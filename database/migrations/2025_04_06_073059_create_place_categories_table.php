@@ -4,9 +4,9 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreatePlaceCategoriesTable extends Migration
+return new class extends Migration
 {
-    public function up()
+    public function up(): void
     {
         Schema::create('place_categories', function (Blueprint $table) {
             $table->uuid('place_id');
@@ -25,8 +25,8 @@ class CreatePlaceCategoriesTable extends Migration
         });
     }
 
-    public function down()
+    public function down(): void
     {
         Schema::dropIfExists('place_categories');
     }
-}
+};

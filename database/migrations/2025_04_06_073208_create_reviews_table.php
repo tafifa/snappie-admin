@@ -3,14 +3,13 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\DB;
 
-class CreateReviewsTable extends Migration
+return new class extends Migration
 {
-    public function up()
+    public function up(): void
     {
         Schema::create('reviews', function (Blueprint $table) {
-            $table->uuid('review_id')->primary()->default(DB::raw('uuid_generate_v4()'));
+            $table->uuid('review_id')->primary();
             $table->uuid('user_id');
             $table->uuid('place_id');
             $table->float('rating')->nullable();
@@ -32,8 +31,8 @@ class CreateReviewsTable extends Migration
         });
     }
 
-    public function down()
+    public function down(): void
     {
         Schema::dropIfExists('reviews');
     }
-}
+};

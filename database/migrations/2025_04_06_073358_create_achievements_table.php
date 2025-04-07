@@ -3,14 +3,13 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\DB;
 
-class CreateAchievementsTable extends Migration
+return new class extends Migration
 {
-    public function up()
+    public function up(): void
     {
         Schema::create('achievements', function (Blueprint $table) {
-            $table->uuid('achievement_id')->primary()->default(DB::raw('uuid_generate_v4()'));
+            $table->uuid('achievement_id')->primary();
             $table->string('name');
             $table->text('description')->nullable();
             $table->integer('level')->nullable();
@@ -18,8 +17,8 @@ class CreateAchievementsTable extends Migration
         });
     }
 
-    public function down()
+    public function down(): void
     {
         Schema::dropIfExists('achievements');
     }
-}
+};

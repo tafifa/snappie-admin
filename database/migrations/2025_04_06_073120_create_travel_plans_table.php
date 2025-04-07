@@ -3,14 +3,13 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\DB;
 
-class CreateTravelPlansTable extends Migration
+return new class extends Migration
 {
-    public function up()
+    public function up(): void
     {
         Schema::create('travel_plans', function (Blueprint $table) {
-            $table->uuid('plan_id')->primary()->default(DB::raw('uuid_generate_v4()'));
+            $table->uuid('plan_id')->primary();
             $table->uuid('user_id');
             $table->string('name');
             $table->boolean('is_done')->default(false);
@@ -23,8 +22,8 @@ class CreateTravelPlansTable extends Migration
         });
     }
 
-    public function down()
+    public function down(): void
     {
         Schema::dropIfExists('travel_plans');
     }
-}
+};
