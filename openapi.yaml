@@ -1,0 +1,898 @@
+openapi: 3.0.3
+info:
+  title: Snappie API
+  description: Complete API collection for authentication, places, check-ins, and reviews
+  version: 1.0.0
+  contact:
+    name: Snappie Team
+    email: support@snappie.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://127.0.0.1:8000/api/v1
+    description: Local development server
+  - url: https://api.snappie.com/v1
+    description: Production server
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Bearer token authentication using Laravel Sanctum
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "John Doe"
+        username:
+          type: string
+          example: "johndoe"
+        email:
+          type: string
+          format: email
+          example: "john@example.com"
+        total_coin:
+          type: integer
+          example: 155
+        total_exp:
+          type: integer
+          example: 360
+        level:
+          type: integer
+          example: 4
+        exp_to_next_level:
+          type: integer
+          example: 40
+        additional_info:
+          type: object
+          properties:
+            bio:
+              type: string
+              example: "Food enthusiast and explorer"
+            phone:
+              type: string
+              example: "+6281234567890"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Place:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Warung Makan Sederhana"
+        category:
+          type: string
+          enum: [cafe, traditional, food_court, street_food, restaurant]
+          example: "restaurant"
+        address:
+          type: string
+          example: "Jl. Malioboro No. 123, Yogyakarta"
+        latitude:
+          type: number
+          format: float
+          example: -7.7956
+        longitude:
+          type: number
+          format: float
+          example: 110.3695
+        image_urls:
+          type: array
+          items:
+            type: string
+            format: uri
+          example: ["https://example.com/place1.jpg"]
+        partnership_status:
+          type: string
+          enum: [active, inactive, pending]
+          example: "active"
+        reward_info:
+          type: object
+          properties:
+            base_exp:
+              type: integer
+              example: 10
+            base_coin:
+              type: integer
+              example: 5
+        average_rating:
+          type: number
+          format: float
+          example: 4.5
+        total_reviews:
+          type: integer
+          example: 25
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Checkin:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        place:
+          $ref: '#/components/schemas/Place'
+        user:
+          $ref: '#/components/schemas/User'
+        latitude:
+          type: number
+          format: float
+          example: -7.7956
+        longitude:
+          type: number
+          format: float
+          example: 110.3695
+        checkin_status:
+          type: string
+          enum: [approved, pending, rejected]
+          example: "approved"
+        mission_status:
+          type: string
+          enum: [completed, pending, failed]
+          example: "pending"
+        rewards:
+          type: object
+          properties:
+            base_exp:
+              type: integer
+              example: 10
+            base_coin:
+              type: integer
+              example: 5
+        user_stats:
+          type: object
+          properties:
+            total_exp:
+              type: integer
+              example: 360
+            total_coin:
+              type: integer
+              example: 155
+            level:
+              type: integer
+              example: 4
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Review:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        place:
+          $ref: '#/components/schemas/Place'
+        user:
+          $ref: '#/components/schemas/User'
+        vote:
+          type: integer
+          minimum: 1
+          maximum: 5
+          example: 5
+        content:
+          type: string
+          example: "Amazing food and great service! Highly recommended for authentic local cuisine."
+        image_urls:
+          type: array
+          items:
+            type: string
+            format: uri
+          example: ["https://example.com/review1.jpg", "https://example.com/review2.jpg"]
+        status:
+          type: string
+          enum: [approved, pending, rejected, flagged]
+          example: "approved"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ApiResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Operation successful"
+        data:
+          type: object
+        error_code:
+          type: string
+          example: "VALIDATION_ERROR"
+
+    PaginatedResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            type: object
+        meta:
+          type: object
+          properties:
+            current_page:
+              type: integer
+              example: 1
+            per_page:
+              type: integer
+              example: 20
+            total:
+              type: integer
+              example: 100
+            last_page:
+              type: integer
+              example: 5
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Validation failed"
+        error_code:
+          type: string
+          example: "VALIDATION_ERROR"
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+
+paths:
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register a new user
+      description: Register a new user account. Will return an auth token for subsequent requests.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - username
+                - email
+              properties:
+                name:
+                  type: string
+                  example: "John Doe"
+                username:
+                  type: string
+                  example: "johndoe"
+                email:
+                  type: string
+                  format: email
+                  example: "john@example.com"
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          user:
+                            $ref: '#/components/schemas/User'
+                          token:
+                            type: string
+                            example: "1|abcdef123456..."
+                          token_type:
+                            type: string
+                            example: "Bearer"
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Login user
+      description: Login with email (simplified for MVP). Will return an auth token.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "john@example.com"
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          user:
+                            $ref: '#/components/schemas/User'
+                          token:
+                            type: string
+                            example: "1|abcdef123456..."
+                          token_type:
+                            type: string
+                            example: "Bearer"
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: Logout user
+      description: Logout current user and revoke the authentication token.
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /user/profile:
+    get:
+      tags:
+        - User Profile
+      summary: Get user profile
+      description: Get current user's profile information including stats and progress.
+      responses:
+        '200':
+          description: Profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags:
+        - User Profile
+      summary: Update user profile
+      description: Update user profile information.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Updated Name"
+                username:
+                  type: string
+                  example: "updated_username"
+                additional_info:
+                  type: object
+                  properties:
+                    bio:
+                      type: string
+                      example: "Food enthusiast and explorer"
+                    phone:
+                      type: string
+                      example: "+6281234567890"
+      responses:
+        '200':
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/User'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /places:
+    get:
+      tags:
+        - Places
+      summary: Get places list
+      description: Get paginated list of places with optional filtering by category and search.
+      parameters:
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: Items per page
+          schema:
+            type: integer
+            default: 20
+        - name: category
+          in: query
+          description: Filter by category
+          schema:
+            type: string
+            enum: [cafe, traditional, food_court, street_food, restaurant]
+        - name: search
+          in: query
+          description: Search by name or address
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Places retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Place'
+
+  /places/nearby:
+    get:
+      tags:
+        - Places
+      summary: Get nearby places
+      description: Get nearby places based on GPS coordinates using Haversine formula.
+      parameters:
+        - name: latitude
+          in: query
+          required: true
+          description: Current latitude
+          schema:
+            type: number
+            format: float
+        - name: longitude
+          in: query
+          required: true
+          description: Current longitude
+          schema:
+            type: number
+            format: float
+        - name: radius
+          in: query
+          description: Search radius in kilometers
+          schema:
+            type: number
+            format: float
+            default: 10
+        - name: category
+          in: query
+          description: Filter by category
+          schema:
+            type: string
+            enum: [cafe, traditional, food_court, street_food, restaurant]
+        - name: limit
+          in: query
+          description: Maximum number of results
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Nearby places retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          allOf:
+                            - $ref: '#/components/schemas/Place'
+                            - type: object
+                              properties:
+                                distance:
+                                  type: number
+                                  format: float
+                                  description: Distance in kilometers
+                                  example: 2.5
+
+  /places/{id}:
+    get:
+      tags:
+        - Places
+      summary: Get place details
+      description: Get detailed information about a specific place including recent reviews.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Place ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Place details retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/Place'
+                          - type: object
+                            properties:
+                              recent_reviews:
+                                type: array
+                                items:
+                                  $ref: '#/components/schemas/Review'
+        '404':
+          description: Place not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /categories:
+    get:
+      tags:
+        - Places
+      summary: Get categories
+      description: Get list of available place categories.
+      responses:
+        '200':
+          description: Categories retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              example: "restaurant"
+                            name:
+                              type: string
+                              example: "Restaurant"
+                            description:
+                              type: string
+                              example: "Full-service restaurants"
+
+  /checkins:
+    post:
+      tags:
+        - Check-ins
+      summary: Create check-in
+      description: Create a new check-in at a place with GPS validation.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - place_id
+                - latitude
+                - longitude
+              properties:
+                place_id:
+                  type: integer
+                  example: 1
+                latitude:
+                  type: number
+                  format: float
+                  example: -7.7956
+                longitude:
+                  type: number
+                  format: float
+                  example: 110.3695
+      responses:
+        '201':
+          description: Check-in created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Checkin'
+        '422':
+          description: Validation error or GPS validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /checkins/history:
+    get:
+      tags:
+        - Check-ins
+      summary: Get check-in history
+      description: Get user's check-in history with pagination.
+      parameters:
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: Items per page
+          schema:
+            type: integer
+            default: 20
+        - name: status
+          in: query
+          description: Filter by status
+          schema:
+            type: string
+            enum: [approved, pending, rejected]
+      responses:
+        '200':
+          description: Check-in history retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Checkin'
+
+  /reviews:
+    post:
+      tags:
+        - Reviews
+      summary: Create review
+      description: Create a new review for a place with rating (1-5) and optional images.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - place_id
+                - vote
+                - content
+              properties:
+                place_id:
+                  type: integer
+                  example: 1
+                vote:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                  example: 5
+                content:
+                  type: string
+                  example: "Amazing food and great service! Highly recommended for authentic local cuisine."
+                image_urls:
+                  type: array
+                  items:
+                    type: string
+                    format: uri
+                  example: ["https://example.com/review1.jpg", "https://example.com/review2.jpg"]
+      responses:
+        '201':
+          description: Review created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Review'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      tags:
+        - Reviews
+      summary: Get reviews
+      description: Get reviews for a specific place or all reviews with optional filtering and sorting.
+      parameters:
+        - name: place_id
+          in: query
+          description: Filter by place ID
+          schema:
+            type: integer
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: Items per page
+          schema:
+            type: integer
+            default: 10
+        - name: rating
+          in: query
+          description: Filter by rating
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 5
+        - name: sort
+          in: query
+          description: Sort order
+          schema:
+            type: string
+            enum: [newest, oldest, highest_rating, lowest_rating]
+            default: newest
+      responses:
+        '200':
+          description: Reviews retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Review'
+
+  /:
+    get:
+      tags:
+        - API Info
+      summary: API Information
+      description: Get API version and endpoint information.
+      security: []
+      responses:
+        '200':
+          description: API information retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                            example: "Snappie API"
+                          version:
+                            type: string
+                            example: "v1"
+                          description:
+                            type: string
+                            example: "Complete API for authentication, places, check-ins, and reviews"
+                          endpoints:
+                            type: array
+                            items:
+                              type: string
+                            example: ["/auth", "/user", "/places", "/checkins", "/reviews"]
+
+tags:
+  - name: Authentication
+    description: User authentication endpoints
+  - name: User Profile
+    description: User profile management
+  - name: Places
+    description: Places discovery and search
+  - name: Check-ins
+    description: Check-in management
+  - name: Reviews
+    description: Review and rating management
+  - name: API Info
+    description: General API information
+
+externalDocs:
+  description: Find more info about Snappie API
+  url: https://docs.snappie.com
