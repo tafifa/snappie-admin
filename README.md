@@ -38,15 +38,15 @@
 
 ## 🎯 **Overview**
 
-Snappie Admin Panel adalah sistem manajemen komprehensif untuk aplikasi check-in berbasis gamifikasi. Panel admin ini menyediakan kontrol penuh atas user management, place management, review moderation, dan check-in monitoring dengan interface yang modern dan user-friendly.
+Snappie Admin Panel is a comprehensive management system for gamification-based check-in applications. This admin panel provides full control over user management, place management, review moderation, and check-in monitoring with a modern and user-friendly interface.
 
 ### **Key Highlights**
-- 📊 **Real-time Dashboard** dengan analytics mendalam
-- 👥 **User Management** dengan gamification system
-- 🗺️ **Place Management** dengan GPS tracking
-- ⭐ **Review Moderation** dengan approval workflow
-- 📍 **Check-in Monitoring** dengan mission system
-- 🎨 **Modern UI/UX** menggunakan Filament 3
+- 📊 **Real-time Dashboard** with deep analytics
+- 👥 **User Management** with gamification system
+- 🗺️ **Place Management** with GPS tracking
+- ⭐ **Review Moderation** with approval workflow
+- 📍 **Check-in Monitoring** with mission system
+- 🎨 **Modern UI/UX** using Filament 3
 
 ---
 
@@ -57,38 +57,38 @@ Snappie Admin Panel adalah sistem manajemen komprehensif untuk aplikasi check-in
 - [x] Recent activity monitoring (check-ins & reviews)
 - [x] Pending review alerts with warning badges
 - [x] Completion rate tracking
-- [x] Custom widgets dengan pagination control
+- [x] Custom widgets with pagination control
 
 ### **👥 User Management**
 - [x] Complete CRUD operations
 - [x] Advanced search & filtering
 - [x] Gamification system (EXP, coins, levels)
-- [x] Profile management dengan avatar upload
+- [x] Profile management with avatar upload
 - [x] Activity tracking & analytics
 - [x] Bulk operations support
 
 ### **🗺️ Place Management**
 - [x] Comprehensive place database
 - [x] 5 category system (Cafe, Traditional, Food Court, Street Food, Restaurant)
-- [x] GPS coordinates dengan precision tracking
+- [x] GPS coordinates with precision tracking
 - [x] Image gallery management
 - [x] Mission & reward system
 - [x] Partnership program tracking
-- [x] SEO-optimized dengan auto-generated slugs
+- [x] SEO-optimized with auto-generated slugs
 
 ### **⭐ Review Management**
 - [x] 4-level moderation system (approved, pending, rejected, flagged)
-- [x] Rating system dengan visual indicators
+- [x] Rating system with visual indicators
 - [x] Bulk moderation tools
 - [x] Image support (up to 5 images per review)
-- [x] Content preview dengan tooltips
+- [x] Content preview with tooltips
 - [x] Advanced filtering by multiple criteria
 
 ### **📍 Check-in Management**
 - [x] Dual status system (check-in + mission status)
 - [x] GPS location tracking
-- [x] Mission completion dengan image proof
-- [x] Time tracking untuk activity monitoring
+- [x] Mission completion with image proof
+- [x] Time tracking for activity monitoring
 - [x] Location analytics
 - [x] Performance metrics
 
@@ -182,8 +182,38 @@ php artisan serve
 
 # Access admin panel
 # URL: http://127.0.0.1:8000/admin
-# Email: gracieo@gmail.com
-# Password: ecarg1234
+```
+
+### **Additional OpenAPI Tools**
+
+#### **Documentation Hosting**
+```bash
+# Serve interactive docs locally
+npx swagger-ui-serve openapi.yaml
+
+# Generate static HTML documentation
+npx redoc-cli build openapi.yaml --output docs.html
+
+# Host on GitHub Pages with Swagger UI
+# Upload openapi.yaml to docs/ folder in your repository
+```
+
+#### **API Testing Tools**
+- **Insomnia**: Import OpenAPI spec for visual API testing
+- **Postman**: Import OpenAPI to auto-generate collection
+- **Bruno**: Lightweight API client with OpenAPI support
+- **HTTPie**: Command-line testing with OpenAPI integration
+
+#### **Validation & Linting**
+```bash
+# Validate OpenAPI specification
+npx swagger-parser validate openapi.yaml
+
+# Lint for best practices
+npx @apidevtools/swagger-parser validate openapi.yaml
+
+# Check for breaking changes
+npx oasdiff breaking openapi-old.yaml openapi.yaml
 ```
 
 ---
@@ -317,10 +347,7 @@ php artisan serve
 ## 📖 **Usage Guide**
 
 ### **Accessing Admin Panel**
-1. Navigate to `http://127.0.0.1:8000/admin`
-2. Login dengan credentials:
-   - Email: `gracieo@gmail.com`
-   - Password: `ecarg1234`
+1. Navigate to `http://127.0.0.1:8000/admin` to Login
 
 ### **Dashboard Overview**
 ```
@@ -628,93 +655,39 @@ curl -X POST http://127.0.0.1:8000/api/v1/checkins \
 - **Check-ins**: 10 requests
 - **Reviews**: 20 requests
 
-### **MVP Features Completed ✅**
-
-✅ **Authentication System**
-- User registration with validation (email-based for MVP)
-- Login/logout with JWT tokens 
-- Profile management with avatar upload
-- Simplified authentication for testing
-
-✅ **Places Discovery**
-- List places with pagination & filtering
-- Nearby places with GPS calculation (Haversine formula)
-- Detailed place information with reviews
-- Category system
-
-✅ **Check-in System**
-- GPS-based check-in verification
-- Distance validation using Haversine formula
-- Basic reward system (EXP & coins)
-- Check-in history with pagination
-
-✅ **Review System**
-- Create reviews with rating 1-5
-- Image upload support
-- Review moderation (pending status)
-- Rating statistics and aggregation
-
-✅ **Gamification**
-- EXP & coin tracking
-- Level calculation (every 100 EXP = 1 level)
-- User statistics (total check-ins, reviews, places visited)
-
-✅ **Security & Performance**
-- Rate limiting (60 requests/minute)
-- Complete input validation
-- Consistent error handling
-- CORS support
-- Laravel Sanctum authentication
-
 ---
 
 ## 📮 **API Testing**
 
-### **Postman Collection Setup**
+### **OpenAPI Specification**
 
-Kami menyediakan Postman collection lengkap untuk testing semua API endpoints dengan automatic token management dan environment variables.
+We provide a comprehensive OpenAPI 3.0.3 specification for all API endpoints with detailed schemas, authentication, and examples.
 
 #### **Files Included**
-- `Snappie_API.postman_collection.json` - Main collection dengan semua API endpoints
-- `Snappie_API.postman_environment.json` - Local Development environment
+- `openapi.yaml` - Complete OpenAPI specification with all endpoints
+- Interactive documentation with request/response examples
+- Authentication schemas and security definitions
 
 #### **Quick Setup**
 ```bash
-# 1. Import ke Postman
-1. Buka Postman
-2. Click "Import" button (top left)
-3. Upload collection dan environment files
+# 1. View API Documentation
+# Option A: Use Swagger UI (recommended)
+npx swagger-ui-serve openapi.yaml
 
-# 2. Select Environment
-1. Pilih environment dropdown (top right)
-2. Choose "Snappie API" untuk development testing
+# Option B: Use online Swagger Editor
+# Visit: https://editor.swagger.io/
+# Copy content from openapi.yaml
 
-# 3. Start Testing
-1. Pastikan Laravel server running: php artisan serve
-2. Run requests sesuai urutan
+# Option C: Use VS Code extension
+# Install: "OpenAPI (Swagger) Editor" extension
+# Open openapi.yaml file
+
+# 2. Start Laravel Server
+php artisan serve
+
+# 3. Test Endpoints
+# Use the interactive documentation to test API calls
 ```
-
-### **Collection Features**
-
-#### **✅ Automatic Token Management**
-- Login/Register otomatis menyimpan auth token
-- Token digunakan di semua subsequent requests
-- Tidak perlu manual copying!
-
-#### **✅ Smart Environment Variables**
-- Pre-configured API URLs
-- Test coordinates untuk GPS testing
-- Automatic ID capture untuk related requests
-
-#### **✅ Complete Test Coverage**
-- Semua 15+ API endpoints included
-- Request examples dengan proper data
-- Response validation tests
-
-#### **✅ GPS Testing Ready**
-- Pre-configured test coordinates (Yogyakarta area)
-- Nearby places search dengan distance calculation
-- Check-in GPS validation testing
 
 ### **API Endpoints Structure**
 
@@ -727,17 +700,17 @@ POST /auth/logout       - Revoke current token
 
 #### **👤 User Profile**
 ```
-GET  /user/profile      - View profile dengan stats
+GET  /user/profile      - View profile with stats
 PUT  /user/profile      - Modify user information
 ```
 
 #### **📍 Places**
 ```
-GET  /places            - Paginated list dengan filtering
+GET  /places            - Paginated list with filtering
 GET  /places/category   - Filter by place type
 GET  /places/search     - Search by name/address
 GET  /places/nearby     - GPS-based search
-GET  /places/{id}       - Detailed place info dengan reviews
+GET  /places/{id}       - Detailed place info with reviews
 GET  /categories        - Available place categories
 ```
 
@@ -749,9 +722,9 @@ GET  /checkins/history  - User's check-in history
 
 #### **⭐ Reviews**
 ```
-POST /reviews           - Add rating dan review
-GET  /reviews           - All reviews dengan pagination
-GET  /places/{id}/reviews - Reviews untuk specific place
+POST /reviews           - Add rating and review
+GET  /reviews           - All reviews with pagination
+GET  /places/{id}/reviews - Reviews for specific place
 ```
 
 ### **Testing Workflow**
@@ -809,37 +782,71 @@ GET  /places/{id}/reviews - Reviews untuk specific place
 
 **"Unauthenticated" Error**
 ```bash
-- Run Login/Register first untuk get token
-- Check if token tersimpan di environment
+- Obtain token via /auth/login or /auth/register endpoint
+- Add "Authorization: Bearer {token}" header to requests
+- Check token validity and expiration
 ```
 
 **"Place not found" Error**
 ```bash
-- Check if place_id variable set correctly
-- Use valid place ID dari places list
+- Verify place_id parameter is valid integer
+- Use existing place ID from /places endpoint response
+- Check database has seeded place data
 ```
 
 **GPS Validation Failed**
 ```bash
-- Ensure coordinates dekat dengan place
-- Check test_latitude dan test_longitude values
+- Ensure latitude/longitude are valid decimal numbers
+- Check coordinates are within reasonable proximity to place
+- Verify GPS parameters match OpenAPI schema requirements
 ```
 
 **Server Connection Error**
 ```bash
-- Make sure Laravel server running: php artisan serve
-- Check base_url di environment matches server URL
+- Ensure Laravel server is running: php artisan serve
+- Verify server URL matches OpenAPI specification
+- Check CORS settings for cross-origin requests
+```
+
+**OpenAPI Documentation Issues**
+```bash
+- Ensure openapi.yaml syntax is valid YAML
+- Check OpenAPI 3.0.3 specification compliance
+- Validate schema definitions match actual API responses
 ```
 
 ### **Mobile App Integration**
 
-Postman collection ini serves sebagai **reference implementation** untuk mobile app developers:
+The OpenAPI specification serves as a **comprehensive reference** for mobile app developers:
 
-- **Request Format**: Exact JSON structure yang dibutuhkan
-- **Response Format**: Expected response structure  
-- **Error Handling**: Semua possible error responses
-- **Authentication Flow**: Token-based auth implementation
-- **GPS Integration**: Location-based features testing
+- **API Contract**: Complete endpoint definitions with request/response schemas
+- **Code Generation**: Generate client SDKs for iOS, Android, React Native, Flutter
+- **Type Safety**: Strongly-typed models and interfaces
+- **Authentication Flow**: Bearer token implementation with Laravel Sanctum
+- **Error Handling**: Standardized error response formats
+- **GPS Integration**: Location-based endpoint specifications
+- **Validation Rules**: Parameter constraints and data validation
+
+#### **SDK Generation Examples**
+```bash
+# Generate iOS Swift SDK
+npx @openapitools/openapi-generator-cli generate \
+  -i openapi.yaml \
+  -g swift5 \
+  -o ./ios-sdk
+
+# Generate Android Kotlin SDK
+npx @openapitools/openapi-generator-cli generate \
+  -i openapi.yaml \
+  -g kotlin \
+  -o ./android-sdk
+
+# Generate React Native TypeScript SDK
+npx @openapitools/openapi-generator-cli generate \
+  -i openapi.yaml \
+  -g typescript-axios \
+  -o ./react-native-sdk
+```
 
 ---
 
