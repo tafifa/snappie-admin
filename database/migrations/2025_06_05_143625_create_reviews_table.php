@@ -27,9 +27,6 @@ return new class extends Migration
             $table->index('rating');
             $table->index('vote');
             $table->index('created_at');
-            
-            // Add constraint for rating range
-            $table->check('rating >= 1 AND rating <= 5');
         });
     }
 

@@ -19,10 +19,10 @@ class DatabaseSeeder extends Seeder
     {
         // Create admin user if not exists
         Admin::firstOrCreate(
-            ['email' => 'gracieo@gmail.com'],
+            ['email' => env('ADMIN_EMAIL')],
             [
-                'name' => 'Gracie Oktaviani',
-                'password' => bcrypt('ecarg1234'),
+                'name' => env('ADMIN_NAME'),
+                'password' => bcrypt(env('ADMIN_PASSWORD')),
             ]
         );
 
@@ -69,7 +69,10 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($users as $userData) {
-            User::create($userData);
+            User::firstOrCreate(
+                ['email' => $userData['email']],
+                $userData
+            );
         }
 
         $this->command->info('Users created successfully');
@@ -168,10 +171,149 @@ class DatabaseSeeder extends Seeder
                     'specialties' => ['Nasi Pecel', 'Rempeyek', 'Es Dawet']
                 ],
             ],
+            [
+                'name' => 'Kedai Kopi Klotok',
+                'slug' => 'kedai-kopi-klotok',
+                'category' => 'Cafe',
+                'description' => 'Traditional coffee shop with authentic Javanese coffee brewing method',
+                'address' => 'Jl. Prawirotaman No. 15, Yogyakarta',
+                'latitude' => -7.8012,
+                'longitude' => 110.3658,
+                'image_urls' => [
+                    'https://example.com/kopi1.jpg',
+                    'https://example.com/kopi2.jpg'
+                ],
+                'status' => true,
+                'partnership_status' => true,
+                'clue_mission' => 'Find the vintage coffee grinder at the entrance',
+                'exp_reward' => 75,
+                'coin_reward' => 35,
+                'additional_info' => [
+                    'opening_hours' => '07:00 - 23:00',
+                    'price_range' => 'Rp 8,000 - Rp 25,000',
+                    'specialties' => ['Kopi Tubruk', 'Kopi Joss', 'Wedang Jahe']
+                ],
+            ],
+            [
+                'name' => 'Ayam Geprek Mas Kobis',
+                'slug' => 'ayam-geprek-mas-kobis',
+                'category' => 'Fast Food',
+                'description' => 'Spicy smashed fried chicken with various sambal levels',
+                'address' => 'Jl. Gejayan No. 88, Yogyakarta',
+                'latitude' => -7.7689,
+                'longitude' => 110.3801,
+                'image_urls' => [
+                    'https://example.com/geprek1.jpg'
+                ],
+                'status' => true,
+                'partnership_status' => false,
+                'clue_mission' => 'Look for the red chili pepper mascot statue',
+                'exp_reward' => 85,
+                'coin_reward' => 40,
+                'additional_info' => [
+                    'opening_hours' => '10:00 - 22:00',
+                    'price_range' => 'Rp 12,000 - Rp 30,000',
+                    'specialties' => ['Ayam Geprek Level 1-10', 'Nasi Bakar', 'Es Teh Manis']
+                ],
+            ],
+            [
+                'name' => 'Lesehan Jejamuran',
+                'slug' => 'lesehan-jejamuran',
+                'category' => 'Restaurant',
+                'description' => 'Mushroom specialty restaurant with traditional lesehan dining style',
+                'address' => 'Jl. Kaliurang KM 23, Pakem, Sleman',
+                'latitude' => -7.6789,
+                'longitude' => 110.4123,
+                'image_urls' => [
+                    'https://example.com/jamur1.jpg',
+                    'https://example.com/jamur2.jpg',
+                    'https://example.com/jamur3.jpg'
+                ],
+                'status' => true,
+                'partnership_status' => true,
+                'clue_mission' => 'Find the giant mushroom sculpture in the garden',
+                'exp_reward' => 110,
+                'coin_reward' => 55,
+                'additional_info' => [
+                    'opening_hours' => '11:00 - 21:00',
+                    'price_range' => 'Rp 20,000 - Rp 60,000',
+                    'specialties' => ['Sate Jamur', 'Tongseng Jamur', 'Sup Jamur Kuping']
+                ],
+            ],
+            [
+                'name' => 'Es Dawet Ayu Banjarnegara',
+                'slug' => 'es-dawet-ayu-banjarnegara',
+                'category' => 'Traditional Drinks',
+                'description' => 'Authentic Banjarnegara dawet with coconut milk and palm sugar',
+                'address' => 'Alun-alun Kidul, Yogyakarta',
+                'latitude' => -7.8134,
+                'longitude' => 110.3621,
+                'image_urls' => [
+                    'https://example.com/dawet1.jpg'
+                ],
+                'status' => true,
+                'partnership_status' => false,
+                'clue_mission' => 'Find the traditional cart with yellow umbrella',
+                'exp_reward' => 60,
+                'coin_reward' => 30,
+                'additional_info' => [
+                    'opening_hours' => '14:00 - 22:00',
+                    'price_range' => 'Rp 5,000 - Rp 15,000',
+                    'specialties' => ['Es Dawet Ayu', 'Es Cendol', 'Es Kelapa Muda']
+                ],
+            ],
+            [
+                'name' => 'Warung Makan Padang Sederhana',
+                'slug' => 'warung-makan-padang-sederhana',
+                'category' => 'Restaurant',
+                'description' => 'Authentic Padang cuisine with rich spices and traditional cooking',
+                'address' => 'Jl. Sudirman No. 45, Yogyakarta',
+                'latitude' => -7.7956,
+                'longitude' => 110.3695,
+                'image_urls' => [
+                    'https://example.com/padang1.jpg',
+                    'https://example.com/padang2.jpg'
+                ],
+                'status' => true,
+                'partnership_status' => true,
+                'clue_mission' => 'Find the traditional Minang house architecture facade',
+                'exp_reward' => 95,
+                'coin_reward' => 50,
+                'additional_info' => [
+                    'opening_hours' => '08:00 - 21:00',
+                    'price_range' => 'Rp 15,000 - Rp 45,000',
+                    'specialties' => ['Rendang', 'Gulai Ayam', 'Dendeng Balado']
+                ],
+            ],
+            [
+                'name' => 'Mie Ayam Tumini',
+                'slug' => 'mie-ayam-tumini',
+                'category' => 'Fast Food',
+                'description' => 'Famous chicken noodle soup with homemade noodles and secret recipe',
+                'address' => 'Jl. Veteran No. 18, Yogyakarta',
+                'latitude' => -7.7834,
+                'longitude' => 110.3712,
+                'image_urls' => [
+                    'https://example.com/mieayam1.jpg'
+                ],
+                'status' => true,
+                'partnership_status' => false,
+                'clue_mission' => 'Look for the vintage noodle making machine display',
+                'exp_reward' => 70,
+                'coin_reward' => 35,
+                'additional_info' => [
+                    'opening_hours' => '09:00 - 20:00',
+                    'price_range' => 'Rp 8,000 - Rp 20,000',
+                    'specialties' => ['Mie Ayam Bakso', 'Mie Ayam Pangsit', 'Es Jeruk']
+                ],
+            ],
         ];
 
         foreach ($places as $placeData) {
-            Place::create($placeData);
+            Place::firstOrCreate(
+                ['slug' => $placeData['slug']],
+                $placeData
+            );
         }
 
         $this->command->info('Places created successfully');
@@ -217,7 +359,7 @@ class DatabaseSeeder extends Seeder
         }
 
         // Add additional random check-ins to make it more realistic
-        for ($i = 0; $i < 30; $i++) {
+        for ($i = 0; $i < 60; $i++) {
             $user = $createdUsers->random();
             $place = $createdPlaces->random();
             $checkInStatus = $statuses[array_rand($statuses)];
@@ -314,7 +456,7 @@ class DatabaseSeeder extends Seeder
         }
 
         // Add more random reviews from different combinations
-        for ($i = 0; $i < 40; $i++) {
+        for ($i = 0; $i < 80; $i++) {
             $user = $createdUsers->random();
             $place = $createdPlaces->random();
             $vote = rand(1, 5);
