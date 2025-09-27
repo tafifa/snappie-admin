@@ -2,16 +2,23 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Clickbar\Magellan\Data\Geometries\Point;
 
 class Place extends Model
 {
+    use HasFactory;
+
     /**
      * The table associated with the model.
      *
      * @var string
      */
     protected $table = 'places';
+
+    protected $primaryKey = 'id';
 
     /**
      * The attributes that are mass assignable.
@@ -20,18 +27,19 @@ class Place extends Model
      */
     protected $fillable = [
         'name',
-        'slug',
-        'category',
         'description',
-        'address',
-        'latitude',
         'longitude',
+        'latitude',
         'image_urls',
+        'coin_reward',
+        'exp_reward',
+        'min_price',
+        'max_price',
+        'avg_rating',
+        'total_review',
+        'total_checkin',
         'status',
         'partnership_status',
-        'clue_mission',
-        'exp_reward',
-        'coin_reward',
         'additional_info'
     ];
 
@@ -41,14 +49,31 @@ class Place extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'image_urls' => 'array',
+        'longitude' => 'float',
+        'latitude' => 'float',
+        'image_urls' => 'json',
+        'coin_reward' => 'integer',
+        'exp_reward' => 'integer',
+        'min_price' => 'integer',
+        'max_price' => 'integer',
+        'avg_rating' => 'float',
+        'total_review' => 'integer',
+        'total_checkin' => 'integer',
         'status' => 'boolean',
         'partnership_status' => 'boolean',
-        'exp_reward' => 'integer',
-        'coin_reward' => 'integer',
-        'additional_info' => 'array',
+        'additional_info' => 'json',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+    ];
+
+    /**
+     * Additional Info Key References
+     */
+    protected $additionalInfoKey = [
+        'place_detail', // subkey: shortDescription, address, openingHours, openingDays, contactNumber, website
+        'place_value', // subkey: key, value
+        'food_type', // subkey: key, value
+        'place_attributes' // subkey: menu, facility, parking, capacity, accessibility, payment, service
     ];
 
     /**
@@ -67,15 +92,13 @@ class Place extends Model
         return $this->hasMany(Review::class);
     }
 
+    // --- QUERY SCOPES ---
+
     /**
-     * Get reward information for missions
+     * Scope query untuk hanya menyertakan tempat yang aktif.
      */
-    public function getRewardInfoAttribute()
+    public function scopeActive(Builder $query): Builder
     {
-        return [
-            'clue_mission' => $this->clue_mission,
-            'exp_reward' => $this->exp_reward,
-            'coin_reward' => $this->coin_reward,
-        ];
+        return $query->where('status', true);
     }
 }

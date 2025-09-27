@@ -13,8 +13,12 @@ class EditPlace extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\ViewAction::make(),
-            Actions\DeleteAction::make(),
+            Actions\ViewAction::make()
+                ->icon('heroicon-o-eye')
+                ->color('info'),
+            Actions\DeleteAction::make()
+                ->icon('heroicon-o-trash')
+                ->color('danger'),
         ];
     }
 }

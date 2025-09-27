@@ -40,10 +40,7 @@ class PlaceReviews extends ListRecords
                     ->limit(50)
                     ->searchable(),
 
-                Tables\Columns\TextColumn::make('vote')
-                    ->label('Rating')
-                    ->formatStateUsing(fn (string $state): string => str_repeat('⭐', (int)$state))
-                    ->sortable(),
+
 
                 Tables\Columns\BadgeColumn::make('status')
                     ->label('Status')
@@ -67,15 +64,7 @@ class PlaceReviews extends ListRecords
                         'rejected' => 'Rejected',
                     ]),
 
-                SelectFilter::make('vote')
-                    ->label('Rating')
-                    ->options([
-                        '1' => '⭐ (1 Star)',
-                        '2' => '⭐⭐ (2 Stars)',
-                        '3' => '⭐⭐⭐ (3 Stars)',
-                        '4' => '⭐⭐⭐⭐ (4 Stars)',
-                        '5' => '⭐⭐⭐⭐⭐ (5 Stars)',
-                    ]),
+
             ])
             ->actions([
                 Tables\Actions\ViewAction::make()

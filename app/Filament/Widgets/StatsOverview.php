@@ -22,8 +22,8 @@ class StatsOverview extends BaseWidget
         $todayCheckins = Checkin::whereDate('created_at', today())->count();
         $todayReviews = Review::whereDate('created_at', today())->count();
         
-        $pendingReviews = Review::where('status', 'pending')->count();
-        $completedCheckins = Checkin::where('check_in_status', 'completed')->count();
+        $pendingReviews = Review::where('status', true)->count();
+        $completedCheckins = Checkin::where('status', true)->count();
         
         return [
             Stat::make('Total Users', $totalUsers)

@@ -17,22 +17,33 @@ use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Support\Enums\FontWeight;
+use Filament\Infolists\Infolist;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\ImageEntry;
+use Filament\Infolists\Components\Section as InfolistSection;
+use Filament\Infolists\Components\Group as InfolistGroup;
 
 class ReviewResource extends Resource
 {
     protected static ?string $model = Review::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-star';
+
+    protected static ?string $navigationLabel = 'Reviews';
+
+    protected static ?string $modelLabel = 'Review';
+
+    protected static ?string $pluralModelLabel = 'Reviews';
     
-    protected static ?string $navigationGroup = 'Activity';
+    protected static ?string $navigationGroup = 'Activity Management';
     
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Review Details')
+                Forms\Components\Section::make('📝 Review Details')
                     ->description('Basic information about the review')
                     ->schema([
                         Forms\Components\Grid::make(2)
@@ -62,34 +73,41 @@ class ReviewResource extends Resource
                                         Forms\Components\TextInput::make('name')
                                             ->required()
                                             ->maxLength(255),
-                                        Forms\Components\TextInput::make('address')
-                                            ->maxLength(255),
+                                        Forms\Components\Textarea::make('description')
+                                            ->maxLength(500),
                                     ]),
                             ]),
-                        Forms\Components\Select::make('vote')
-                            ->label('Rating')
-                            ->options([
-                                1 => '👍 Positive (1)',
-                                0 => '👎 Negative (0)',
-                            ])
-                            ->default(1)
-                            ->required()
-                            ->native(false)
-                            ->helperText('Choose whether this is a positive or negative review'),
-                        Forms\Components\Select::make('status')
-                            ->label('Review Status')
-                            ->options([
-                                'pending' => 'Pending Review',
-                                'approved' => 'Approved',
-                                'rejected' => 'Rejected',
-                                'flagged' => 'Flagged for Review',
-                            ])
-                            ->default('pending')
-                            ->required()
-                            ->native(false),
+
+                        Forms\Components\Grid::make(3)
+                            ->schema([
+                                Forms\Components\Select::make('rating')
+                                    ->label('Rating')
+                                    ->options([
+                                        1 => '⭐ 1 Star',
+                                        2 => '⭐⭐ 2 Stars',
+                                        3 => '⭐⭐⭐ 3 Stars',
+                                        4 => '⭐⭐⭐⭐ 4 Stars',
+                                        5 => '⭐⭐⭐⭐⭐ 5 Stars',
+                                    ])
+                                    ->required()
+                                    ->native(false),
+                                Forms\Components\TextInput::make('total_like')
+                                    ->label('Total Likes')
+                                    ->numeric()
+                                    ->default(0)
+                                    ->minValue(0),
+                                Forms\Components\Toggle::make('status')
+                                    ->label('Approved')
+                                    ->onColor('success')
+                                    ->offColor('danger')
+                                    ->onIcon('heroicon-m-check')
+                                    ->offIcon('heroicon-m-x-mark')
+                                    ->helperText('Toggle to approve/reject this review')
+                                    ->default(true),
+                            ]),
                     ]),
                 
-                Forms\Components\Section::make('Review Content')
+                Forms\Components\Section::make('📝 Review Content')
                     ->description('The actual review content and media')
                     ->schema([
                         Forms\Components\Textarea::make('content')
@@ -98,21 +116,33 @@ class ReviewResource extends Resource
                             ->maxLength(1000)
                             ->placeholder('Write the review content here...')
                             ->helperText('Maximum 1000 characters')
+                            ->required()
                             ->columnSpanFull(),
+
                         Forms\Components\FileUpload::make('image_urls')
                             ->label('Review Images')
                             ->image()
                             ->multiple()
                             ->maxFiles(5)
-                            ->imageEditor()
-                            ->imageResizeMode('cover')
-                            ->imageCropAspectRatio('16:9')
-                            ->imageResizeTargetWidth('1920')
-                            ->imageResizeTargetHeight('1080')
                             ->maxSize(5120)
-                            ->helperText('Upload up to 5 images for this review (max 5MB each)')
+                            ->helperText('Upload up to 5 images (max 5MB each)')
+                            ->disk('public')
+                            ->directory('reviews')
                             ->columnSpanFull(),
                     ]),
+
+                Forms\Components\Section::make('🔧 Additional Information')
+                    ->description('Extra data for this review (optional)')
+                    ->schema([
+                        Forms\Components\KeyValue::make('additional_info')
+                            ->label('Additional Data')
+                            ->keyLabel('Key')
+                            ->valueLabel('Value')
+                            ->addActionLabel('Add new field')
+                            ->columnSpanFull(),
+                    ])
+                    ->collapsible()
+                    ->collapsed(),
             ]);
     }
 
@@ -130,54 +160,37 @@ class ReviewResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->weight(FontWeight::Medium),
-                Tables\Columns\TextColumn::make('content')
-                    ->label('Review')
-                    ->limit(100)
-                    ->tooltip(function (Review $record): ?string {
-                        return $record->content ? strip_tags($record->content) : null;
-                    })
-                    ->searchable()
-                    ->wrap(),
-                Tables\Columns\BadgeColumn::make('vote')
+
+                Tables\Columns\TextColumn::make('rating')
                     ->label('Rating')
-                    ->formatStateUsing(fn (int $state): string => match ($state) {
-                        1 => '👍 Positive',
-                        0 => '👎 Negative',
-                        default => 'Unknown',
-                    })
-                    ->colors([
-                        'success' => 1,
-                        'danger' => 0,
-                    ]),
-                Tables\Columns\BadgeColumn::make('status')
+                    ->formatStateUsing(fn (string $state): string => str_repeat('⭐', (int) $state))
+                    ->sortable()
+                    ->alignCenter(),
+
+                Tables\Columns\TextColumn::make('total_like')
+                    ->label('Likes')
+                    ->numeric()
+                    ->sortable()
+                    ->alignCenter()
+                    ->badge()
+                    ->color('info'),
+
+                Tables\Columns\IconColumn::make('status')
                     ->label('Status')
-                    ->colors([
-                        'warning' => 'pending',
-                        'success' => 'approved',
-                        'danger' => 'rejected',
-                        'primary' => 'flagged',
-                    ])
-                    ->icons([
-                        'heroicon-o-clock' => 'pending',
-                        'heroicon-o-check-circle' => 'approved',
-                        'heroicon-o-x-circle' => 'rejected',
-                        'heroicon-o-flag' => 'flagged',
-                    ])
-                    ->searchable(),
-                // Tables\Columns\ImageColumn::make('image_urls')
-                //     ->label('Images')
-                //     ->circular()
-                //     ->stacked()
-                //     ->limit(3)
-                //     ->limitedRemainingText()
-                //     ->size(40)
-                //     ->toggleable(),
+                    ->boolean()
+                    ->trueIcon('heroicon-o-check-circle')
+                    ->falseIcon('heroicon-o-x-circle')
+                    ->trueColor('success')
+                    ->falseColor('danger')
+                    ->sortable(),
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Posted')
                     ->dateTime('M j, Y g:i A')
                     ->sortable()
                     ->since()
                     ->tooltip(fn ($record) => $record->created_at->format('F j, Y g:i:s A')),
+
                 Tables\Columns\TextColumn::make('updated_at')
                     ->label('Updated')
                     ->dateTime('M j, Y g:i A')
@@ -194,27 +207,35 @@ class ReviewResource extends Resource
                     ->relationship('place', 'name')
                     ->searchable()
                     ->preload(),
-                SelectFilter::make('vote')
-                    ->label('Rating')
+                SelectFilter::make('rating')
                     ->options([
-                        1 => '👍 Positive',
-                        0 => '👎 Negative',
+                        1 => '⭐ 1 Star',
+                        2 => '⭐⭐ 2 Stars',
+                        3 => '⭐⭐⭐ 3 Stars',
+                        4 => '⭐⭐⭐⭐ 4 Stars',
+                        5 => '⭐⭐⭐⭐⭐ 5 Stars',
                     ])
                     ->multiple(),
-                SelectFilter::make('status')
+
+                Tables\Filters\TernaryFilter::make('status')
                     ->label('Review Status')
-                    ->options([
-                        'pending' => 'Pending Review',
-                        'approved' => 'Approved',
-                        'rejected' => 'Rejected',
-                        'flagged' => 'Flagged for Review',
-                    ])
-                    ->multiple(),
+                    ->placeholder('All Reviews')
+                    ->trueLabel('Approved')
+                    ->falseLabel('Rejected'),
                 Filter::make('has_images')
                     ->label('Has Images')
                     ->query(fn (Builder $query): Builder => $query->whereNotNull('image_urls')
                         ->where('image_urls', '!=', '[]')
                         ->where('image_urls', '!=', '')),
+                Filter::make('high_rating')
+                    ->label('High Rating (4-5 stars)')
+                    ->query(fn (Builder $query): Builder => $query->where('rating', '>=', 4)),
+                Filter::make('low_rating')
+                    ->label('Low Rating (1-2 stars)')
+                    ->query(fn (Builder $query): Builder => $query->where('rating', '<=', 2)),
+                Filter::make('popular')
+                    ->label('Popular (5+ likes)')
+                    ->query(fn (Builder $query): Builder => $query->where('total_like', '>=', 5)),
                 Filter::make('today')
                     ->label('Today')
                     ->query(fn (Builder $query): Builder => $query->whereDate('created_at', today())),
@@ -226,7 +247,7 @@ class ReviewResource extends Resource
                     ])),
                 Filter::make('needs_review')
                     ->label('Needs Review')
-                    ->query(fn (Builder $query): Builder => $query->whereIn('status', ['pending', 'flagged'])),
+                    ->query(fn (Builder $query): Builder => $query->where('status', false)),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
@@ -236,14 +257,14 @@ class ReviewResource extends Resource
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->requiresConfirmation()
-                    ->action(fn (Review $record) => $record->update(['status' => 'approved']))
-                    ->visible(fn (Review $record) => $record->status !== 'approved'),
+                    ->action(fn (Review $record) => $record->update(['status' => true]))
+                    ->visible(fn (Review $record) => $record->status === false),
                 Tables\Actions\Action::make('reject')
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
                     ->requiresConfirmation()
-                    ->action(fn (Review $record) => $record->update(['status' => 'rejected']))
-                    ->visible(fn (Review $record) => $record->status !== 'rejected'),
+                    ->action(fn (Review $record) => $record->update(['status' => false]))
+                    ->visible(fn (Review $record) => $record->status === true),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -253,19 +274,96 @@ class ReviewResource extends Resource
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
                         ->requiresConfirmation()
-                        ->action(fn ($records) => $records->each->update(['status' => 'approved'])),
+                        ->action(fn ($records) => $records->each->update(['status' => true])),
                     Tables\Actions\BulkAction::make('reject')
                         ->label('Reject Selected')
                         ->icon('heroicon-o-x-circle')
                         ->color('danger')
                         ->requiresConfirmation()
-                        ->action(fn ($records) => $records->each->update(['status' => 'rejected'])),
+                        ->action(fn ($records) => $records->each->update(['status' => false])),
                 ]),
             ])
             ->defaultSort('created_at', 'desc')
             ->emptyStateHeading('No reviews found')
             ->emptyStateDescription('Once users start reviewing places, they will appear here.')
             ->emptyStateIcon('heroicon-o-star');
+    }
+
+    public static function infolist(Infolist $infolist): Infolist
+    {
+        return $infolist
+            ->schema([
+                InfolistSection::make('📝 Review Information')
+                    ->description('Basic review details')
+                    ->schema([
+                        InfolistGroup::make([
+                            TextEntry::make('user.name')
+                                ->label('Reviewer')
+                                ->icon('heroicon-m-user')
+                                ->weight(FontWeight::Bold),
+                            TextEntry::make('place.name')
+                                ->label('Place')
+                                ->icon('heroicon-m-map-pin')
+                                ->weight(FontWeight::Bold),
+                        ])->columns(2),
+                        
+                        InfolistGroup::make([
+                            TextEntry::make('rating')
+                                ->label('Rating')
+                                ->formatStateUsing(fn (string $state): string => str_repeat('⭐', (int) $state) . " ({$state}/5)")
+                                ->color('warning'),
+                            TextEntry::make('total_like')
+                                ->label('Total Likes')
+                                ->numeric()
+                                ->badge()
+                                ->color('info'),
+                            TextEntry::make('status')
+                                ->label('Status')
+                                ->formatStateUsing(fn (bool $state): string => $state ? 'Approved' : 'Pending Review')
+                                ->badge()
+                                ->color(fn (bool $state): string => $state ? 'success' : 'warning'),
+                        ])->columns(3),
+                    ]),
+
+                InfolistSection::make('💬 Review Content')
+                    ->description('The actual review content and media')
+                    ->schema([
+                        TextEntry::make('content')
+                            ->label('Review Text')
+                            ->prose()
+                            ->columnSpanFull(),
+                            
+                        ImageEntry::make('image_urls')
+                            ->label('Review Images')
+                            ->size(200)
+                            ->square()
+                            ->columnSpanFull()
+                            ->placeholder('Gambar tidak tersedia'),
+                    ]),
+
+                InfolistSection::make('📅 Timestamps')
+                    ->description('Review creation and modification dates')
+                    ->schema([
+                        InfolistGroup::make([
+                            TextEntry::make('created_at')
+                                ->label('Created')
+                                ->dateTime('F j, Y g:i A')
+                                ->since(),
+                            TextEntry::make('updated_at')
+                                ->label('Last Updated')
+                                ->dateTime('F j, Y g:i A')
+                                ->since(),
+                        ])->columns(2),
+                    ])
+                    ->collapsible(),
+
+                InfolistSection::make('🔧 Additional Information')
+                    ->description('Extra data stored with this review')
+                    ->schema([
+                        TextEntry::make('additional_info.review_type')
+                            ->label('Additional Data')
+                    ])
+            ]);
     }
 
     public static function getRelations(): array
@@ -287,12 +385,12 @@ class ReviewResource extends Resource
     
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::where('status', 'pending')->count() ?: null;
+        return static::getModel()::where('status', false)->count() ?: null;
     }
     
     public static function getNavigationBadgeColor(): ?string
     {
-        $pendingCount = static::getModel()::where('status', 'pending')->count();
+        $pendingCount = static::getModel()::where('status', false)->count();
         return $pendingCount > 0 ? 'warning' : null;
     }
     

@@ -26,17 +26,7 @@ class RecentReviews extends BaseWidget
                     ->label('Place')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\BadgeColumn::make('vote')
-                    ->label('Rating')
-                    ->formatStateUsing(fn (int $state): string => match ($state) {
-                        1 => '👍 Positive',
-                        0 => '👎 Negative',
-                        default => 'Unknown',
-                    })
-                    ->colors([
-                        'success' => 1,
-                        'danger' => 0,
-                    ]),
+
                 Tables\Columns\BadgeColumn::make('status')
                     ->label('Status')
                     ->colors([

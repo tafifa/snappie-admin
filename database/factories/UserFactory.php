@@ -11,10 +11,6 @@ use Illuminate\Support\Str;
  */
 class UserFactory extends Factory
 {
-    /**
-     * The current password being used by the factory.
-     */
-    protected static ?string $password;
 
     /**
      * Define the model's default state.
@@ -23,22 +19,25 @@ class UserFactory extends Factory
      */
     public function definition(): array
     {
+        $foodTypeOptions = ['Nusantara', 'Internasional', 'Seafood', 'Kafein', 'Non-Kafein', 'Vegetarian', 'Dessert', 'Makanan Ringan', 'Pastry'];
+        $placeValueOptions = ['Harga Terjangkau', 'Rasa Autentik', 'Menu Bervariasi', 'Buka 24 Jam', 'Jaringan Lancar', 'Estetika', 'Suasana Tenang', 'Suasana Tradisional', 'Suasana Homey', 'Pet Friendly', 'Ramah Keluarga', 'Pelayanan Ramah', 'Cocok untuk Nongkrong', 'Cocok untuk Work From Cafe', 'Tempat Bersejarah'];
         return [
             'name' => fake()->name(),
+            'username' => fake()->unique()->userName(),
             'email' => fake()->unique()->safeEmail(),
-            'email_verified_at' => now(),
-            'password' => static::$password ??= Hash::make('password'),
-            'remember_token' => Str::random(10),
+            'total_exp' => fake()->numberBetween(0, 10000),
+            'image_url' => 'https://i.pravatar.cc/150?u=' . fake()->uuid,
+            'additional_info' => [
+                'user_detail' => [
+                    'gender' => fake()->randomElement(['male', 'female', 'other']),
+                ],
+                'user_preferences' => [
+                    'food_type' => fake()->randomElement($foodTypeOptions),
+                    'place_value' => fake()->randomElement($placeValueOptions),
+                ],
+            ],
+            'created_at' => fake()->dateTimeThisYear(),
+            'updated_at' => fn (array $attributes) => $attributes['created_at'],
         ];
-    }
-
-    /**
-     * Indicate that the model's email address should be unverified.
-     */
-    public function unverified(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'email_verified_at' => null,
-        ]);
     }
 }
