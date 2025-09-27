@@ -3,201 +3,261 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\PlaceResource\Pages;
-use App\Filament\Resources\PlaceResource\RelationManagers;
 use App\Models\Place;
 use Filament\Forms;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Group;
+use Filament\Infolists\Components\Section as InfolistSection;
+use Filament\Infolists\Components\Group as InfolistGroup;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\ImageEntry;
+use Filament\Infolists\Components\IconEntry;
+use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Forms\Form;
+use Filament\Infolists\Infolist;
+use Filament\Infolists\Components\TextEntry\TextEntrySize;
+use Filament\Support\Enums\FontWeight;
+use Filament\Support\Enums\Size;
+use Illuminate\Support\Facades\Storage;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Filament\Infolists\Components\Group;
-use Filament\Infolists\Components\ImageEntry;
-use Filament\Infolists\Components\Section;
-use Filament\Infolists\Components\TextEntry;
-use Filament\Infolists\Infolist;
-use Illuminate\Support\Str;
 
 class PlaceResource extends Resource
 {
     protected static ?string $model = Place::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-map';
-    
-    protected static ?string $navigationGroup = 'Core Data';
-    
-    protected static ?int $navigationSort = 2;
+
+    protected static ?string $navigationLabel = 'Places';
+
+    protected static ?string $modelLabel = 'Place';
+
+    protected static ?string $pluralModelLabel = 'Places';
+
+    protected static ?string $navigationGroup = 'Location Management';
+
+    protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form
     {
+        // Opsi ini diambil dari factory Anda untuk konsistensi
+        $placeValueOptions = ['Harga Terjangkau', 'Rasa Autentik', 'Menu Bervariasi', 'Buka 24 Jam', 'Jaringan Lancar', 'Estetika', 'Suasana Tenang', 'Suasana Tradisional', 'Suasana Homey', 'Pet Friendly', 'Ramah Keluarga', 'Pelayanan Ramah', 'Cocok untuk Nongkrong', 'Cocok untuk Work From Cafe', 'Tempat Bersejarah'];
+        $foodTypeOptions = ['Nusantara', 'Internasional', 'Seafood', 'Kafein', 'Non-Kafein', 'Vegetarian', 'Dessert', 'Makanan Ringan', 'Pastry'];
+
         return $form
             ->schema([
-                // Section 1: Informasi Dasar
-                Forms\Components\Section::make('📍 Informasi Dasar Tempat')
-                    ->description('Masukkan informasi dasar tentang tempat ini')
+                Group::make()
                     ->schema([
-                        Forms\Components\TextInput::make('name')
-                            ->label('Nama Tempat')
-                            ->placeholder('Masukkan nama tempat')
-                            ->maxLength(255)
-                            ->required()
-                            ->live(onBlur: true)
-                            ->afterStateUpdated(fn ($state, callable $set) => $set('slug', Str::slug($state))),
-
-                        Forms\Components\TextInput::make('slug')
-                            ->label('Slug URL')
-                            ->placeholder('Auto-generated from name')
-                            ->maxLength(255)
-                            ->unique(ignoreRecord: true)
-                            ->required()
-                            ->helperText('Slug akan otomatis dibuat dari nama tempat'),
-
-                        Forms\Components\Select::make('category')
-                            ->label('Kategori Tempat')
-                            ->options([
-                                'cafeEatery' => '☕ Cafe & Eatery',
-                                'tradisional' => '🍜 Tradisional',
-                                'foodcourt' => '🍽️ Food Court',
-                                'streetfood' => '🌮 Street Food',
-                                'restaurant' => '🍴 Restaurant',
-                            ])
-                            ->searchable()
-                            ->preload()
-                            ->required(),
-                    ])->columns(2)->collapsible(),
-
-                // Section 2: Deskripsi & Alamat
-                Forms\Components\Section::make('📝 Deskripsi & Lokasi')
-                    ->description('Berikan deskripsi lengkap dan alamat tempat')
-                    ->schema([
-                        Forms\Components\RichEditor::make('description')
-                            ->label('Deskripsi Lengkap')
-                            ->placeholder('Masukkan deskripsi lengkap tempat')
-                            ->toolbarButtons([
-                                'bold',
-                                'italic',
-                                'underline',
-                                'bulletList',
-                                'orderedList',
-                                'link',
-                            ])
-                            ->columnSpanFull(),
-
-                        Forms\Components\Textarea::make('address')
-                            ->label('Alamat Lengkap')
-                            ->placeholder('Masukkan alamat lengkap tempat')
-                            ->rows(3)
-                            ->columnSpanFull(),
-                    ])->columns(1)->collapsible(),
-
-                // Section 3: Koordinat GPS
-                Forms\Components\Section::make('🗺️ Koordinat GPS')
-                    ->description('Masukkan koordinat latitude dan longitude untuk pemetaan')
-                    ->schema([
-                        Forms\Components\TextInput::make('latitude')
-                            ->label('Latitude')
-                            ->numeric()
-                            ->step(0.000001)
-                            ->placeholder('Contoh: -6.200000')
-                            ->helperText('Koordinat lintang (rentang: -90 sampai 90)'),
-
-                        Forms\Components\TextInput::make('longitude')
-                            ->label('Longitude')
-                            ->numeric()
-                            ->step(0.000001)
-                            ->placeholder('Contoh: 106.816666')
-                            ->helperText('Koordinat bujur (rentang: -180 sampai 180)'),
-                    ])->columns(2)->collapsible(),
-
-                // Section 4: Media & Gambar
-                Forms\Components\Section::make('🖼️ Media & Gambar')
-                    ->description('Upload atau masukkan URL gambar-gambar tempat')
-                    ->schema([
-                        Forms\Components\Repeater::make('image_urls')
-                            ->label('URL Gambar')
+                        Section::make('Informasi Utama')
                             ->schema([
-                                Forms\Components\TextInput::make('url')
-                                    ->label('URL Gambar')
-                                    ->url()
-                                    ->placeholder('https://example.com/image.jpg')
+                                Forms\Components\TextInput::make('name')
                                     ->required()
-                                    ->suffixIcon('heroicon-m-photo'),
+                                    ->maxLength(255),
+                                Forms\Components\RichEditor::make('description')
+                                    ->required()
+                                    ->columnSpanFull(),
+                                Forms\Components\FileUpload::make('image_urls')
+                                    ->multiple()
+                                    ->image()
+                                    ->disk('public')
+                                    ->directory('places')
+                                    ->reorderable(),
+                            ]),
+                    ])
+                    ->columnSpan(['lg' => 1]),
+
+                Group::make()
+                    ->schema([
+                        Section::make('Status')
+                            ->schema([
+                                Forms\Components\Toggle::make('status')
+                                    ->label('Status Aktif')
+                                    ->default(true)
+                                    ->required(),
+                                Forms\Components\Toggle::make('partnership_status')
+                                    ->label('Status Kemitraan')
+                                    ->default(false)
+                                    ->required(),
+                            ]),
+
+                        Section::make('Harga & Rating')
+                            ->schema([
+                                Forms\Components\TextInput::make('min_price')
+                                    ->required()
+                                    ->numeric()
+                                    ->prefix('IDR'),
+                                Forms\Components\TextInput::make('max_price')
+                                    ->required()
+                                    ->numeric()
+                                    ->prefix('IDR'),
+                                Forms\Components\TextInput::make('avg_rating')
+                                    ->required()
+                                    ->numeric()
+                                    ->minValue(1)->maxValue(5),
+                            ]),
+                        Section::make('Rewards & Statistik')
+                            ->schema([
+                                Forms\Components\TextInput::make('coin_reward')->numeric(),
+                                Forms\Components\TextInput::make('exp_reward')->numeric(),
+                                Forms\Components\TextInput::make('total_review')->numeric(),
+                                Forms\Components\TextInput::make('total_checkin')->numeric(),
+                            ]),
+
+                        Section::make('Lokasi')
+                            ->schema([
+                                Forms\Components\TextInput::make('latitude')
+                                    ->label('Latitude')
+                                    ->numeric()
+                                    ->step(0.000001)
+                                    ->placeholder('Contoh: -6.200000')
+                                    ->helperText('Koordinat lintang (rentang: -90 sampai 90)'),
+
+                                Forms\Components\TextInput::make('longitude')
+                                    ->label('Longitude')
+                                    ->numeric()
+                                    ->step(0.000001)
+                                    ->placeholder('Contoh: 106.816666')
+                                    ->helperText('Koordinat bujur (rentang: -180 sampai 180)'),
+                            ]),
+                    ])
+                    ->columnSpan(['lg' => 1]),
+
+                Group::make()
+                    ->schema([
+                        Section::make('Informasi Tambahan (JSON)')
+                            ->schema([
+                                Forms\Components\Grid::make(2)
+                                    ->schema([
+                                        Forms\Components\TextInput::make('additional_info.place_detail.short_description')
+                                            ->label('Deskripsi Singkat'),
+                                        Forms\Components\TextInput::make('additional_info.place_detail.address')
+                                            ->label('Alamat'),
+                                        Forms\Components\TimePicker::make('additional_info.place_detail.opening_hours')
+                                            ->label('Jam Buka'),
+                                        Forms\Components\TextInput::make('additional_info.place_detail.contact_number')
+                                            ->label('Nomor Kontak')
+                                            ->tel(),
+                                        Forms\Components\TextInput::make('additional_info.place_detail.website')
+                                            ->label('Website')
+                                            ->url()
+                                            ->columnSpanFull(),
+                                        Forms\Components\CheckboxList::make('additional_info.place_detail.opening_days')
+                                            ->label('Hari Buka')
+                                            ->options(['Senin' => 'Senin', 'Selasa' => 'Selasa', 'Rabu' => 'Rabu', 'Kamis' => 'Kamis', 'Jumat' => 'Jumat', 'Sabtu' => 'Sabtu', 'Minggu' => 'Minggu']),
+                                    ]),
+                                Forms\Components\CheckboxList::make('additional_info.place_value')
+                                    ->label('Nilai Tempat (Place Value)')
+                                    ->options(array_combine($placeValueOptions, $placeValueOptions))
+                                    ->columns(3),
+                                Forms\Components\CheckboxList::make('additional_info.food_type')
+                                    ->label('Jenis Makanan')
+                                    ->options(array_combine($foodTypeOptions, $foodTypeOptions))
+                                    ->columns(3),
+                            ]),
+                    ])
+                    ->columnSpan(['lg' => 1]),
+
+                Group::make()
+                    ->schema([
+                        Section::make('Menu')
+                            ->schema([
+                                Forms\Components\FileUpload::make('additional_info.place_attributes.menu_image_url')
+                                    ->label('Gambar Menu')
+                                    ->image()
+                                    ->disk('public')
+                                    ->directory('places'),
+                                Forms\Components\Repeater::make('additional_info.place_attributes.menu')
+                                    ->label('Menu Favorit')
+                                    ->schema([
+                                        Group::make()
+                                            ->schema([
+                                                Forms\Components\TextInput::make('name')->required(),
+                                                Forms\Components\TextInput::make('price')->numeric()->prefix('IDR'),
+                                            ])
+                                            ->columns(2),
+                                        Group::make()
+                                            ->schema([
+                                                Forms\Components\FileUpload::make('image_url')
+                                                    ->label('Gambar')
+                                                    ->image()
+                                                    ->disk('public')
+                                                    ->directory('places'),
+                                                Forms\Components\TextInput::make('description'),
+                                            ])
+                                            ->columns(1),
+                                    ])
+                                    ->defaultItems(1),
                             ])
-                            ->columnSpanFull()
-                            ->defaultItems(0)
-                            ->addActionLabel('➕ Tambah Gambar')
-                            ->reorderableWithButtons()
-                            ->collapsible(),
-                    ])->columns(1)->collapsible(),
+                    ]),
 
-                // Section 5: Status & Partnership
-                Forms\Components\Section::make('⚙️ Status & Partnership')
-                    ->description('Atur status aktif dan kemitraan tempat')
+                Group::make()
                     ->schema([
-                        Forms\Components\Toggle::make('status')
-                            ->label('Status Aktif')
-                            ->helperText('Apakah tempat ini aktif dan dapat dikunjungi?')
-                            ->default(true)
-                            ->inline(false),
-
-                        Forms\Components\Toggle::make('partnership_status')
-                            ->label('Status Partnership')
-                            ->helperText('Apakah tempat ini memiliki kemitraan dengan aplikasi?')
-                            ->default(false)
-                            ->inline(false),
-                    ])->columns(2)->collapsible(),
-
-                // Section 6: Misi & Game
-                Forms\Components\Section::make('🎮 Misi & Game')
-                    ->description('Setup misi dan petunjuk untuk game')
-                    ->schema([
-                        Forms\Components\Textarea::make('clue_mission')
-                            ->label('Petunjuk Misi')
-                            ->placeholder('Contoh: Cari patung di depan gerbang utama yang menghadap ke arah timur')
-                            ->rows(4)
-                            ->helperText('Berikan petunjuk yang jelas untuk membantu pengguna menemukan lokasi')
-                            ->columnSpanFull(),
-                    ])->columns(1)->collapsible(),
-
-                // Section 7: Sistem Reward
-                Forms\Components\Section::make('🏆 Sistem Reward')
-                    ->description('Tentukan reward yang didapat pengguna')
-                    ->schema([
-                        Forms\Components\TextInput::make('exp_reward')
-                            ->label('Reward EXP')
-                            ->numeric()
-                            ->minValue(0)
-                            ->maxValue(1000)
-                            ->placeholder('10')
-                            ->default(10)
-                            ->helperText('Experience points yang didapat (0-1000)')
-                            ->suffixIcon('heroicon-m-star'),
-
-                        Forms\Components\TextInput::make('coin_reward')
-                            ->label('Reward Coin')
-                            ->numeric()
-                            ->minValue(0)
-                            ->maxValue(1000)
-                            ->placeholder('10')
-                            ->default(10)
-                            ->helperText('Coin yang didapat (0-1000)')
-                            ->suffixIcon('heroicon-m-currency-dollar'),
-                    ])->columns(2)->collapsible(),
-
-                // Section 8: Informasi Tambahan
-                Forms\Components\Section::make('ℹ️ Informasi Tambahan')
-                    ->description('Tambahkan informasi opsional lainnya')
-                    ->schema([
-                        Forms\Components\KeyValue::make('additional_info')
-                            ->label('Informasi Tambahan')
-                            ->helperText('Contoh: website, kapasitas, jam_buka, nomor_telepon, fasilitas')
-                            ->keyLabel('Kunci')
-                            ->valueLabel('Nilai')
-                            ->addActionLabel('➕ Tambah Info')
-                            ->columnSpanFull(),
-                    ])->columns(1)->collapsible(),
-            ]);
+                        Section::make('Atribut Tempat (JSON)')
+                            ->schema([
+                                Group::make()
+                                    ->schema([
+                                        Section::make()
+                                            ->schema([
+                                                Forms\Components\Repeater::make('additional_info.place_attributes.facility')
+                                                    ->label('Fasilitas')
+                                                    ->schema([
+                                                        Forms\Components\TextInput::make('name'),
+                                                        Forms\Components\TextInput::make('description'),
+                                                    ])
+                                                    ->columns(2)
+                                                    ->defaultItems(1),
+                                                Forms\Components\Repeater::make('additional_info.place_attributes.parking')
+                                                    ->label('Parkir')
+                                                    ->schema([
+                                                        Forms\Components\TextInput::make('name'),
+                                                        Forms\Components\TextInput::make('description'),
+                                                    ])
+                                                    ->columns(2)
+                                                    ->defaultItems(1),
+                                                Forms\Components\Repeater::make('additional_info.place_attributes.capacity')
+                                                    ->label('Kapasitas')
+                                                    ->schema([
+                                                        Forms\Components\TextInput::make('name'),
+                                                        Forms\Components\TextInput::make('description'),
+                                                    ])
+                                                    ->columns(2)
+                                                    ->defaultItems(1),
+                                            ])->columnSpan(1),
+                                        Section::make()
+                                            ->schema([
+                                                Forms\Components\Repeater::make('additional_info.place_attributes.accessibility')
+                                                    ->label('Aksesibilitas')
+                                                    ->schema([
+                                                        Forms\Components\TextInput::make('name'),
+                                                        Forms\Components\TextInput::make('description'),
+                                                    ])
+                                                    ->columns(2)
+                                                    ->defaultItems(1),
+                                                Forms\Components\Repeater::make('additional_info.place_attributes.payment')
+                                                    ->label('Pembayaran')
+                                                    ->schema([
+                                                        Forms\Components\TextInput::make('name'),
+                                                        Forms\Components\TextInput::make('description'),
+                                                    ])
+                                                    ->columns(2)
+                                                    ->defaultItems(1),
+                                                Forms\Components\Repeater::make('additional_info.place_attributes.service')
+                                                    ->label('Layanan')
+                                                    ->schema([
+                                                        Forms\Components\TextInput::make('name'),
+                                                        Forms\Components\TextInput::make('description'),
+                                                    ])
+                                                    ->columns(2)
+                                                    ->defaultItems(1),
+                                            ])->columnSpan(1)
+                                    ])
+                                    ->columns(2),
+                            ]),
+                    ])
+                    ->columnSpan(['lg' => 1]),
+            ])
+            ->columns(1);
     }
 
     public static function table(Table $table): Table
@@ -205,91 +265,50 @@ class PlaceResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
-                    ->label('Nama Tempat')
                     ->searchable()
-                    ->sortable()
-                    ->limit(30),
-
-                Tables\Columns\TextColumn::make('category')
-                    ->label('Kategori')
-                    ->searchable()
-                    ->sortable()
-                    ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'cafeEatery' => 'info',
-                        'tradisional' => 'warning',
-                        'foodcourt' => 'success',
-                        'streetfood' => 'danger',
-                        'restaurant' => 'primary',
-                        default => 'gray',
-                    }),
-
-                Tables\Columns\TextColumn::make('address')
-                    ->label('Alamat')
-                    ->limit(40)
-                    ->tooltip(function ($record) {
-                        return $record->address;
-                    }),
-
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('min_price')
+                    ->money('IDR')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('max_price')
+                    ->money('IDR')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('avg_rating')
+                    ->sortable(),
                 Tables\Columns\IconColumn::make('status')
-                    ->label('Status')
-                    ->boolean()
-                    ->trueIcon('heroicon-o-check-circle')
-                    ->falseIcon('heroicon-o-x-circle')
-                    ->trueColor('success')
-                    ->falseColor('danger'),
-
+                    ->boolean(),
                 Tables\Columns\IconColumn::make('partnership_status')
-                    ->label('Partnership')
-                    ->boolean()
-                    ->trueIcon('heroicon-o-star')
-                    ->falseIcon('heroicon-o-minus-circle')
-                    ->trueColor('warning')
-                    ->falseColor('gray'),
-
-                Tables\Columns\TextColumn::make('exp_reward')
-                    ->label('EXP')
-                    ->numeric()
-                    ->sortable(),
-
-                Tables\Columns\TextColumn::make('coin_reward')
-                    ->label('Coin')
-                    ->numeric()
-                    ->sortable(),
-
+                    ->label('Partner')
+                    ->boolean(),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Dibuat')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->label('Diperbarui')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('category')
-                    ->label('Kategori')
+                Tables\Filters\SelectFilter::make('partnership_status')
+                    ->label('Kemitraan')
                     ->options([
-                        'cafeEatery' => 'Cafe & Eatery',
-                        'tradisional' => 'Tradisional',
-                        'foodcourt' => 'Food Court',
-                        'streetfood' => 'Street Food',
-                        'restaurant' => 'Restaurant',
+                        1 => 'Partner',
+                        0 => 'Bukan Partner',
                     ]),
-
-                Tables\Filters\TernaryFilter::make('status')
-                    ->label('Status Aktif'),
-
-                Tables\Filters\TernaryFilter::make('partnership_status')
-                    ->label('Partnership'),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
+                Tables\Actions\Action::make('activate')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->action(fn(Place $record) => $record->update(['status' => true]))
+                    ->visible(fn(Place $record) => $record->status === false),
+                Tables\Actions\Action::make('deactivate')
+                    ->icon('heroicon-o-x-circle')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->action(fn(Place $record) => $record->update(['status' => false]))
+                    ->visible(fn(Place $record) => $record->status === true),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -302,92 +321,251 @@ class PlaceResource extends Resource
     {
         return $infolist
             ->schema([
-                Section::make('Informasi Umum Tempat')
+                InfolistGroup::make()
                     ->schema([
-                        TextEntry::make('name')->label('Nama Tempat'),
-                        TextEntry::make('slug')->label('Slug'),
-                        TextEntry::make('category')
-                            ->label('Kategori')
-                            ->badge()
-                            ->color(fn (string $state): string => match ($state) {
-                                'cafeEatery' => 'info',
-                                'tradisional' => 'warning',
-                                'foodcourt' => 'success',
-                                'streetfood' => 'danger',
-                                'restaurant' => 'primary',
-                                default => 'gray',
-                            }),
-                        TextEntry::make('address')->label('Alamat Lengkap'),
-                        TextEntry::make('description')
-                            ->label('Deskripsi')
-                            ->html()
-                            ->columnSpanFull(),
-                    ])->columns(2),
+                        InfolistSection::make('Informasi Utama')
+                            ->schema([
+                                TextEntry::make('name')
+                                    ->label('Nama Tempat'),
+                                TextEntry::make('description')
+                                    ->label('Deskripsi')
+                                    ->html()
+                                    ->columnSpanFull(),
+                                ImageEntry::make('image_urls')
+                                ->label('Gambar')
+                                ->disk('public')
+                                ->columnSpanFull()
+                                ->getStateUsing(function ($record) {
+                                    // Pastikan image_urls adalah array dan bukan string
+                                    $imageUrls = is_string($record->image_urls)
+                                    ? json_decode($record->image_urls, true)
+                                    : $record->image_urls;
+                                    
+                                    return $imageUrls;
+                                }),
+                                InfolistSection::make('Lokasi')
+                                    ->schema([
+                                        TextEntry::make('latitude')
+                                            ->label('Latitude'),
+                                        TextEntry::make('longitude')
+                                            ->label('Longitude'),
+                                    ])->columns(2),
+                            ]),
+                    ])
+                    ->columnSpan(['lg' => 1]),
 
-                Section::make('Lokasi & Media')
+                InfolistGroup::make()
                     ->schema([
-                        TextEntry::make('latitude')->label('Latitude'),
-                        TextEntry::make('longitude')->label('Longitude'),
-                        TextEntry::make('image_urls')
-                            ->label('Gambar')
-                            ->formatStateUsing(function ($state) {
-                                if (empty($state)) {
-                                    return 'Tidak ada gambar';
-                                }
-                                if (is_array($state)) {
-                                    return count($state) . ' gambar tersedia';
-                                }
-                                return 'Tidak ada gambar';
-                            })
-                            ->columnSpanFull(),
-                    ])->columns(2),
+                        InfolistGroup::make()
+                            ->schema([
+                                InfolistSection::make('Status')
+                                    ->schema([
+                                        IconEntry::make('status')
+                                            ->label('Status Aktif')
+                                            ->boolean(),
+                                        IconEntry::make('partnership_status')
+                                            ->label('Status Kemitraan')
+                                            ->boolean(),
+                                    ])->columnSpan(1),
 
-                Section::make('Status & Partnership')
+                                InfolistSection::make('Harga & Rating')
+                                    ->schema([
+                                        TextEntry::make('min_price')
+                                            ->label('Harga Minimum')
+                                            ->money('IDR'),
+                                        TextEntry::make('max_price')
+                                            ->label('Harga Maksimum')
+                                            ->money('IDR'),
+                                    ])->columnSpan(1),
+                            ])
+                            ->columns(2),
+
+                        InfolistSection::make('Statistik & Reward')
+                            ->schema([
+                                InfolistGroup::make()
+                                    ->schema([
+                                        TextEntry::make('exp_reward')
+                                            ->label('Reward EXP')
+                                            ->badge()
+                                            ->color('info'),
+                                        TextEntry::make('total_checkin')
+                                            ->label('Total Check-in')
+                                            ->badge()
+                                            ->color('primary'),
+
+                                    ])
+                                    ->columns(2),
+                                InfolistGroup::make()
+                                    ->schema([
+                                        TextEntry::make('coin_reward')
+                                            ->label('Reward Koin')
+                                            ->badge()
+                                            ->color('warning'),
+                                        TextEntry::make('total_review')
+                                            ->label('Total Review')
+                                            ->badge()
+                                            ->color('success'),
+                                    ])
+                                    ->columns(2),
+
+                                TextEntry::make('avg_rating')
+                                    ->label('Rating Rata-rata')
+                                    ->badge()
+                                    ->color(fn(string $state): string => match (true) {
+                                        $state >= 4.5 => 'success',
+                                        $state >= 4.0 => 'warning',
+                                        default => 'danger',
+                                    }),
+                            ]),
+                    ])
+                    ->columnSpan(['lg' => 1]),
+
+                InfolistGroup::make()
                     ->schema([
-                        TextEntry::make('status')
-                            ->label('Status Aktif')
-                            ->badge()
-                            ->color(fn (bool $state): string => $state ? 'success' : 'danger')
-                            ->formatStateUsing(fn (bool $state): string => $state ? 'Aktif' : 'Tidak Aktif'),
-                        TextEntry::make('partnership_status')
-                            ->label('Status Partnership')
-                            ->badge()
-                            ->color(fn (bool $state): string => $state ? 'warning' : 'gray')
-                            ->formatStateUsing(fn (bool $state): string => $state ? 'Partner' : 'Bukan Partner'),
-                    ])->columns(2),
+                        InfolistSection::make('Detail Tempat')
+                            ->schema([
+                                TextEntry::make('additional_info.place_detail.short_description')
+                                    ->label('Deskripsi Singkat'),
+                                TextEntry::make('additional_info.place_detail.address')
+                                    ->label('Alamat'),
+                                TextEntry::make('additional_info.place_detail.opening_hours')
+                                    ->label('Jam Buka'),
+                                TextEntry::make('additional_info.place_detail.contact_number')
+                                    ->label('Nomor Kontak'),
+                                TextEntry::make('additional_info.place_detail.website')
+                                    ->label('Website')
+                                    ->url('additional_info.place_detail.website')
+                                    ->openUrlInNewTab(),
+                                TextEntry::make('additional_info.place_detail.opening_days')
+                                    ->label('Hari Buka')
+                                    ->badge()
+                                    ->separator(','),
+                            ])
+                            ->columns(2),
 
-                Section::make('Detail Misi & Reward')
+                        InfolistSection::make('Nilai & Jenis Tempat')
+                            ->schema([
+                                TextEntry::make('additional_info.place_value')
+                                    ->label('Nilai Tempat')
+                                    ->badge()
+                                    ->separator(',')
+                                    ->color('success'),
+                                TextEntry::make('additional_info.food_type')
+                                    ->label('Jenis Makanan')
+                                    ->badge()
+                                    ->separator(',')
+                                    ->color('warning'),
+                            ]),
+                    ])
+                    ->columnSpan(['lg' => 1]),
+
+                InfolistGroup::make()
                     ->schema([
-                        TextEntry::make('clue_mission')->label('Clue Misi')->columnSpanFull(),
-                        TextEntry::make('exp_reward')->label('Reward EXP')->numeric(),
-                        TextEntry::make('coin_reward')->label('Reward Coin')->numeric(),
-                    ])->columns(2),
+                        InfolistSection::make('Menu')
+                            ->schema([
+                                ImageEntry::make('additional_info.place_attributes.menu_image_url')
+                                    ->label('Gambar Menu')
+                                    ->disk('public'),
+                                RepeatableEntry::make('additional_info.place_attributes.menu')
+                                    ->label('Menu Favorit')
+                                    ->schema([
+                                        ImageEntry::make('image_url')
+                                            ->label('Gambar')
+                                            ->disk('public'),    
+                                        TextEntry::make('name')
+                                            ->label('Nama Menu'),
+                                        TextEntry::make('price')
+                                            ->label('Harga')
+                                            ->money('IDR'),
+                                        TextEntry::make('description')
+                                            ->label('Deskripsi'),
+                                    ])
+                                    ->columns(4),
+                            ]),
+                    ])
+                    ->columnSpan(['lg' => 1]),
 
-                // Section::make('Informasi Tambahan')
-                //     ->schema([
-                //         TextEntry::make('additional_info')
-                //             ->label('Info Tambahan')
-                //             ->formatStateUsing(function ($state) {
-                //                 if (empty($state)) {
-                //                     return 'Tidak ada informasi tambahan';
-                //                 }
-                //                 if (is_array($state)) {
-                //                     return collect($state)->map(fn($value, $key) => "{$key}: {$value}")->implode(' | ');
-                //                 }
-                //                 // If it's a string, try to decode it
-                //                 if (is_string($state)) {
-                //                     $decoded = json_decode($state, true);
-                //                     if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-                //                         return collect($decoded)->map(fn($value, $key) => "{$key}: {$value}")->implode(' | ');
-                //                     }
-                //                 }
-                //                 return 'Tidak ada informasi tambahan';
-                //             })
-                //             ->columnSpanFull(),
-                //         TextEntry::make('created_at')->label('Dibuat Pada')->dateTime(),
-                //         TextEntry::make('updated_at')->label('Diperbarui Pada')->dateTime(),
-                //     ])->columns(2),
-            ]);
+                InfolistGroup::make()
+                    ->schema([
+                        InfolistSection::make('Atribut Tempat')
+                            ->schema([
+                                InfolistGroup::make()
+                                    ->schema([
+                                        InfolistSection::make('Fasilitas & Parkir')
+                                            ->schema([
+                                                RepeatableEntry::make('additional_info.place_attributes.facility')
+                                                    ->label('Fasilitas')
+                                                    ->getStateUsing(function (Place $record): array {
+                                                        $addt = $record->additional_info['place_attributes']['facility'];
+                                                        dd($addt); 
+                                                        return $addt ?? [];
+                                                    })
+                                                    ->schema([
+                                                        TextEntry::make('name')->label('Nama'),
+                                                        TextEntry::make('description')->label('Deskripsi'),
+                                                    ])
+                                                    ->columns(2),
+                                                RepeatableEntry::make('additional_info.place_attributes.parking')
+                                                    ->label('Parkir')
+                                                    ->schema([
+                                                        TextEntry::make('name')->label('Nama'),
+                                                        TextEntry::make('description')->label('Deskripsi'),
+                                                    ])
+                                                    ->columns(2),
+                                                RepeatableEntry::make('additional_info.place_attributes.capacity')
+                                                    ->label('Kapasitas')
+                                                    ->schema([
+                                                        TextEntry::make('name')->label('Nama'),
+                                                        TextEntry::make('description')->label('Deskripsi'),
+                                                    ])
+                                                    ->columns(2),
+                                            ])->columnSpan(1),
+                                        InfolistSection::make('Layanan & Pembayaran')
+                                            ->schema([
+                                                RepeatableEntry::make('additional_info.place_attributes.accessibility')
+                                                    ->label('Aksesibilitas')
+                                                    ->schema([
+                                                        TextEntry::make('name')->label('Nama'),
+                                                        TextEntry::make('description')->label('Deskripsi'),
+                                                    ])
+                                                    ->columns(2),
+                                                RepeatableEntry::make('additional_info.place_attributes.payment')
+                                                    ->label('Pembayaran')
+                                                    ->schema([
+                                                        TextEntry::make('name')->label('Nama'),
+                                                        TextEntry::make('description')->label('Deskripsi'),
+                                                    ])
+                                                    ->columns(2),
+                                                RepeatableEntry::make('additional_info.place_attributes.service')
+                                                    ->label('Layanan')
+                                                    ->schema([
+                                                        TextEntry::make('name')->label('Nama'),
+                                                        TextEntry::make('description')->label('Deskripsi'),
+                                                    ])
+                                                    ->columns(2),
+                                            ])->columnSpan(1),
+                                    ])
+                                    ->columns(2),
+                            ]),
+                    ])
+                    ->columnSpan(['lg' => 1]),
+
+                InfolistGroup::make()
+                    ->schema([
+                        InfolistSection::make('Informasi Sistem')
+                            ->schema([
+                                TextEntry::make('created_at')
+                                    ->label('Dibuat Pada')
+                                    ->dateTime(),
+                                TextEntry::make('updated_at')
+                                    ->label('Diperbarui Pada')
+                                    ->dateTime(),
+                            ])
+                            ->columns(2),
+                    ])
+                    ->columnSpan(['lg' => 1]),
+            ])
+            ->columns(1);
     }
 
     public static function getRelations(): array

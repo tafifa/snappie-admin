@@ -8,5 +8,5 @@ Route::get('/', function () {
 
 // Add login route for welcome page compatibility
 Route::get('/login', function () {
-    return redirect('/api/docs');
+    return redirect('/admin');
 })->name('login');
