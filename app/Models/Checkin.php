@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Checkin extends Model
 {
+    use HasFactory;
+
     /**
      * The table associated with the model.
      *
@@ -22,12 +24,11 @@ class Checkin extends Model
     protected $fillable = [
         'user_id',
         'place_id',
-        'time',
-        'location',
-        'check_in_status',
-        'mission_image_url',
-        'mission_status',
-        'mission_completed_at',
+        'latitude',
+        'longitude',
+        'image_url',
+        'status',
+        'additional_info',
     ];
 
     /**
@@ -36,74 +37,71 @@ class Checkin extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'time' => 'datetime',
-        'location' => 'array', // For GPS coordinates [latitude, longitude]
-        'check_in_status' => 'string',
-        'mission_status' => 'string',
-        'mission_completed_at' => 'datetime',
+        'latitude' => 'float',
+        'longitude' => 'float',
+        'status' => 'boolean',
+        'additional_info' => 'json',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
-    
+
     /**
-     * Accessor for latitude from location array
+     * Get the validation rules for the model.
+     *
+     * @return array
      */
-    public function getLatitudeAttribute(): ?float
+    public static function rules()
     {
-        if (!$this->location || !is_array($this->location)) {
-            return null;
-        }
-        return $this->location['latitude'] ?? $this->location[0] ?? null;
-    }
-    
-    /**
-     * Accessor for longitude from location array
-     */
-    public function getLongitudeAttribute(): ?float
-    {
-        if (!$this->location || !is_array($this->location)) {
-            return null;
-        }
-        return $this->location['longitude'] ?? $this->location[1] ?? null;
-    }
-    
-    /**
-     * Mutator to set latitude in location array
-     */
-    public function setLatitudeAttribute($value): void
-    {
-        $location = $this->location ?? [];
-        if ($value !== null) {
-            $location['latitude'] = (float) $value;
-            $this->attributes['location'] = json_encode($location);
-        }
-    }
-    
-    /**
-     * Mutator to set longitude in location array
-     */
-    public function setLongitudeAttribute($value): void
-    {
-        $location = $this->location ?? [];
-        if ($value !== null) {
-            $location['longitude'] = (float) $value;
-            $this->attributes['location'] = json_encode($location);
-        }
+        return [
+            'user_id' => 'required|exists:users,id',
+            'place_id' => 'required|exists:places,id',
+            'latitude' => 'required|float',
+            'longitude' => 'required|float',
+            'image_url' => 'nullable|json',
+            'status' => 'boolean',
+            'additional_info' => 'nullable|json',
+        ];
     }
 
     /**
-     * Get the user that owns the check-in.
+     * Additional Info Key References
      */
-    public function user(): BelongsTo
+    protected $additionalInfoKey = [
+        'checkin_detail'
+    ];
+
+
+    /**
+     * Mendapatkan pengguna (user) yang melakukan check-in ini.
+     */
+    public function user()
     {
         return $this->belongsTo(User::class);
     }
 
     /**
-     * Get the place that was checked into.
+     * Mendapatkan tempat (place) di mana check-in ini dilakukan.
      */
-    public function place(): BelongsTo
+    public function place()
     {
         return $this->belongsTo(Place::class);
+    }
+
+    /**
+     * Mendapatkan model yang menjadi sumber transaksi ini (polimorfik).
+     * Bisa berupa CoinTransaction dan ExpTransaction.
+     */
+    public function coinTransactions()
+    {
+        return $this->morphMany(CoinTransaction::class, 'related_to');
+    }
+
+    /**
+     * Mendapatkan model yang menjadi sumber transaksi ini (polimorfik).
+     * Bisa berupa ExpTransaction.
+     */
+    public function expTransactions()
+    {
+        return $this->morphMany(ExpTransaction::class, 'related_to');
     }
 }

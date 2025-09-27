@@ -1,15 +1,15 @@
 <?php
+
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable
+class User extends Model
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory;
 
     /**
      * The table associated with the model.
@@ -30,18 +30,17 @@ class User extends Authenticatable
         'image_url',
         'total_coin',
         'total_exp',
+        'total_following',
+        'total_follower',
+        'total_checkin',
+        'total_post',
+        'total_article',
+        'total_review',
+        'total_achievement',
+        'total_challenge',
         'status',
         'last_login_at',
         'additional_info',
-    ];
-
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
-    protected $hidden = [
-        'remember_token',
     ];
 
     /**
@@ -50,35 +49,64 @@ class User extends Authenticatable
      * @var array<string, string>
      */
     protected $casts = [
-        'status' => 'boolean',
         'total_coin' => 'integer',
         'total_exp' => 'integer',
-        'additional_info' => 'array',
+        'total_following' => 'integer',
+        'total_follower' => 'integer',
+        'total_checkin' => 'integer',
+        'total_post' => 'integer',
+        'total_article' => 'integer',
+        'total_review' => 'integer',
+        'total_achievement' => 'integer',
+        'total_challenge' => 'integer',
+        'status' => 'boolean',
+        'additional_info' => 'json',
         'last_login_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
 
     /**
-     * Get user level based on experience points
+     * AdditionalInfo Key References
      */
-    public function getLevelAttribute()
+    protected $additionalInfoKey = [
+        'user_detail', // subkey: firstName, lastName, gender
+        'user_preferences', // subkey: foodType, placeValue
+        'user_saved', // subkey: savedPlaces, savedPosts, savedArticles
+        'user_settings', // subkey: language, theme
+        'user_notification', // subkey: pushNotification
+    ];
+
+    /**
+     * Get the validation rules for the model.
+     *
+     * @return array
+     */
+    public static function rules()
     {
-        return intval($this->total_exp / 100) + 1;
+        return [
+            'name' => 'required|string|max:255',
+            'username' => 'required|string|max:255|unique:users,username',
+            'email' => 'required|email|max:255|unique:users,email',
+            'image_url' => 'nullable|url|max:500',
+            'total_coin' => 'integer|min:0',
+            'total_exp' => 'integer|min:0',
+            'total_following' => 'integer|min:0',
+            'total_follower' => 'integer|min:0',
+            'total_checkin' => 'integer|min:0',
+            'total_post' => 'integer|min:0',
+            'total_article' => 'integer|min:0',
+            'total_review' => 'integer|min:0',
+            'total_achievement' => 'integer|min:0',
+            'total_challenge' => 'integer|min:0',
+            'status' => 'boolean',
+            'last_login_at' => 'nullable|date',
+            'additional_info' => 'nullable|json',
+        ];
     }
 
     /**
-     * Get experience points needed for next level
-     */
-    public function getExpToNextLevelAttribute()
-    {
-        $currentLevel = $this->level;
-        $expForNextLevel = $currentLevel * 100;
-        return $expForNextLevel - $this->total_exp;
-    }
-
-    /**
-     * Get all check-ins for this user.
+     * Mendapatkan semua check-in yang dilakukan oleh pengguna.
      */
     public function checkins()
     {
@@ -86,10 +114,132 @@ class User extends Authenticatable
     }
 
     /**
-     * Get all reviews created by this user.
+     * Mendapatkan semua reviews yang dilakukan oleh pengguna.
      */
     public function reviews()
     {
         return $this->hasMany(Review::class);
+    }
+
+    /**
+     * Mendapatkan semua artikel yang ditulis oleh pengguna.
+     */
+    public function articles()
+    {
+        return $this->hasMany(Article::class);
+    }
+
+    /**
+     * Mendapatkan semua pencapaian yang dimiliki pengguna.
+     */
+    public function userAchievements()
+    {
+        return $this->hasMany(UserAchievement::class);
+    }
+
+    /**
+     * Relasi many-to-many ke model Achievement melalui tabel user_achievements.
+     */
+    public function achievements()
+    {
+        return $this->belongsToMany(Achievement::class, 'user_achievements')
+            ->using(UserAchievement::class)
+            ->withPivot('status', 'additional_info')
+            ->withTimestamps();
+    }
+
+    /**
+     * Mendapatkan semua tantangan yang diikuti pengguna.
+     */
+    public function userChallenges()
+    {
+        return $this->hasMany(UserChallenge::class);
+    }
+
+    /**
+     * Relasi many-to-many ke model Challenge melalui tabel user_challenges.
+     */
+    public function challenges()
+    {
+        return $this->belongsToMany(Challenge::class, 'user_challenges')
+            ->using(UserChallenge::class)
+            ->withPivot('status', 'additional_info')
+            ->withTimestamps();
+    }
+
+    /**
+     * Mendapatkan semua hadiah yang diklaim oleh pengguna.
+     */
+    public function userRewards()
+    {
+        return $this->hasMany(UserReward::class);
+    }
+    
+    /**
+     * Relasi many-to-many ke model Reward melalui tabel user_rewards.
+     */
+    public function rewards()
+    {
+        return $this->belongsToMany(Reward::class, 'user_rewards')
+            ->using(UserReward::class)
+            ->withPivot('status', 'additional_info')
+            ->withTimestamps();
+    }
+
+    /**
+     * Mendapatkan semua transaksi koin pengguna.
+     */
+    public function coinTransactions()
+    {
+        return $this->hasMany(CoinTransaction::class);
+    }
+
+    /**
+     * Mendapatkan semua transaksi EXP pengguna.
+     */
+    public function expTransactions()
+    {
+        return $this->hasMany(ExpTransaction::class);
+    }
+
+    /**
+     * Mendapatkan semua 'like' yang diberikan oleh pengguna.
+     */
+    public function likes()
+    {
+        return $this->hasMany(UserLike::class);
+    }
+
+    /**
+     * Mendapatkan daftar pengguna yang mengikuti pengguna ini (followers).
+     */
+    public function followers()
+    {
+        return $this->belongsToMany(User::class, 'user_follows', 'following_id', 'follower_id')
+            ->using(UserFollow::class)
+            ->withTimestamps();
+    }
+
+    /**
+     * Mendapatkan daftar pengguna yang diikuti oleh pengguna ini (following).
+     */
+    public function following()
+    {
+        return $this->belongsToMany(User::class, 'user_follows', 'follower_id', 'following_id')
+            ->using(UserFollow::class)
+            ->withTimestamps();
+    }
+
+    // --- QUERY SCOPES ---
+
+    /**
+     * Scope a query to only include users that are active.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where('status', true);
     }
 }

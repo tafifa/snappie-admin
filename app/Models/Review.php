@@ -2,11 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Review extends Model
 {
+    use HasFactory;
+
     /**
      * The table associated with the model.
      *
@@ -25,8 +29,9 @@ class Review extends Model
         'content',
         'rating',
         'image_urls',
-        'vote',
+        'total_like',
         'status',
+        'additional_info',
     ];
 
     /**
@@ -35,23 +40,39 @@ class Review extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'image_urls' => 'array', // For multiple image URLs
         'rating' => 'integer',
-        'vote' => 'integer',
-        'status' => 'string',
+        'image_urls' => 'json',
+        'total_like' => 'integer',
+        'status' => 'boolean',
+        'additional_info' => 'json',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
 
     /**
-     * The model's default values for attributes.
+     * Get the validation rules for the model.
      *
-     * @var array
+     * @return array
      */
-    protected $attributes = [
-        'status' => 'pending',
-        'rating' => 5,
-        'vote' => 0,
+    public static function rules()
+    {
+        return [
+            'user_id' => 'required|exists:users,id',
+            'place_id' => 'required|exists:places,id',
+            'content' => 'nullable|string|max:1000',
+            'rating' => 'required|integer|min:1|max:5',
+            'image_urls' => 'nullable|json',
+            'total_like' => 'integer|min:0',
+            'status' => 'boolean',
+            'additional_info' => 'nullable|json',
+        ];
+    }
+
+    /**
+     * Additional Info Key References
+     */
+    protected $additionalInfoKey = [
+        'review_detail'
     ];
 
     /**
@@ -71,42 +92,38 @@ class Review extends Model
     }
 
     /**
-     * Get validation rules for review
+     * Get the likes for the review.
      */
-    public static function getValidationRules()
+    public function likes()
     {
-        return [
-            'user_id' => 'required|exists:users,id',
-            'place_id' => 'required|exists:places,id',
-            'content' => 'nullable|string|max:1000',
-            'rating' => 'required|integer|min:1|max:5',
-            'image_urls' => 'nullable|array|max:5',
-            'image_urls.*' => 'url',
-            'status' => 'in:approved,rejected,pending',
-        ];
+        return $this->morphMany(UserLike::class, 'related_to');
     }
 
     /**
-     * Get star rating display
+     * Mendapatkan model yang menjadi sumber transaksi ini (polimorfik).
+     * Bisa berupa CoinTransaction dan ExpTransaction.
      */
-    public function getStarRatingAttribute()
+    public function coinTransactions()
     {
-        return str_repeat('★', $this->rating) . str_repeat('☆', 5 - $this->rating);
+        return $this->morphMany(CoinTransaction::class, 'related_to');
     }
 
     /**
-     * Increment vote count
+     * Mendapatkan model yang menjadi sumber transaksi ini (polimorfik).
+     * Bisa berupa ExpTransaction.
      */
-    public function incrementVote()
+    public function expTransactions()
     {
-        $this->increment('vote');
+        return $this->morphMany(ExpTransaction::class, 'related_to');
     }
+    
+    // --- QUERY SCOPES ---
 
     /**
-     * Decrement vote count
+     * Scope untuk hanya mengambil ulasan yang sudah disetujui (moderasi).
      */
-    public function decrementVote()
+    public function scopeApproved(Builder $query): Builder
     {
-        $this->decrement('vote');
+        return $query->where('status', true);
     }
 }

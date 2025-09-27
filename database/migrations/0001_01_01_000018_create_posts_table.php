@@ -11,21 +11,21 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('reviews', function (Blueprint $table) {
+        Schema::create('posts', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('place_id')->constrained('places')->onDelete('cascade');
-            $table->text('content')->nullable();
-            $table->integer('rating')->default(5); // Star rating 1-5
+            $table->text('content');
             $table->jsonb('image_urls')->nullable();
-            $table->integer('vote')->default(0); // Like count
-            $table->enum('status', ['approved', 'rejected', 'pending'])->default('pending');
+            $table->integer('total_like')->default(0); // Number of likes
+            $table->integer('total_comment')->default(0); // Number of comments
+            $table->boolean('status')->default(true); // e.g., for moderation
+            $table->jsonb('additional_info')->nullable(); // Stores flexible key-value pairs
             $table->timestamps();
-            
-            $table->index(['user_id', 'place_id']);
-            $table->index('status');
-            $table->index('rating');
-            $table->index('vote');
+
+            // Indexes for better performance
+            $table->index('user_id');
+            $table->index('place_id');
             $table->index('created_at');
         });
     }
@@ -35,6 +35,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('reviews');
+        Schema::dropIfExists('posts');
     }
 };
