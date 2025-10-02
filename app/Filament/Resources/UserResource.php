@@ -102,14 +102,42 @@ class UserResource extends Resource
                 Forms\Components\Section::make('ℹ️ Informasi Tambahan')
                     ->description('Data tambahan dan fleksibel')
                     ->schema([
-                        Forms\Components\CheckboxList::make('additional_info.place_value')
+                        Forms\Components\CheckboxList::make('additional_info.user_preferences.place_value')
                             ->label('Nilai Tempat (Place Value)')
                             ->options(array_combine($placeValueOptions, $placeValueOptions))
                             ->columns(3),
-                        Forms\Components\CheckboxList::make('additional_info.food_type')
+                        Forms\Components\CheckboxList::make('additional_info.user_preferences.food_type')
                             ->label('Jenis Makanan')
                             ->options(array_combine($foodTypeOptions, $foodTypeOptions))
                             ->columns(3),
+                    ])->collapsible(),
+
+                Forms\Components\Section::make('📁 Daftar Tersimpan')
+                    ->description('Kelola daftar tempat, postingan, dan artikel yang disimpan pengguna')
+                    ->schema([
+                        Forms\Components\Repeater::make('saved_items')
+                            ->label('Item Tersimpan')
+                            ->schema([
+                                Forms\Components\Select::make('type')
+                                    ->label('Kategori')
+                                    ->options([
+                                        'saved_places' => 'Tempat',
+                                        'saved_posts' => 'Postingan',
+                                        'saved_articles' => 'Artikel',
+                                    ])
+                                    ->required()
+                                    ->columnSpan(1),
+
+                                Forms\Components\TextInput::make('item_id')
+                                    ->label('ID Item')
+                                    ->numeric()
+                                    ->required()
+                                    ->columnSpan(1),
+                            ])
+                            ->grid(2)
+                            ->columnSpanFull()
+                            ->reorderable()
+                            ->addActionLabel('Tambah item'),
                     ])->collapsible(),
             ]);
     }
@@ -482,16 +510,39 @@ class UserResource extends Resource
                     ->schema([
                          Section::make('Nilai & Jenis Tempat')
                             ->schema([
-                                TextEntry::make('additional_info.place_value')
+                                TextEntry::make('additional_info.user_preferences.place_value')
                                     ->label('Nilai Tempat')
                                     ->badge()
                                     ->separator(',')
                                     ->color('success'),
-                                TextEntry::make('additional_info.food_type')
+                                TextEntry::make('additional_info.user_preferences.food_type')
                                     ->label('Jenis Makanan')
                                     ->badge()
                                     ->separator(',')
                                     ->color('warning'),
+                            ]),
+                    ])
+                    ->collapsible(),
+
+                Section::make('📁 Daftar Tersimpan')
+                    ->schema([
+                        Grid::make(3)
+                            ->schema([
+                                TextEntry::make('additional_info.user_saved.saved_places')
+                                    ->label('Saved Places')
+                                    ->badge()
+                                    ->separator(',')
+                                    ->color('info'),
+                                TextEntry::make('additional_info.user_saved.saved_posts')
+                                    ->label('Saved Posts')
+                                    ->badge()
+                                    ->separator(',')
+                                    ->color('primary'),
+                                TextEntry::make('additional_info.user_saved.saved_articles')
+                                    ->label('Saved Articles')
+                                    ->badge()
+                                    ->separator(',')
+                                    ->color('secondary'),
                             ]),
                     ])
                     ->collapsible(),

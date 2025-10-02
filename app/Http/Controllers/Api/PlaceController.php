@@ -3,318 +3,118 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\PlaceRequest;
 use App\Models\Place;
+use App\Services\PlaceService;
+use App\Traits\ApiResponseTrait;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class PlaceController extends Controller
 {
+    use ApiResponseTrait;
+
+    protected PlaceService $placeService;
+
+    public function __construct(PlaceService $placeService)
+    {
+        $this->placeService = $placeService;
+    }
+
     /**
-     * Get list of places with pagination
+     * Get paginated places with optional filters
+     *
+     * @param PlaceRequest $request
+     * @return JsonResponse
      */
-    public function index(Request $request)
+    public function index(PlaceRequest $request): JsonResponse
     {
         try {
-            $validator = Validator::make($request->all(), [
-                'category' => 'sometimes|string|in:cafe,restaurant,traditional,food_court,street_food',
-                'search' => 'sometimes|string|max:255',
-                'page' => 'sometimes|integer|min:1',
-                'per_page' => 'sometimes|integer|min:1|max:50',
-            ]);
+            $perPage = $request->get('per_page', 10);
 
-            if ($validator->fails()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Validation error',
-                    'errors' => $validator->errors()
-                ], 422);
-            }
-
-            $query = Place::where('status', true);
-
-            // Filter by category
-            if ($request->has('category')) {
-                $query->where('category', $request->category);
-            }
-
-            // Search by name or address
+            // Handle different filtering options
             if ($request->has('search')) {
-                $search = $request->search;
-                $query->where(function($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
-                      ->orWhere('address', 'like', "%{$search}%");
-                });
+                $places = $this->placeService->searchByName($request->search, $perPage);
+            } elseif ($request->has('min_rating')) {
+                $places = $this->placeService->getByRating($request->min_rating, $perPage);
+            } elseif ($request->has('min_price') && $request->has('max_price')) {
+                $places = $this->placeService->getByPriceRange(
+                    $request->min_price,
+                    $request->max_price,
+                    $perPage
+                );
+            } elseif ($request->has('latitude') && $request->has('longitude')) {
+                $radius = $request->get('radius', 5.0);
+                $places = $this->placeService->findNearby(
+                    $request->latitude,
+                    $request->longitude,
+                    $radius,
+                    $perPage
+                );
+            } elseif ($request->boolean('popular')) {
+                $places = $this->placeService->getMostPopular($perPage);
+            } elseif ($request->boolean('partner')) {
+                $places = $this->placeService->getPartnerPlaces($perPage);
+            } elseif ($request->boolean('active_only')) {
+                $places = $this->placeService->getActive($perPage);
+            } elseif ($request->has('food_type') || $request->has('place_value')) {
+                $places = $this->placeService->getByUserPreferences(
+                    $request->input('food_type', []),
+                    $request->input('place_value', [])
+                );
+            } else {
+                $places = $this->placeService->getPaginated($perPage);
             }
 
-            $perPage = $request->get('per_page', 20);
-            $places = $query->withCount(['checkins', 'reviews'])
-                           ->orderBy('name')
-                           ->paginate($perPage);
-
-            $data = $places->through(function ($place) {
-                return [
-                    'id' => $place->id,
-                    'name' => $place->name,
-                    'slug' => $place->slug,
-                    'category' => $place->category,
-                    'description' => $place->description,
-                    'address' => $place->address,
-                    'latitude' => (float) $place->latitude,
-                    'longitude' => (float) $place->longitude,
-                    'image_urls' => $place->image_urls,
-                    'partnership_status' => $place->partnership_status,
-                    'stats' => [
-                        'total_checkins' => $place->checkins_count,
-                        'total_reviews' => $place->reviews_count,
-                        'average_rating' => $place->reviews()->avg('vote') ? round($place->reviews()->avg('vote'), 1) : 0,
-                    ],
-                    'reward_info' => $place->reward_info,
-                    'created_at' => $place->created_at->toISOString(),
-                ];
-            });
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Places retrieved successfully',
-                'data' => $data,
-                'pagination' => [
-                    'current_page' => $places->currentPage(),
-                    'per_page' => $places->perPage(),
-                    'total' => $places->total(),
-                    'total_pages' => $places->lastPage(),
-                    'has_next_page' => $places->hasMorePages(),
-                ]
-            ]);
-
+            return $this->successResponse($places, 'Places retrieved successfully');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to retrieve places',
-                'error' => $e->getMessage()
-            ], 500);
+            return $this->errorResponse('Failed to retrieve places', 500, $e->getMessage());
         }
     }
 
     /**
-     * Get nearby places based on GPS coordinates
+     * Get a specific place by ID
+     *
+     * @param int $place_id
+     * @return JsonResponse
      */
-    public function nearby(Request $request)
+    public function show(int $place_id): JsonResponse
     {
         try {
-            $validator = Validator::make($request->all(), [
-                'latitude' => 'required|numeric|between:-90,90',
-                'longitude' => 'required|numeric|between:-180,180',
-                'radius' => 'sometimes|numeric|min:0.1|max:25', // radius in km
-                'category' => 'sometimes|string|in:cafe,restaurant,traditional,food_court,street_food',
-                'limit' => 'sometimes|integer|min:1|max:50',
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Validation error',
-                    'errors' => $validator->errors()
-                ], 422);
-            }
-
-            $latitude = $request->latitude;
-            $longitude = $request->longitude;
-            $radius = $request->get('radius', 5); // Default 5km
-            $limit = $request->get('limit', 20);            // Using Haversine formula to calculate distance
-            $places = Place::selectRaw("*, 
-                    (6371 * acos(cos(radians(?)) 
-                    * cos(radians(latitude)) 
-                    * cos(radians(longitude) - radians(?)) 
-                    + sin(radians(?)) 
-                    * sin(radians(latitude)))) AS distance
-                ", [$latitude, $longitude, $latitude])
-                ->withCount(['checkins', 'reviews'])
-                ->where('status', true)
-                ->whereRaw("
-                    (6371 * acos(cos(radians(?)) 
-                    * cos(radians(latitude)) 
-                    * cos(radians(longitude) - radians(?)) 
-                    + sin(radians(?)) 
-                    * sin(radians(latitude)))) <= ?
-                ", [$latitude, $longitude, $latitude, $radius]);            // Filter by category if provided
-            if ($request->has('category')) {
-                $places->where('category', $request->category);
-            }
-
-            $places = $places->orderByRaw("
-                    (6371 * acos(cos(radians(?)) 
-                    * cos(radians(latitude)) 
-                    * cos(radians(longitude) - radians(?)) 
-                    + sin(radians(?)) 
-                    * sin(radians(latitude))))
-                ", [$latitude, $longitude, $latitude])
-                           ->limit($limit)
-                           ->get();
-
-            $data = $places->map(function ($place) {
-                return [
-                    'id' => $place->id,
-                    'name' => $place->name,
-                    'slug' => $place->slug,
-                    'category' => $place->category,
-                    'description' => $place->description,
-                    'address' => $place->address,
-                    'latitude' => (float) $place->latitude,
-                    'longitude' => (float) $place->longitude,
-                    'distance' => round($place->distance, 2), // in km
-                    'image_urls' => $place->image_urls,
-                    'partnership_status' => $place->partnership_status,
-                    'stats' => [
-                        'total_checkins' => $place->checkins_count,
-                        'total_reviews' => $place->reviews_count,
-                        'average_rating' => $place->reviews()->avg('vote') ? round($place->reviews()->avg('vote'), 1) : 0,
-                    ],
-                    'reward_info' => $place->reward_info,
-                ];
-            });
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Nearby places retrieved successfully',
-                'data' => $data,
-                'search_params' => [
-                    'latitude' => $latitude,
-                    'longitude' => $longitude,
-                    'radius' => $radius,
-                    'category' => $request->category,
-                ]
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to retrieve nearby places',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Get place details by ID
-     */
-    public function show(Request $request, $id)
-    {
-        try {
-            $place = Place::where('status', true)
-                         ->withCount(['checkins', 'reviews'])
-                         ->find($id);
+            $place = $this->placeService->getById($place_id);
 
             if (!$place) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Place not found',
-                    'error_code' => 'PLACE_NOT_FOUND'
-                ], 404);
+                return $this->errorResponse('Place not found', 404);
             }
 
-            // Get recent reviews with user info
-            $recentReviews = $place->reviews()
-                                  ->with('user:id,name,username,image_url')
-                                  ->orderBy('created_at', 'desc')
-                                  ->limit(5)
-                                  ->get()                                  ->map(function ($review) {
-                                      return [
-                                          'id' => $review->id,
-                                          'rating' => $review->vote,
-                                          'content' => $review->content,
-                                          'image_urls' => $review->image_urls,
-                                          'user' => [
-                                              'id' => $review->user->id,
-                                              'name' => $review->user->name,
-                                              'username' => $review->user->username,
-                                              'image_url' => $review->user->image_url,
-                                          ],
-                                          'created_at' => $review->created_at->toISOString(),
-                                      ];
-                                  });
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Place details retrieved successfully',
-                'data' => [
-                    'id' => $place->id,
-                    'name' => $place->name,
-                    'slug' => $place->slug,
-                    'category' => $place->category,
-                    'description' => $place->description,
-                    'address' => $place->address,
-                    'latitude' => (float) $place->latitude,
-                    'longitude' => (float) $place->longitude,
-                    'image_urls' => $place->image_urls,
-                    'partnership_status' => $place->partnership_status,
-                    'stats' => [
-                        'total_checkins' => $place->checkins_count,
-                        'total_reviews' => $place->reviews_count,
-                        'average_rating' => $place->reviews()->avg('vote') ? round($place->reviews()->avg('vote'), 1) : 0,
-                    ],
-                    'reward_info' => $place->reward_info,
-                    'recent_reviews' => $recentReviews,
-                    'created_at' => $place->created_at->toISOString(),
-                    'updated_at' => $place->updated_at->toISOString(),
-                ]
-            ]);
-
+            return $this->successResponse($place, 'Place retrieved successfully');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to retrieve place details',
-                'error' => $e->getMessage()
-            ], 500);
+            return $this->errorResponse('Failed to retrieve place', 500, $e->getMessage());
         }
     }
 
     /**
-     * Get available categories
+     * Get place reviews
+     *
+     * @param int $place_id
+     * @return JsonResponse
      */
-    public function categories()
+    public function getPlaceReviews(int $place_id): JsonResponse
     {
         try {
-            $categories = [
-                [
-                    'value' => 'cafe',
-                    'label' => 'Cafe',
-                    'description' => 'Coffee shops and cafes'
-                ],
-                [
-                    'value' => 'restaurant',
-                    'label' => 'Restaurant',
-                    'description' => 'Fine dining restaurants'
-                ],
-                [
-                    'value' => 'traditional',
-                    'label' => 'Traditional Food',
-                    'description' => 'Traditional local cuisine'
-                ],
-                [
-                    'value' => 'food_court',
-                    'label' => 'Food Court',
-                    'description' => 'Food courts and markets'
-                ],
-                [
-                    'value' => 'street_food',
-                    'label' => 'Street Food',
-                    'description' => 'Street food vendors'
-                ]
-            ];
+            $place = $this->placeService->getById($place_id);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Categories retrieved successfully',
-                'data' => $categories
-            ]);
+            if (!$place) {
+                return $this->errorResponse('Place not found', 404);
+            }
 
+            $reviews = $this->placeService->getPlaceReviews($place->id);
+
+            return $this->successResponse($reviews, 'Place reviews retrieved successfully');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to retrieve categories',
-                'error' => $e->getMessage()
-            ], 500);
+            return $this->errorResponse('Failed to retrieve place reviews', 500, $e->getMessage());
         }
     }
 }

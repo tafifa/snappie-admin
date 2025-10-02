@@ -40,6 +40,31 @@ class AuthService
         ]);
       }
 
+      $additionalInfo = [
+        'user_detail' => [
+          'bio' => '',
+          'gender' => $data['gender'],
+          'date_of_birth' => '',
+          'phone' => '',
+        ],
+        'user_preferences' => [
+          'food_type' => $data['food_type'],
+          'place_value' => $data['place_value'],
+        ],
+        'user_saved' => [
+          'saved_places' => [],
+          'saved_posts' => [],
+          'saved_articles' => []
+        ],
+        'user_settings' => [
+          'language' => 'id',
+          'theme' => 'light'
+        ],
+        'user_notification' => [
+          'push_notification' => true
+        ],
+      ];
+
       // Create new user with default values
       $user = User::create([
         'name' => $data['name'],
@@ -57,30 +82,7 @@ class AuthService
         'total_achievement' => 0,
         'total_challenge' => 0,
         'status' => true,
-        'additional_info' => [
-          'user_detail' => [
-            'bio' => $data['bio'] ?? null,
-            'gender' => $data['gender'],
-            'date_of_birth' => $data['date_of_birth'] ?? null,
-            'phone' => $data['phone'] ?? null,
-          ],
-          'user_preferences' => [
-            'food_type' => $data['food_type'],
-            'place_value' => $data['place_value'],
-          ],
-          'user_saved' => [
-            'saved_places' => [],
-            'saved_posts' => [],
-            'saved_articles' => []
-          ],
-          'user_settings' => [
-            'language' => 'id',
-            'theme' => 'light'
-          ],
-          'user_notification' => [
-            'push_notification' => true
-          ]
-        ]
+        'additional_info' => $additionalInfo,
       ]);
 
       // Log successful registration
@@ -205,68 +207,6 @@ class AuthService
         'error' => $e->getMessage()
       ]);
       return false;
-    }
-  }
-
-  /**
-   * Get comprehensive user profile with statistics
-   *
-   * @param User $user
-   * @return array
-   */ 
-  public function getUserProfile(User $user): array
-  {
-    try {
-      // Load user with relationships
-      $userWithRelations = $user->load([
-        'achievements' => function ($query) {
-          $query->wherePivot('status', true)->latest('pivot_created_at');
-        },
-        'rewards' => function ($query) {
-          $query->wherePivot('status', true)->latest('pivot_created_at');
-        },
-        'challenges' => function ($query) {
-          $query->latest('pivot_created_at');
-        }
-      ]);
-
-      // Calculate comprehensive statistics
-      $stats = [
-        'activity' => [
-          'total_checkins' => $user->total_checkin,
-          'total_reviews' => $user->total_review,
-          'total_posts' => $user->total_post,
-          'total_articles' => $user->total_article,
-        ],
-        'social' => [
-          'total_followers' => $user->total_follower,
-          'total_following' => $user->total_following,
-        ],
-        'gamification' => [
-          'total_coins' => $user->total_coin,
-          'total_exp' => $user->total_exp,
-          'total_achievements' => $user->total_achievement,
-          'total_challenges' => $user->total_challenge,
-        ],
-        'engagement' => [
-          'join_date' => $user->created_at->toDateString(),
-          'last_login' => $user->last_login_at?->toDateTimeString(),
-          'days_active' => $user->created_at->diffInDays(now()),
-        ]
-      ];
-
-      return [
-        'user' => $userWithRelations,
-        'stats' => $stats,
-        'preferences' => $user->additional_info['user_preferences'] ?? [],
-        'settings' => $user->additional_info['user_settings'] ?? []
-      ];
-    } catch (\Exception $e) {
-      Log::error('Failed to get user profile', [
-        'user_id' => $user->id,
-        'error' => $e->getMessage()
-      ]);
-      throw $e;
     }
   }
 }

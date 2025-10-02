@@ -3,199 +3,134 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Validator;
+use App\Http\Requests\AuthRequest;
+use App\Services\AuthService;
+use App\Traits\ApiResponseTrait;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
+    use ApiResponseTrait;
+
+    protected AuthService $authService;
+
+    public function __construct(AuthService $authService)
+    {
+        $this->authService = $authService;
+    }
+
     /**
      * Register new user
+     *
+     * @param AuthRequest $request
+     * @return JsonResponse
      */
-    public function register(Request $request)
+    public function register(AuthRequest $request): JsonResponse
     {
         try {
-            $validator = Validator::make($request->all(), [
-                'name' => 'required|string|min:2|max:255',
-                'username' => 'required|string|min:3|max:20|unique:users,username|regex:/^[a-zA-Z0-9_]+$/',
-                'email' => 'required|string|email|max:255|unique:users,email',
-            ]);
+            $result = $this->authService->register($request->validated());
 
-            if ($validator->fails()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Validation error',
-                    'errors' => $validator->errors()
-                ], 422);
-            }
-
-            $user = User::create([
-                'name' => $request->name,
-                'username' => $request->username,
-                'email' => $request->email,
-                'total_coin' => 0,
-                'total_exp' => 0,
-                'status' => true,
-            ]);
-
-            $token = $user->createToken('auth_token')->plainTextToken;
-
-            return response()->json([
-                'success' => true,
-                'message' => 'User registered successfully',
-                'data' => [
-                    'user' => [
-                        'id' => $user->id,
-                        'name' => $user->name,
-                        'username' => $user->username,
-                        'email' => $user->email,
-                        'image_url' => $user->image_url,
-                        'total_coin' => $user->total_coin,
-                        'total_exp' => $user->total_exp,
-                        'level' => $user->level,
-                        'exp_to_next_level' => $user->exp_to_next_level,
-                        'status' => $user->status,
-                        'created_at' => $user->created_at->toISOString(),
-                    ],
-                    'token' => $token,
-                    'token_type' => 'Bearer',
-                ]
-            ], 201);
-
+            return $this->successResponse(
+                $result,
+                $result['message'],
+                201
+            );
+        } catch (ValidationException $e) {
+            return $this->errorResponse(
+                'Registrasi gagal',
+                422,
+                $e->errors()
+            );
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Registration failed',
-                'error' => $e->getMessage()
-            ], 500);
+            Log::error('Registration error in controller', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return $this->errorResponse(
+                'Terjadi kesalahan saat registrasi',
+                500,
+                $e->getMessage()
+            );
         }
     }
 
     /**
      * Login user (simplified for MVP - email only)
+     *
+     * @param AuthRequest $request
+     * @return JsonResponse
      */
-    public function login(Request $request)
+    public function login(AuthRequest $request): JsonResponse
     {
         try {
-            $validator = Validator::make($request->all(), [
-                'email' => 'required|email',
-            ]);
+            $credentials = $request->validated();
+            $remember = $credentials['remember'] ?? false;
 
-            if ($validator->fails()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Validation error',
-                    'errors' => $validator->errors()
-                ], 422);
-            }
+            $result = $this->authService->login($credentials, $remember);
 
-            $user = User::where('email', $request->email)->first();
-
-            if (!$user) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'User not found',
-                    'error_code' => 'USER_NOT_FOUND'
-                ], 404);
-            }
-
-            if (!$user->status) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Account is inactive',
-                    'error_code' => 'ACCOUNT_INACTIVE'
-                ], 403);
-            }
-            
-            // Update last login
-            $user->update(['last_login_at' => now()]);
-            
-            $token = $user->createToken('auth_token')->plainTextToken;
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Login successful',
-                'data' => [
-                    'user' => [
-                        'id' => $user->id,
-                        'name' => $user->name,
-                        'username' => $user->username,
-                        'email' => $user->email,
-                        'image_url' => $user->image_url,
-                        'total_coin' => $user->total_coin,
-                        'total_exp' => $user->total_exp,
-                        'level' => $user->level,
-                        'exp_to_next_level' => $user->exp_to_next_level,
-                        'status' => $user->status,
-                        'last_login_at' => $user->last_login_at?->toISOString(),
-                    ],
-                    'token' => $token,
-                    'token_type' => 'Bearer',
-                ]
-            ]);
-
+            return $this->successResponse(
+                $result,
+                $result['message']
+            );
+        } catch (ValidationException $e) {
+            return $this->errorResponse(
+                'Login gagal',
+                422,
+                $e->errors()
+            );
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Login failed',
-                'error' => $e->getMessage()
-            ], 500);
+            // Log::error('Login error in controller', [
+            //     'error' => $e->getMessage(),
+            //     'email' => $request->input('email'),
+            //     'trace' => $e->getTraceAsString()
+            // ]);
+
+            return $this->errorResponse(
+                'Terjadi kesalahan saat login',
+                500,
+                $e->getMessage()
+            );
         }
     }
 
     /**
      * Logout user
+     *
+     * @param AuthRequest $request
+     * @return JsonResponse
      */
-    public function logout(Request $request)
-    {
-        try {
-            $request->user()->currentAccessToken()->delete();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Logout successful'
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Logout failed',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Refresh token
-     */
-    public function refresh(Request $request)
+    public function logout(AuthRequest $request): JsonResponse
     {
         try {
             $user = $request->user();
-            
-            // Delete current token
-            $request->user()->currentAccessToken()->delete();
-            
-            // Create new token
-            $token = $user->createToken('auth_token')->plainTextToken;
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Token refreshed successfully',
-                'data' => [
-                    'token' => $token,
-                    'token_type' => 'Bearer',
-                ]
+            $result = $this->authService->logout($user);
+
+            if ($result) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Logout berhasil!',
+                    'logged_out_at' => now()->toISOString()
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Logout gagal!'
+                ], 500);
+            }
+        } catch (\Exception $e) {
+            Log::error('Logout error', [
+                'user_id' => $request->user()?->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
 
-        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Token refresh failed',
-                'error' => $e->getMessage()
+                'message' => 'Terjadi kesalahan saat logout'
             ], 500);
         }
     }
