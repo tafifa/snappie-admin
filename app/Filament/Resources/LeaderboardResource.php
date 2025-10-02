@@ -5,8 +5,10 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\LeaderboardResource\Pages;
 use App\Models\Leaderboard;
 use App\Models\User;
+use Faker\Provider\Image;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Infolists\Components\ImageEntry;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -32,80 +34,6 @@ class LeaderboardResource extends Resource
     protected static ?string $navigationGroup = 'Gamification';
 
     protected static ?int $navigationSort = 9;
-
-    // public static function form(Form $form): Form
-    // {
-    //     return $form
-    //         ->schema([
-    //             Forms\Components\Section::make('📊 Leaderboard Data')
-    //                 ->description('Data ranking pengguna (JSON format)')
-    //                 ->schema([
-    //                     Forms\Components\Actions::make([
-    //                         Forms\Components\Actions\Action::make('generate_leaderboard')
-    //                             ->label('Generate Leaderboard')
-    //                             ->icon('heroicon-o-sparkles')
-    //                             ->color('success')
-    //                             ->requiresConfirmation()
-    //                             ->modalHeading('Generate Leaderboard')
-    //                             ->modalDescription('This will generate a leaderboard based on the top 10 users with the highest total EXP. This action will overwrite any existing leaderboard data.')
-    //                             ->modalSubmitActionLabel('Generate')
-    //                             ->action(function ($livewire, $set) {
-    //                                 $leaderboardData = app(\App\Services\LeaderboardService::class)->getTopUsersThisMonth(7);
-
-    //                                 // Set all form fields
-    //                                 $set('leaderboard', json_encode($leaderboardData, true));
-    //                                 // dd(json_decode($leaderboardData));
-    //                                 $set('started_at', now()->startOfMonth()->format('Y-m-d H:i:s'));
-    //                                 $set('ended_at', now()->endOfMonth()->format('Y-m-d H:i:s'));
-
-    //                                 \Filament\Notifications\Notification::make()
-    //                                     ->title('Leaderboard Generated Successfully')
-    //                                     ->body('Top 10 users by EXP have been loaded into the leaderboard.')
-    //                                     ->success()
-    //                                     ->send();
-    //                             }),
-    //                     ]),
-
-    //                     Forms\Components\DateTimePicker::make('started_at')
-    //                         ->label('Start Date')
-    //                         ->helperText('Tanggal mulai periode leaderboard'),
-
-    //                     Forms\Components\DateTimePicker::make('ended_at')
-    //                         ->label('End Date')
-    //                         ->helperText('Tanggal berakhir periode leaderboard'),
-
-    //                     Forms\Components\Select::make('status')
-    //                         ->label('Status')
-    //                         ->options([
-    //                             true => 'Active',
-    //                             false => 'Inactive',
-    //                         ])
-    //                         ->helperText('Status leaderboard')
-    //                         ->default(true),
-
-    //                     // Forms\Components\Repeater::make('leaderboard')
-    //                     //     ->label('Leaderboard')
-    //                     //     ->schema([
-    //                     //         Forms\Components\TextInput::make('name')
-    //                     //             ->label('Name')
-    //                     //             ->required(),
-    //                     //         Forms\Components\TextInput::make('exp')
-    //                     //             ->label('EXP')
-    //                     //             ->numeric()
-    //                     //             ->required(),
-    //                     //     ])
-    //                     //     ->required(),
-
-    //                     Forms\Components\Textarea::make('leaderboard')
-    //                         ->label('Leaderboard JSON')
-    //                         ->rows(10)
-    //                         ->helperText('Data leaderboard dalam format JSON. Akan diupdate otomatis oleh sistem.')
-    //                         ->columnSpanFull(),
-    //                 ])
-    //                 ->collapsible(),
-    //         ]);
-    // }
-
     public static function form(Form $form): Form
     {
         return $form
@@ -159,7 +87,7 @@ class LeaderboardResource extends Resource
 
                         Forms\Components\Repeater::make('leaderboard')
                             ->label('Leaderboard')
-                            ->reorderable('false')
+                            ->reorderable(false)
                             ->schema([
                                 Forms\Components\TextInput::make('rank')
                                     ->label('Rank')
@@ -175,13 +103,10 @@ class LeaderboardResource extends Resource
                                     ->numeric()
                                     ->required(),
                             ]),
-
-
                     ])
                     ->collapsible(),
             ]);
     }
-
 
     public static function table(Table $table): Table
     {
@@ -293,8 +218,8 @@ class LeaderboardResource extends Resource
                                 RepeatableEntry::make('leaderboard')
                                     ->label('Leaderboard')
                                     ->schema([
-                                        TextEntry::make('rank')->label('Rank'),
-                                        TextEntry::make('image_url')->label(''),
+                                        TextEntry::make('rank')->label(''),
+                                        ImageEntry::make('image_url')->label('')->circular()->size(40),
                                         TextEntry::make('name')->label(''),
                                         TextEntry::make('total_exp')->label('')->badge()->color('warning')->icon('heroicon-o-star'),
                                     ])
