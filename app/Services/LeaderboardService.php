@@ -20,45 +20,50 @@ class LeaderboardService
   /**
    * Get top users from active leaderboard JSON data
    */
-  public function getTopUsers(int $limit = 10): Collection
+  public function getTopUsers(int $leaderboardId, int $limit = 10): Collection
   {
-    $cacheKey = "leaderboard:top_users:{$limit}";
+    $cacheKey = "leaderboard:top_users:{$limit}:{$leaderboardId}";
 
-    return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($limit) {
-      $activeLeaderboard = Leaderboard::active()->first();
+    return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($limit, $leaderboardId) {
+      $leaderboardData = Leaderboard::where('id', $leaderboardId)->first();
 
-      if (!$activeLeaderboard || !$activeLeaderboard->leaderboard) {
+      if (!$leaderboardData || !$leaderboardData->leaderboard) {
         return collect();
       }
 
       // Get data from JSON column and limit results
-      $leaderboardData = collect($activeLeaderboard->leaderboard)
-        ->take($limit);
+      $leaderboardData = collect($leaderboardData->leaderboard)->take($limit);
 
       return $leaderboardData;
     });
   }
 
   /**
-   * Get top users with pagination.
-   *
-   * @param int $perPage
-   * @return LengthAwarePaginator
+   * Get user's current rank from active leaderboard
    */
-  public function getTopUsersPaginated(int $perPage = self::DEFAULT_LIMIT): LengthAwarePaginator
+  public function getUserRank(int $userId, int $leaderboardId): ?int
   {
-    return User::select(['id', 'name', 'total_exp'])
-      ->where('total_exp', '>', 0)
-      ->orderBy('total_exp', 'desc')
-      ->orderBy('total_checkin', 'desc')
-      ->orderBy('created_at', 'asc')
-      ->paginate($perPage);
+    $cacheKey = "leaderboard:user_rank:{$userId}:{$leaderboardId}";
+
+    return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($userId, $leaderboardId) {
+      $leaderboardData = Leaderboard::where('id', $leaderboardId)->first();
+
+      if (!$leaderboardData || !$leaderboardData->leaderboard) {
+        return null;
+      }
+
+      // Search for user in leaderboard JSON data
+      $leaderboardData = collect($leaderboardData->leaderboard);
+      $userEntry = $leaderboardData->firstWhere('user_id', $userId);
+
+      return $userEntry ? $userEntry['rank'] : null;
+    });
   }
 
   /**
    * Get top users for this week from active leaderboard
    */
-  public function getTopUserThisWeek(int $limit = 10): Collection
+  public function getTopUserThisWeek(int $limit = 10): array
   {
     $cacheKey = "leaderboard:weekly:{$limit}";
 
@@ -66,31 +71,34 @@ class LeaderboardService
       $startOfWeek = now()->startOfWeek();
 
       // Get users with EXP gained this week
-      $weeklyUsers = User::select('id', 'name', 'username', 'image_url')
-        ->selectRaw('COALESCE(SUM(exp_transactions.exp), 0) as weekly_exp')
+      $leaderboard = User::select(['users.id','users.name', 'users.username', 'users.image_url', 'users.total_checkin'])
+        ->selectRaw('COALESCE(SUM(exp_transactions.amount), 0) as weekly_exp')
         ->leftJoin('exp_transactions', function ($join) use ($startOfWeek) {
           $join->on('users.id', '=', 'exp_transactions.user_id')
             ->where('exp_transactions.created_at', '>=', $startOfWeek);
         })
-        ->groupBy('users.id', 'users.name', 'users.username', 'users.image_url')
-        ->having('weekly_exp', '>', 0)
-        ->orderBy('weekly_exp', 'desc')
+        ->groupBy('users.id', 'users.name', 'users.username', 'users.image_url', 'users.total_checkin')
+        ->havingRaw('COALESCE(SUM(exp_transactions.amount), 0) > 0')
+        ->orderByRaw('COALESCE(SUM(exp_transactions.amount), 0) desc')
+        ->orderBy('users.total_checkin', 'desc') // Tiebreaker
         ->limit($limit)
-        ->get();
+        ->get()
+        ->toArray(); // Convert the Collection to Array
 
       // Add ranking
       $rank = 1;
-      return $weeklyUsers->map(function ($user) use (&$rank) {
+      return array_map(function ($user) use (&$rank) {
         return [
           'rank' => $rank++,
-          'user_id' => $user->id,
-          'name' => $user->name,
-          'username' => $user->username,
-          'exp' => $user->weekly_exp,
-          'image_url' => $user->image_url,
+          'user_id' => $user['id'],
+          'name' => $user['name'],
+          'username' => $user['username'],
+          'total_exp' => $user['weekly_exp'],
+          'total_checkin' => $user['total_checkin'],
+          'image_url' => $user['image_url'],
           'period' => 'weekly'
         ];
-      });
+      }, $leaderboard);
     });
   }
 
@@ -106,42 +114,27 @@ class LeaderboardService
 
     return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($limit) {
       // Get the top users from the database, sorted by total_exp and total_checkin (tiebreaker)
-      $leaderboard = User::select(['name', 'image_url', 'total_exp', 'total_checkin'])
+      $leaderboard = User::select(['id','name', 'username', 'image_url', 'total_exp', 'total_checkin'])
         ->orderBy('total_exp', 'desc')
         ->orderBy('total_checkin', 'desc') // Tiebreaker
         ->limit($limit)
         ->get()
         ->toArray(); // Convert to array
 
-      // Add rank to each user in the leaderboard based on the sorted order
-      foreach ($leaderboard as $index => $user) {
-        $leaderboard[$index]['rank'] = $index + 1; // Add rank starting from 1
-      }
-
-      // Return as array with rank
-      return $leaderboard;
-    });
-  }
-
-  /**
-   * Get user's current rank from active leaderboard
-   */
-  public function getUserRank(int $userId): ?int
-  {
-    $cacheKey = "leaderboard:user_rank:{$userId}";
-
-    return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($userId) {
-      $activeLeaderboard = Leaderboard::active()->first();
-
-      if (!$activeLeaderboard || !$activeLeaderboard->leaderboard) {
-        return null;
-      }
-
-      // Search for user in leaderboard JSON data
-      $leaderboardData = collect($activeLeaderboard->leaderboard);
-      $userEntry = $leaderboardData->firstWhere('user_id', $userId);
-
-      return $userEntry ? $userEntry['rank'] : null;
+      // Add ranking
+      $rank = 1;
+      return array_map(function ($user) use (&$rank) {
+        return [
+          'rank' => $rank++,
+          'user_id' => $user['id'],
+          'name' => $user['name'],
+          'username' => $user['username'],
+          'image_url' => $user['image_url'],
+          'total_exp' => $user['total_exp'],
+          'total_checkin' => $user['total_checkin'],
+          'period' => 'monthly'
+        ];
+      }, $leaderboard);
     });
   }
 

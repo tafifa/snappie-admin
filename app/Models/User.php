@@ -67,6 +67,50 @@ class User extends Model
     ];
 
     /**
+     * Accessor to guarantee additional_info always contains expected structure.
+     */
+    public function getAdditionalInfoAttribute($value): array
+    {
+        $data = $value ?? [];
+
+        if (is_string($data)) {
+            $decoded = json_decode($data, true);
+            $data = is_array($decoded) ? $decoded : [];
+        }
+
+        if (!is_array($data)) {
+            $data = (array) $data;
+        }
+
+        $defaults = [
+            'user_detail' => [
+                'bio' => '',
+                'gender' => null,
+                'date_of_birth' => '',
+                'phone' => '',
+            ],
+            'user_preferences' => [
+                'food_type' => [],
+                'place_value' => [],
+            ],
+            'user_saved' => [
+                'saved_places' => [],
+                'saved_posts' => [],
+                'saved_articles' => [],
+            ],
+            'user_settings' => [
+                'language' => 'id',
+                'theme' => 'light',
+            ],
+            'user_notification' => [
+                'push_notification' => true,
+            ],
+        ];
+
+        return array_replace_recursive($defaults, $data);
+    }
+
+    /**
      * AdditionalInfo Key References
      */
     protected $additionalInfoKey = [
