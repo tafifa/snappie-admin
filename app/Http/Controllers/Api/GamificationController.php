@@ -30,7 +30,7 @@ class GamificationController extends Controller
     public function performCheckin(GamificationRequest $request): JsonResponse
     {
         try {
-            $user = User::findOrFail($request->user_id);
+            $user = $request->user();
             $place = Place::findOrFail($request->place_id);
             
             $checkin = $this->gamificationService->performCheckin($user, $place, $request->only(['latitude', 'longitude', 'image_url', 'additional_info']));
@@ -47,7 +47,7 @@ class GamificationController extends Controller
     public function createReview(GamificationRequest $request): JsonResponse
     {
         try {
-            $user = User::findOrFail($request->user_id);
+            $user = $request->user();
             $place = Place::findOrFail($request->place_id);
             
             $review = $this->gamificationService->createReview($user, $place, $request->only(['content', 'rating', 'image_urls', 'additional_info']));

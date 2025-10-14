@@ -24,7 +24,6 @@ class PlaceRequest extends FormRequest
                 'place_value' => 'sometimes|array',
                 'per_page' => 'sometimes|integer|min:1|max:100',
                 'search' => 'sometimes|string|max:255',
-                'category' => 'sometimes|string|max:100',
                 'min_rating' => 'sometimes|numeric|min:0|max:5',
                 'min_price' => 'sometimes|integer|min:0',
                 'max_price' => 'sometimes|integer|min:0|gte:min_price',
@@ -37,13 +36,6 @@ class PlaceRequest extends FormRequest
             ],
             default => [],
         };
-
-        // // Tambahkan validasi khusus untuk method show
-        // if ($method === 'show') {
-        //     $rules['place_id'] = 'required|integer';
-        // }
-
-        // return $rules;
     }
 
     public function messages(): array
@@ -54,8 +46,6 @@ class PlaceRequest extends FormRequest
             'per_page.max' => 'Jumlah per halaman maksimal 100.',
             'search.string' => 'Kata kunci pencarian harus berupa teks.',
             'search.max' => 'Kata kunci pencarian maksimal 255 karakter.',
-            'category.string' => 'Kategori harus berupa teks.',
-            'category.max' => 'Kategori maksimal 100 karakter.',
             'min_rating.numeric' => 'Rating minimum harus berupa angka.',
             'min_rating.min' => 'Rating minimum tidak boleh kurang dari 0.',
             'min_rating.max' => 'Rating minimum tidak boleh lebih dari 5.',
@@ -85,7 +75,6 @@ class PlaceRequest extends FormRequest
         return [
             'per_page' => 'jumlah per halaman',
             'search' => 'kata kunci pencarian',
-            'category' => 'kategori',
             'min_rating' => 'rating minimum',
             'min_price' => 'harga minimum',
             'max_price' => 'harga maksimum',

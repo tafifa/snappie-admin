@@ -3,6 +3,8 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class GamificationRequest extends FormRequest
 {
@@ -14,26 +16,58 @@ class GamificationRequest extends FormRequest
     public function rules(): array
     {
         // Rules dasar yang bisa digunakan untuk semua method
-        return [
-            'user_id' => 'sometimes|integer',
-            'place_id' => 'sometimes|integer',
-            'achievement_id' => 'sometimes|integer',
-            'challenge_id' => 'sometimes|integer',
-            'reward_id' => 'sometimes|integer',
-            'amount' => 'sometimes|integer|min:1',
-            'related_to_id' => 'sometimes|integer',
-            'related_to_type' => 'sometimes|string|max:100',
-            'description' => 'sometimes|string|max:500',
-            'latitude' => 'sometimes|numeric|between:-90,90',
-            'longitude' => 'sometimes|numeric|between:-180,180',
-            'image_url' => 'sometimes|url|max:500',
-            'image_urls' => 'sometimes|array',
-            'image_urls.*' => 'url|max:500',
-            'additional_info' => 'sometimes|array',
-            'content' => 'sometimes|string|max:1000',
-            'rating' => 'sometimes|integer|min:1|max:5',
-            'per_page' => 'sometimes|integer|min:1|max:100',
-        ];
+        $method = $this->route()->getActionMethod();
+        return match ($method) {
+            'performCheckin' => [
+                'place_id' => 'required|integer',
+                'latitude' => 'required|numeric|between:-90,90',
+                'longitude' => 'required|numeric|between:-180,180',
+                'image_url' => 'sometimes|url|max:500',
+                'additional_info' => 'sometimes|array',
+            ],
+            'createReview' => [
+                'place_id' => 'required|integer',
+                'content' => 'required|string|max:1000',
+                'rating' => 'required|integer|min:1|max:5',
+                'image_urls' => 'sometimes|array',
+                'image_urls.*' => 'sometimes|url|max:500',
+                'additional_info' => 'sometimes|array',
+            ],
+            'grantAchievement' => [
+                'achievement_id' => 'required|integer|exists:achievements,id',
+            ],
+            'completeChallenge' => [
+                'challenge_id' => 'required|integer|exists:challenges,id',
+            ],
+            'redeemReward' => [
+                'reward_id' => 'required|integer|exists:rewards,id',
+            ],
+            'addCoins' => [
+                'amount' => 'required|integer|min:1',
+                'related_to_id' => 'required|integer',
+                'related_to_type' => 'required|string|max:100',
+                'description' => 'sometimes|string|max:500',
+            ],
+            'useCoins' => [
+                'amount' => 'required|integer|min:1',
+                'related_to_id' => 'required|integer',
+                'related_to_type' => 'required|string|max:100',
+                'description' => 'sometimes|string|max:500',
+            ],
+            'addExp' => [
+                'amount' => 'required|integer|min:1',
+                'related_to_id' => 'required|integer',
+                'related_to_type' => 'required|string|max:100',
+                'description' => 'sometimes|string|max:500',
+            ],
+            'getCoinTransactions' => [
+                'per_page' => 'sometimes|integer|min:1|max:100',
+            ],
+            'getExpTransactions' => [
+                'per_page' => 'sometimes|integer|min:1|max:100',
+            ],
+            default => []
+        };
     }
 
     public function messages(): array
@@ -105,135 +139,147 @@ class GamificationRequest extends FormRequest
         ];
     }
 
-    public function withValidator($validator)
+    /**
+     * Handle a failed validation attempt.
+     */
+    protected function failedValidation(Validator $validator)
     {
-        $validator->after(function ($validator) {
-            $method = $this->route()->getActionMethod();
-
-            // Validasi berdasarkan method
-            switch ($method) {
-                case 'performCheckin':
-                    $this->validateCheckin($validator);
-                    break;
-                case 'createReview':
-                    $this->validateReview($validator);
-                    break;
-                case 'grantAchievement':
-                    $this->validateGrantAchievement($validator);
-                    break;
-                case 'completeChallenge':
-                    $this->validateCompleteChallenge($validator);
-                    break;
-                case 'redeemReward':
-                    $this->validateRedeemReward($validator);
-                    break;
-                case 'addCoins':
-                case 'useCoins':
-                    $this->validateCoinTransaction($validator);
-                    break;
-                case 'addExp':
-                    $this->validateExpTransaction($validator);
-                    break;
-                case 'getCoinTransactions':
-                case 'getExpTransactions':
-                    $this->validateGetTransactions($validator);
-                    break;
-            }
-        });
+        throw new HttpResponseException(response()->json([
+            'success' => false,
+            'message' => 'Validasi gagal',
+            'errors' => $validator->errors()
+        ], 422));
     }
 
-    private function validateCheckin($validator)
-    {
-        if (!$this->has('user_id')) {
-            $validator->errors()->add('user_id', 'ID pengguna wajib diisi untuk checkin.');
-        }
-        if (!$this->has('place_id')) {
-            $validator->errors()->add('place_id', 'ID tempat wajib diisi untuk checkin.');
-        }
-    }
+    // public function withValidator($validator)
+    // {
+    //     $validator->after(function ($validator) {
+    //         $method = $this->route()->getActionMethod();
 
-    private function validateReview($validator)
-    {
-        if (!$this->has('user_id')) {
-            $validator->errors()->add('user_id', 'ID pengguna wajib diisi untuk review.');
-        }
-        if (!$this->has('place_id')) {
-            $validator->errors()->add('place_id', 'ID tempat wajib diisi untuk review.');
-        }
-        if (!$this->has('content')) {
-            $validator->errors()->add('content', 'Konten review wajib diisi.');
-        }
-        if (!$this->has('rating')) {
-            $validator->errors()->add('rating', 'Rating wajib diisi untuk review.');
-        }
-    }
+    //         // Validasi berdasarkan method
+    //         switch ($method) {
+    //             case 'performCheckin':
+    //                 $this->validateCheckin($validator);
+    //                 break;
+    //             case 'createReview':
+    //                 $this->validateReview($validator);
+    //                 break;
+    //             case 'grantAchievement':
+    //                 $this->validateGrantAchievement($validator);
+    //                 break;
+    //             case 'completeChallenge':
+    //                 $this->validateCompleteChallenge($validator);
+    //                 break;
+    //             case 'redeemReward':
+    //                 $this->validateRedeemReward($validator);
+    //                 break;
+    //             case 'addCoins':
+    //             case 'useCoins':
+    //                 $this->validateCoinTransaction($validator);
+    //                 break;
+    //             case 'addExp':
+    //                 $this->validateExpTransaction($validator);
+    //                 break;
+    //             case 'getCoinTransactions':
+    //             case 'getExpTransactions':
+    //                 $this->validateGetTransactions($validator);
+    //                 break;
+    //         }
+    //     });
+    // }
 
-    private function validateGrantAchievement($validator)
-    {
-        if (!$this->has('user_id')) {
-            $validator->errors()->add('user_id', 'ID pengguna wajib diisi untuk memberikan pencapaian.');
-        }
-        if (!$this->has('achievement_id')) {
-            $validator->errors()->add('achievement_id', 'ID pencapaian wajib diisi.');
-        }
-    }
+    // private function validateCheckin($validator)
+    // {
+    //     if (!$this->has('user_id')) {
+    //         $validator->errors()->add('user_id', 'ID pengguna wajib diisi untuk checkin.');
+    //     }
+    //     if (!$this->has('place_id')) {
+    //         $validator->errors()->add('place_id', 'ID tempat wajib diisi untuk checkin.');
+    //     }
+    // }
 
-    private function validateCompleteChallenge($validator)
-    {
-        if (!$this->has('user_id')) {
-            $validator->errors()->add('user_id', 'ID pengguna wajib diisi untuk menyelesaikan tantangan.');
-        }
-        if (!$this->has('challenge_id')) {
-            $validator->errors()->add('challenge_id', 'ID tantangan wajib diisi.');
-        }
-    }
+    // private function validateReview($validator)
+    // {
+    //     if (!$this->has('user_id')) {
+    //         $validator->errors()->add('user_id', 'ID pengguna wajib diisi untuk review.');
+    //     }
+    //     if (!$this->has('place_id')) {
+    //         $validator->errors()->add('place_id', 'ID tempat wajib diisi untuk review.');
+    //     }
+    //     if (!$this->has('content')) {
+    //         $validator->errors()->add('content', 'Konten review wajib diisi.');
+    //     }
+    //     if (!$this->has('rating')) {
+    //         $validator->errors()->add('rating', 'Rating wajib diisi untuk review.');
+    //     }
+    // }
 
-    private function validateRedeemReward($validator)
-    {
-        if (!$this->has('user_id')) {
-            $validator->errors()->add('user_id', 'ID pengguna wajib diisi untuk menukar hadiah.');
-        }
-        if (!$this->has('reward_id')) {
-            $validator->errors()->add('reward_id', 'ID hadiah wajib diisi.');
-        }
-    }
+    // private function validateGrantAchievement($validator)
+    // {
+    //     if (!$this->has('user_id')) {
+    //         $validator->errors()->add('user_id', 'ID pengguna wajib diisi untuk memberikan pencapaian.');
+    //     }
+    //     if (!$this->has('achievement_id')) {
+    //         $validator->errors()->add('achievement_id', 'ID pencapaian wajib diisi.');
+    //     }
+    // }
 
-    private function validateCoinTransaction($validator)
-    {
-        if (!$this->has('user_id')) {
-            $validator->errors()->add('user_id', 'ID pengguna wajib diisi untuk transaksi koin.');
-        }
-        if (!$this->has('amount')) {
-            $validator->errors()->add('amount', 'Jumlah koin wajib diisi.');
-        }
-        if (!$this->has('related_to_id')) {
-            $validator->errors()->add('related_to_id', 'ID terkait wajib diisi untuk transaksi koin.');
-        }
-        if (!$this->has('related_to_type')) {
-            $validator->errors()->add('related_to_type', 'Tipe terkait wajib diisi untuk transaksi koin.');
-        }
-    }
+    // private function validateCompleteChallenge($validator)
+    // {
+    //     if (!$this->has('user_id')) {
+    //         $validator->errors()->add('user_id', 'ID pengguna wajib diisi untuk menyelesaikan tantangan.');
+    //     }
+    //     if (!$this->has('challenge_id')) {
+    //         $validator->errors()->add('challenge_id', 'ID tantangan wajib diisi.');
+    //     }
+    // }
 
-    private function validateExpTransaction($validator)
-    {
-        if (!$this->has('user_id')) {
-            $validator->errors()->add('user_id', 'ID pengguna wajib diisi untuk transaksi exp.');
-        }
-        if (!$this->has('amount')) {
-            $validator->errors()->add('amount', 'Jumlah exp wajib diisi.');
-        }
-        if (!$this->has('related_to_id')) {
-            $validator->errors()->add('related_to_id', 'ID terkait wajib diisi untuk transaksi exp.');
-        }
-        if (!$this->has('related_to_type')) {
-            $validator->errors()->add('related_to_type', 'Tipe terkait wajib diisi untuk transaksi exp.');
-        }
-    }
+    // private function validateRedeemReward($validator)
+    // {
+    //     if (!$this->has('user_id')) {
+    //         $validator->errors()->add('user_id', 'ID pengguna wajib diisi untuk menukar hadiah.');
+    //     }
+    //     if (!$this->has('reward_id')) {
+    //         $validator->errors()->add('reward_id', 'ID hadiah wajib diisi.');
+    //     }
+    // }
 
-    private function validateGetTransactions($validator)
-    {
-        if (!$this->has('user_id')) {
-            $validator->errors()->add('user_id', 'ID pengguna wajib diisi untuk melihat transaksi.');
-        }
-    }
+    // private function validateCoinTransaction($validator)
+    // {
+    //     if (!$this->has('user_id')) {
+    //         $validator->errors()->add('user_id', 'ID pengguna wajib diisi untuk transaksi koin.');
+    //     }
+    //     if (!$this->has('amount')) {
+    //         $validator->errors()->add('amount', 'Jumlah koin wajib diisi.');
+    //     }
+    //     if (!$this->has('related_to_id')) {
+    //         $validator->errors()->add('related_to_id', 'ID terkait wajib diisi untuk transaksi koin.');
+    //     }
+    //     if (!$this->has('related_to_type')) {
+    //         $validator->errors()->add('related_to_type', 'Tipe terkait wajib diisi untuk transaksi koin.');
+    //     }
+    // }
+
+    // private function validateExpTransaction($validator)
+    // {
+    //     if (!$this->has('user_id')) {
+    //         $validator->errors()->add('user_id', 'ID pengguna wajib diisi untuk transaksi exp.');
+    //     }
+    //     if (!$this->has('amount')) {
+    //         $validator->errors()->add('amount', 'Jumlah exp wajib diisi.');
+    //     }
+    //     if (!$this->has('related_to_id')) {
+    //         $validator->errors()->add('related_to_id', 'ID terkait wajib diisi untuk transaksi exp.');
+    //     }
+    //     if (!$this->has('related_to_type')) {
+    //         $validator->errors()->add('related_to_type', 'Tipe terkait wajib diisi untuk transaksi exp.');
+    //     }
+    // }
+
+    // private function validateGetTransactions($validator)
+    // {
+    //     if (!$this->has('user_id')) {
+    //         $validator->errors()->add('user_id', 'ID pengguna wajib diisi untuk melihat transaksi.');
+    //     }
+    // }
 }

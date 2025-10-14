@@ -126,12 +126,28 @@ class SocialMediaController extends Controller
     }
 
     /**
+     * Get default feed posts (latest posts)
+     */
+    public function getDefaultFeedPosts(SocialMediaRequest $request): JsonResponse
+    {
+        try {
+            $perPage = $request->get('per_page', 10);
+
+            $posts = $this->socialMediaService->getDefaultFeedPosts($perPage);
+
+            return $this->successResponse($posts, 'Default feed posts retrieved successfully');
+        } catch (\Exception $e) {
+            return $this->errorResponse('Failed to get default feed posts', 500, $e->getMessage());
+        }
+    }
+
+    /**
      * Get feed posts for user
      */
     public function getFeedPosts(SocialMediaRequest $request): JsonResponse
     {
         try {
-            $user = User::findOrFail($request->user_id);
+            $user = $request->user();
             $perPage = $request->get('per_page', 10);
 
             $posts = $this->socialMediaService->getFeedPosts($user, $perPage);
@@ -139,6 +155,23 @@ class SocialMediaController extends Controller
             return $this->successResponse($posts, 'Feed posts retrieved successfully');
         } catch (\Exception $e) {
             return $this->errorResponse('Failed to get feed posts', 500, $e->getMessage());
+        }
+    }
+
+    /**
+     * Get trending posts
+     */
+    public function getTrendingPosts(SocialMediaRequest $request): JsonResponse
+    {
+        try {
+            $perPage = $request->get('per_page', 20);
+            $hours = $request->get('hours', 24);
+
+            $posts = $this->socialMediaService->getTrendingPosts($perPage);
+
+            return $this->successResponse($posts, 'Trending posts retrieved successfully');
+        } catch (\Exception $e) {
+            return $this->errorResponse('Failed to get trending posts', 500, $e->getMessage());
         }
     }
 
@@ -160,19 +193,19 @@ class SocialMediaController extends Controller
     }
 
     /**
-     * Get trending posts
+     * Get posts by place
      */
-    public function getTrendingPosts(SocialMediaRequest $request): JsonResponse
+    public function getPostsByPlace(int $place_id, SocialMediaRequest $request): JsonResponse
     {
         try {
+            $place = Place::findOrFail($place_id);
             $perPage = $request->get('per_page', 20);
-            $hours = $request->get('hours', 24);
 
-            $posts = $this->socialMediaService->getTrendingPosts($perPage, $hours);
+            $posts = $this->socialMediaService->getPostsByPlace($place, $perPage);
 
-            return $this->successResponse($posts, 'Trending posts retrieved successfully');
+            return $this->successResponse($posts, 'Place posts retrieved successfully');
         } catch (\Exception $e) {
-            return $this->errorResponse('Failed to get trending posts', 500, $e->getMessage());
+            return $this->errorResponse('Failed to get place posts', 500, $e->getMessage());
         }
     }
 
