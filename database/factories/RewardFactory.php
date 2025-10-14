@@ -20,7 +20,7 @@ class RewardFactory extends Factory
         return [
             'name' => 'Reward: ' . fake()->words(3, true),
             'description' => fake()->sentence(12),
-            'image_url' => 'https://example.com/images/rewards/default.png',
+            'image_url' => fake()->imageUrl(640, 480, 'nature', true),
             'coin_requirement' => fake()->numberBetween(500, 5000),
             'stock' => fake()->numberBetween(10, 100),
             'started_at' => Carbon::now(),

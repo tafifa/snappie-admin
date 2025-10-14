@@ -37,7 +37,7 @@ class CheckinFactory extends Factory
             'place_id' => $place->id,
             'latitude' => $latitude,
             'longitude' => $longitude,
-            'image_url' => '', // 60% chance of having an image
+            'image_url' => fake()->imageUrl(640, 480, 'nature', true), // 60% chance of having an image
             'status' => true, // Assuming most seeded check-ins are valid
             'additional_info' => [
                 'device' => fake()->randomElement(['mobile_android', 'mobile_ios']),

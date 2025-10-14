@@ -22,7 +22,11 @@ class PostFactory extends Factory
             'user_id' => User::inRandomOrder()->first()?->id,
             'place_id' => Place::inRandomOrder()->first()?->id,
             'content' => fake()->paragraph(fake()->numberBetween(2, 5)),
-            'image_urls' => '',
+            'image_urls' => [
+                fake()->imageUrl(640, 480, 'nature', true),
+                fake()->imageUrl(640, 480, 'city', true),
+                fake()->imageUrl(640, 480, 'food', true),
+            ],
             'total_like' => fake()->numberBetween(0, 500),
             'total_comment' => fake()->numberBetween(0, 100),
             'status' => fake()->boolean(95), // 95% active

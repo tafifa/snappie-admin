@@ -22,7 +22,11 @@ class ArticleFactory extends Factory
             'title' => fake()->sentence(6),
             'category' => fake()->randomElement(['Kuliner', 'Wisata', 'Budaya', 'Tips', 'Event Pontianak']),
             'content' => fake()->paragraphs(fake()->numberBetween(8, 20), true),
-            'image_urls' => '',
+            'image_urls' => [
+                fake()->imageUrl(640, 480, 'nature', true),
+                fake()->imageUrl(640, 480, 'city', true),
+                fake()->imageUrl(640, 480, 'food', true),
+            ],
             'created_at' => fake()->dateTimeBetween('-2 years', 'now'),
             'updated_at' => fn(array $attributes) => $attributes['created_at'],
         ];
