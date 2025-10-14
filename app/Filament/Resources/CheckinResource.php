@@ -92,7 +92,7 @@ class CheckinResource extends Resource
                                     ->onIcon('heroicon-m-check')
                                     ->offIcon('heroicon-m-clock')
                                     ->helperText('Toggle to mark as completed')
-                                    ->default(false),
+                                    ->default(true),
                             ]),
                     ]),
                 
@@ -126,6 +126,8 @@ class CheckinResource extends Resource
                             ->image()
                             ->maxSize(5120)
                             ->helperText('Upload an image (max 5MB)')
+                            ->disk('public')
+                            ->directory('checkins')
                             ->columnSpanFull(),
 
                         Forms\Components\KeyValue::make('additional_info')

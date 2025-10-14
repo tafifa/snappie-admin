@@ -2,26 +2,25 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\ArticleController;
 use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\PlaceController;
 use App\Http\Controllers\Api\GamificationController;
 use App\Http\Controllers\Api\LeaderboardController;
-use App\Http\Controllers\Api\ArticleController;
-use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\PlaceController;
 use App\Http\Controllers\Api\SocialMediaController;
+use App\Http\Controllers\Api\UserController;
 
 /*
 |--------------------------------------------------------------------------
-| API Routes
+| API Routes - Snappie API
 |--------------------------------------------------------------------------
 |
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "api" middleware group. Make something great!
+| Production API routes mirrored from the development build with per-endpoint
+| throttling to protect the service under load.
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+Route::middleware(['auth:sanctum', 'throttle:60,1'])->get('/user', function (Request $request) {
     return $request->user();
 });
 
@@ -44,12 +43,14 @@ Route::prefix('v1')->group(function () {
                 'social-media' => '/api/v1/social-media/*',
             ]
         ]);
-    });
+    })->middleware('throttle:60,1');
 
     // Authentication routes (public)
     Route::prefix('auth')->group(function () {
-        Route::post('/register', [AuthController::class, 'register']);
-        Route::post('/login', [AuthController::class, 'login']);
+        Route::post('/register', [AuthController::class, 'register'])
+            ->middleware('throttle:5,1');
+        Route::post('/login', [AuthController::class, 'login'])
+            ->middleware('throttle:5,1');
     });
 });
 
@@ -57,81 +58,124 @@ Route::prefix('v1')->group(function () {
 Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     // Authentication routes (protected)
     Route::prefix('auth')->group(function () {
-        Route::post('/logout', [AuthController::class, 'logout']);
+        Route::post('/logout', [AuthController::class, 'logout'])
+            ->middleware('throttle:20,1');
     });
-    
+
     // Places routes
     Route::prefix('places')->group(function () {
-        Route::get('/', [PlaceController::class, 'index']);
-        Route::get('/id/{place_id}', [PlaceController::class, 'show']);
-        Route::get('/id/{place_id}/reviews', [PlaceController::class, 'getPlaceReviews']);
+        Route::get('/', [PlaceController::class, 'index'])
+            ->middleware('throttle:100,1');
+        Route::get('/id/{place_id}', [PlaceController::class, 'show'])
+            ->middleware('throttle:100,1');
+        Route::get('/id/{place_id}/reviews', [PlaceController::class, 'getPlaceReviews'])
+            ->middleware('throttle:60,1');
     });
-    
+
     // Articles routes
     Route::prefix('articles')->group(function () {
-        Route::get('/', [ArticleController::class, 'index']);
-        Route::get('/id/{article_id}', [ArticleController::class, 'show']);
+        Route::get('/', [ArticleController::class, 'index'])
+            ->middleware('throttle:80,1');
+        Route::get('/id/{article_id}', [ArticleController::class, 'show'])
+            ->middleware('throttle:80,1');
     });
-    
+
     // Leaderboard routes
     Route::prefix('leaderboard')->group(function () {
-        Route::get('/id/{leaderboard_id}/top-users', [LeaderboardController::class, 'getTopUsers']);
-        Route::get('/id/{leaderboard_id}/user/id/{user_id}', [LeaderboardController::class, 'getUserRank']);
-        Route::get('/weekly', [LeaderboardController::class, 'getTopUserThisWeek']);
-        Route::get('/monthly', [LeaderboardController::class, 'getTopUsersThisMonth']);
+        Route::get('/id/{leaderboard_id}/top-users', [LeaderboardController::class, 'getTopUsers'])
+            ->middleware('throttle:60,1');
+        Route::get('/id/{leaderboard_id}/user/id/{user_id}', [LeaderboardController::class, 'getUserRank'])
+            ->middleware('throttle:60,1');
+        Route::get('/weekly', [LeaderboardController::class, 'getTopUserThisWeek'])
+            ->middleware('throttle:60,1');
+        Route::get('/monthly', [LeaderboardController::class, 'getTopUsersThisMonth'])
+            ->middleware('throttle:60,1');
     });
-    
+
     // User management routes
     Route::prefix('users')->group(function () {
-        Route::get('/id/{user_id}', [UserController::class, 'show']);
-        Route::get('/profile', [UserController::class, 'profile']);
-        Route::post('/profile', [UserController::class, 'update']);
+        Route::get('/id/{user_id}', [UserController::class, 'show'])
+            ->middleware('throttle:60,1');
+        Route::get('/profile', [UserController::class, 'profile'])
+            ->middleware('throttle:60,1');
+        Route::post('/profile', [UserController::class, 'update'])
+            ->middleware('throttle:30,1');
     });
-    
+
     // Gamification routes
     Route::prefix('gamification')->group(function () {
-        Route::post('/checkin', [GamificationController::class, 'performCheckin']);
-        Route::post('/review', [GamificationController::class, 'createReview']);
-        Route::post('/achievement', [GamificationController::class, 'grantAchievement']);
-        Route::post('/challenge/complete', [GamificationController::class, 'completeChallenge']);
-        Route::post('/reward/redeem', [GamificationController::class, 'redeemReward']);
-        
+        Route::post('/checkin', [GamificationController::class, 'performCheckin'])
+            ->middleware('throttle:20,1');
+        Route::post('/review', [GamificationController::class, 'createReview'])
+            ->middleware('throttle:20,1');
+        Route::post('/achievement', [GamificationController::class, 'grantAchievement'])
+            ->middleware('throttle:20,1');
+        Route::post('/challenge/complete', [GamificationController::class, 'completeChallenge'])
+            ->middleware('throttle:20,1');
+        Route::post('/reward/redeem', [GamificationController::class, 'redeemReward'])
+            ->middleware('throttle:20,1');
+
         // Coin and Experience management
-        Route::post('/coins/add', [GamificationController::class, 'addCoins']);
-        Route::post('/coins/use', [GamificationController::class, 'useCoins']);
-        Route::post('/exp/add', [GamificationController::class, 'addExp']);
-        
+        Route::post('/coins/add', [GamificationController::class, 'addCoins'])
+            ->middleware('throttle:20,1');
+        Route::post('/coins/use', [GamificationController::class, 'useCoins'])
+            ->middleware('throttle:20,1');
+        Route::post('/exp/add', [GamificationController::class, 'addExp'])
+            ->middleware('throttle:20,1');
+
         // Transaction history
-        Route::get('/coins/transactions', [GamificationController::class, 'getCoinTransactions']);
-        Route::get('/exp/transactions', [GamificationController::class, 'getExpTransactions']);
+        Route::get('/coins/transactions', [GamificationController::class, 'getCoinTransactions'])
+            ->middleware('throttle:60,1');
+        Route::get('/exp/transactions', [GamificationController::class, 'getExpTransactions'])
+            ->middleware('throttle:60,1');
     });
-    
+
     // Social Media routes
     Route::prefix('social')->group(function () {
         // Follow system
-        Route::post('/follow', [SocialMediaController::class, 'follow']);
-        Route::delete('/unfollow', [SocialMediaController::class, 'unfollow']);
-        Route::get('/followers', [SocialMediaController::class, 'getFollowers']);
-        Route::get('/following', [SocialMediaController::class, 'getFollowing']);
-        Route::get('/is-following', [SocialMediaController::class, 'isFollowing']);
-        
+        Route::post('/follow', [SocialMediaController::class, 'follow'])
+            ->middleware('throttle:30,1');
+        Route::delete('/unfollow', [SocialMediaController::class, 'unfollow'])
+            ->middleware('throttle:30,1');
+        Route::get('/followers', [SocialMediaController::class, 'getFollowers'])
+            ->middleware('throttle:60,1');
+        Route::get('/following', [SocialMediaController::class, 'getFollowing'])
+            ->middleware('throttle:60,1');
+        Route::get('/is-following', [SocialMediaController::class, 'isFollowing'])
+            ->middleware('throttle:60,1');
+
         // User profiles and posts
-        Route::get('/profile/{user_id}', [SocialMediaController::class, 'getUserProfile']);
-        Route::get('/feed', [SocialMediaController::class, 'getFeedPosts']);
-        Route::get('/posts/user/{user_id}', [SocialMediaController::class, 'getPostsByUser']);
-        
+        Route::get('/profile/{user_id}', [SocialMediaController::class, 'getUserProfile'])
+            ->middleware('throttle:60,1');
+        Route::get('/posts/user/{user_id}', [SocialMediaController::class, 'getPostsByUser'])
+            ->middleware('throttle:60,1');
+
         // Post management
-        Route::post('/posts', [SocialMediaController::class, 'createPost']);
-        Route::get('/posts/trending', [SocialMediaController::class, 'getTrendingPosts']);
-        Route::get('/posts/id/{post_id}', [SocialMediaController::class, 'getPostById']);
-        Route::put('/posts/id/{post_id}', [SocialMediaController::class, 'updatePost']);
-        Route::delete('/posts/id/{post_id}', [SocialMediaController::class, 'deletePost']);
-        
+        Route::post('/posts', [SocialMediaController::class, 'createPost'])
+            ->middleware('throttle:20,1');
+        Route::get('/posts', [SocialMediaController::class, 'getDefaultFeedPosts'])
+            ->middleware('throttle:60,1');
+        Route::get('/posts/feed', [SocialMediaController::class, 'getFeedPosts'])
+            ->middleware('throttle:60,1');
+        Route::get('/posts/trending', [SocialMediaController::class, 'getTrendingPosts'])
+            ->middleware('throttle:60,1');
+        Route::get('/posts/id/{post_id}', [SocialMediaController::class, 'getPostById'])
+            ->middleware('throttle:60,1');
+        Route::put('/posts/id/{post_id}', [SocialMediaController::class, 'updatePost'])
+            ->middleware('throttle:20,1');
+        Route::delete('/posts/id/{post_id}', [SocialMediaController::class, 'deletePost'])
+            ->middleware('throttle:20,1');
+
         // Post interactions
-        Route::post('/posts/id/{target_id}/like', [SocialMediaController::class, 'likePost']);
-        Route::delete('/posts/id/{target_id}/like', [SocialMediaController::class, 'unlikePost']);
-        Route::get('/posts/id/{target_id}/comments', [SocialMediaController::class, 'getPostComments']);
-        Route::post('/posts/id/{target_id}/comments', [SocialMediaController::class, 'commentOnPost']);
-        Route::delete('/posts/id/{comment_id}/comments', [SocialMediaController::class, 'deleteComment']);
+        Route::post('/posts/id/{target_id}/like', [SocialMediaController::class, 'likePost'])
+            ->middleware('throttle:30,1');
+        Route::delete('/posts/id/{target_id}/like', [SocialMediaController::class, 'unlikePost'])
+            ->middleware('throttle:30,1');
+        Route::get('/posts/id/{target_id}/comments', [SocialMediaController::class, 'getPostComments'])
+            ->middleware('throttle:60,1');
+        Route::post('/posts/id/{target_id}/comments', [SocialMediaController::class, 'commentOnPost'])
+            ->middleware('throttle:30,1');
+        Route::delete('/posts/id/{comment_id}/comments', [SocialMediaController::class, 'deleteComment'])
+            ->middleware('throttle:30,1');
     });
 });

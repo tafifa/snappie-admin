@@ -19,27 +19,76 @@ class SocialMediaRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
+        $method = $this->route()->getActionMethod();
+        
+        return match ($method) {
             // User validation
-            'user_id' => 'nullable|integer',
-            'follower_id' => 'nullable|integer',
-            'target_user_id' => 'nullable|integer',
-            'current_user_id' => 'nullable|integer',
+            'follow' => [
+                'user_id' => 'required|integer|exists:users,id',
+                'follower_id' => 'required|integer|exists:users,id',
+            ],
+            'unfollow' => [
+                'user_id' => 'required|integer|exists:users,id',
+                'follower_id' => 'required|integer|exists:users,id',
+            ],
+            'getFollowers' => [
+                'user_id' => 'required|integer|exists:users,id',
+                'limit' => 'nullable|integer|min:1|max:100',
+            ],
+            'getFollowing' => [
+                'user_id' => 'required|integer|exists:users,id',
+                'limit' => 'nullable|integer|min:1|max:100',
+            ],
+            'isFollowing' => [
+                'user_id' => 'required|integer|exists:users,id',
+                'target_user_id' => 'required|integer|exists:users,id',
+            ],
+            'getUserProfile' => [
+                'user_id' => 'required|integer|exists:users,id',
+            ],
+            'getDefaultFeedPosts' => [
+                'per_page' => 'nullable|integer|min:1|max:100',
+            ],
+            'getFeedPosts' => [
+                'per_page' => 'nullable|integer|min:1|max:100',
+            ],
+            'getTrendingPosts' => [
+                'per_page' => 'nullable|integer|min:1|max:100',
+            ],
+            'getPostsByUser' => [
+                'user_id' => 'required|integer|exists:users,id',
+                'per_page' => 'nullable|integer|min:1|max:100',
+            ],
+            'getPostsByPlace' => [
+                'place_id' => 'required|integer|exists:places,id',
+                'per_page' => 'nullable|integer|min:1|max:100',
+            ],
+            'getPostById' => [
+                'post_id' => 'required|integer|exists:posts,id',
+            ],
+            default => [],
+        };
+        // return [
+        //     // User validation
+        //     'user_id' => 'nullable|integer',
+        //     'follower_id' => 'nullable|integer',
+        //     'target_user_id' => 'nullable|integer',
+        //     'current_user_id' => 'nullable|integer',
 
-            // Content validation
-            'place_id' => 'nullable|integer',
-            'post_id' => 'nullable|integer',
-            'comment_id' => 'nullable|integer',
-            'review_id' => 'nullable|integer',
-            'content' => 'nullable|string|max:1000',
-            'image_url' => 'nullable|url',
-            'additional_info' => 'nullable|array',
+        //     // Content validation
+        //     'place_id' => 'nullable|integer',
+        //     'post_id' => 'nullable|integer',
+        //     'comment_id' => 'nullable|integer',
+        //     'review_id' => 'nullable|integer',
+        //     'content' => 'nullable|string|max:1000',
+        //     'image_url' => 'nullable|url',
+        //     'additional_info' => 'nullable|array',
 
-            // Pagination validation
-            'limit' => 'nullable|integer|min:1|max:100',
-            'per_page' => 'nullable|integer|min:1|max:100',
-            'hours' => 'nullable|integer|min:1|max:168',
-        ];
+        //     // Pagination validation
+        //     'limit' => 'nullable|integer|min:1|max:100',
+        //     'per_page' => 'nullable|integer|min:1|max:100',
+        //     'hours' => 'nullable|integer|min:1|max:168',
+        // ];
     }
 
     /**

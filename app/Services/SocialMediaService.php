@@ -136,13 +136,35 @@ class SocialMediaService
 
     // POST
     /**
+     * Mendapatkan feed posts default (tanpa user spesifik).
+     *
+     * @param int $limit
+     * @return LengthAwarePaginator
+     */
+    public function getDefaultFeedPosts(int $limit = self::PAGINATION_LIMIT): LengthAwarePaginator
+    {
+        $feedPosts = Post::where('status', true)
+            ->with([
+                'user:id,name,image_url',
+                'place:id,name,description',
+                'likes.user:id,name,image_url',
+                'comments.user:id,name,image_url'
+            ])
+            ->withCount(['likes', 'comments'])
+            ->orderBy('created_at', 'desc')
+            ->paginate($limit);
+
+        return $feedPosts;
+    }
+
+    /**
      * Mendapatkan feed posts dari pengguna dan pengguna yang dia follow.
      *
      * @param User $user
      * @param int $limit
      * @return LengthAwarePaginator
      */
-    public function getFeedPosts(User $user, int $limit = self::PAGINATION_LIMIT): LengthAwarePaginator
+    public function getFeedPosts(User $user, int $perPage = self::PAGINATION_LIMIT): LengthAwarePaginator
     {
         // Get IDs of users that current user follows
         $followingIds = $user->following()->pluck('following_id')->toArray();
@@ -152,12 +174,53 @@ class SocialMediaService
 
         $feedPosts = Post::whereIn('user_id', $followingIds)
             ->where('status', true)
-            ->with(['user', 'place', 'likes', 'comments'])
+            ->with([
+                'user:id,name,image_url',
+                'place:id,name,description',
+                'likes.user:id,name,image_url',
+                'comments.user:id,name,image_url'
+            ])
             ->withCount(['likes', 'comments'])
             ->orderBy('created_at', 'desc')
-            ->paginate($limit);
+            ->paginate($perPage);
+
+        // if ($feedPosts->isEmpty()) {
+        //     // If user follows no one or no posts found, return default feed
+        //     return $this->getDefaultFeedPosts($perPage);
+        // }
 
         return $feedPosts;
+    }
+
+    /**
+     * Mendapatkan posts trending berdasarkan engagement rate dalam periode waktu tertentu
+     *
+     * @param int $perPage
+     * @param int $hours Jumlah jam ke belakang untuk menghitung trending (default: 24 jam)
+     * @return LengthAwarePaginator
+     */
+    public function getTrendingPosts(int $perPage = self::PAGINATION_LIMIT): LengthAwarePaginator
+    {
+        $trendingPosts = Post::where('status', true)
+            ->where('created_at', '>=', now())
+            ->with([
+                'user:id,name,image_url',
+                'place:id,name,description',
+                'likes.user:id,name,image_url',
+                'comments.user:id,name,image_url'
+            ])
+            ->withCount(['likes', 'comments'])
+            ->where('total_like', '>=', 5) // Minimal 5 likes untuk dianggap trending
+            ->orderByRaw('(total_like + total_comment * 2) / EXTRACT(EPOCH FROM (NOW() - created_at)) DESC')
+            ->orderBy('created_at', 'desc')
+            ->paginate($perPage);   
+
+        // if ($trendingPosts->isEmpty()) {
+        //     // Jika tidak ada post trending, fallback ke post terbaru
+        //     return $this->getDefaultFeedPosts($perPage);
+        // }
+
+        return $trendingPosts;
     }
 
     /**
@@ -171,7 +234,12 @@ class SocialMediaService
     {
         return Post::where('user_id', $user->id)
             ->where('status', true)
-            ->with(['user', 'place', 'likes', 'comments'])
+            ->with([
+                'user:id,name,image_url',
+                'place:id,name,description',
+                'likes.user:id,name,image_url',
+                'comments.user:id,name,image_url'
+            ])
             ->withCount(['likes', 'comments'])
             ->orderBy('created_at', 'desc')
             ->paginate($perPage);
@@ -188,27 +256,13 @@ class SocialMediaService
     {   
         return Post::where('place_id', $place->id)
             ->where('status', true)
-            ->with(['user', 'place', 'likes', 'comments'])
+            ->with([
+                'user:id,name,image_url',
+                'place:id,name,description',
+                'likes.user:id,name,image_url',
+                'comments.user:id,name,image_url'
+            ])
             ->withCount(['likes', 'comments'])
-            ->orderBy('created_at', 'desc')
-            ->paginate($perPage);
-    }
-
-    /**
-     * Mendapatkan posts trending berdasarkan engagement rate dalam periode waktu tertentu
-     *
-     * @param int $perPage
-     * @param int $hours Jumlah jam ke belakang untuk menghitung trending (default: 24 jam)
-     * @return LengthAwarePaginator
-     */
-    public function getTrendingPosts(int $perPage = self::PAGINATION_LIMIT, int $hours = 24): LengthAwarePaginator
-    {
-        return Post::where('status', true)
-            ->where('created_at', '>=', now()->subHours($hours))
-            ->with(['user', 'place', 'likes', 'comments'])
-            ->withCount(['likes', 'comments'])
-            ->where('total_like', '>=', 5) // Minimal 5 likes untuk dianggap trending
-            ->orderByRaw('(total_like + total_comment * 2) / EXTRACT(EPOCH FROM (NOW() - created_at)) DESC')
             ->orderBy('created_at', 'desc')
             ->paginate($perPage);
     }
@@ -221,7 +275,12 @@ class SocialMediaService
      */
     public function getPostById(int $id): ?Post
     {
-        return Post::with(['user', 'place', 'likes', 'comments'])
+        return Post::with([
+                'user:id,name,image_url',
+                'place:id,name,description',
+                'likes.user:id,name,image_url',
+                'comments.user:id,name,image_url'
+            ])
             ->withCount(['likes', 'comments'])
             ->find($id);
     }
@@ -410,8 +469,13 @@ class SocialMediaService
      */
     public function getPaginatedPosts(int $perPage = 10, ?int $userId = null): LengthAwarePaginator
     {
-        $query = Post::with(['user:id,name,username,image_url'])
-            ->withCount('likes')
+        $query = Post::with([
+                'user:id,name,image_url',
+                'place:id,name,description',
+                'likes.user:id,name,image_url',
+                'comments.user:id,name,image_url'
+            ])
+            ->withCount('likes', 'comments')
             ->orderBy('created_at', 'desc');
 
         if ($userId) {

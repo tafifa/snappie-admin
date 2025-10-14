@@ -78,7 +78,7 @@ class ReviewResource extends Resource
                                     ]),
                             ]),
 
-                        Forms\Components\Grid::make(3)
+                        Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\Select::make('rating')
                                     ->label('Rating')
@@ -91,11 +91,6 @@ class ReviewResource extends Resource
                                     ])
                                     ->required()
                                     ->native(false),
-                                Forms\Components\TextInput::make('total_like')
-                                    ->label('Total Likes')
-                                    ->numeric()
-                                    ->default(0)
-                                    ->minValue(0),
                                 Forms\Components\Toggle::make('status')
                                     ->label('Approved')
                                     ->onColor('success')

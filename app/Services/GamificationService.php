@@ -140,6 +140,7 @@ class GamificationService
     return DB::transaction(function () use ($user, $place, $data) {
       // A. Buat data check-in baru
       $checkin = $user->checkins()->create([
+        'user_id' => $user->id,
         'place_id' => $place->id,
         'latitude' => $data['latitude'] ?? null,
         'longitude' => $data['longitude'] ?? null,

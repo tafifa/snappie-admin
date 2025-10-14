@@ -17,7 +17,11 @@ class ArticleService
    */
   public function getPaginated(int $perPage = self::PAGINATION_LIMIT): LengthAwarePaginator
   {
-    return Article::with(['user:id,name,email,image_url'])
+    return Article::with([
+        'user:id,name,image_url',
+        'likes.user:id,name,image_url',
+        'comments.user:id,name,image_url'
+      ])
       ->withCount(['likes', 'comments'])
       ->latest()
       ->paginate($perPage);
@@ -33,7 +37,7 @@ class ArticleService
   {
     return Article::where('id', $articleId)
       ->with([
-        'user:id,name,email,image_url',
+        'user:id,name,image_url',
         'likes.user:id,name,image_url',
         'comments.user:id,name,image_url'
       ])
@@ -51,7 +55,11 @@ class ArticleService
   public function searchByTitle(string $query, int $perPage = self::PAGINATION_LIMIT): LengthAwarePaginator
   {
     return Article::where('title', 'LIKE', "%{$query}%")
-      ->with(['user:id,name,email,image_url'])
+      ->with([
+        'user:id,name,image_url',
+        'likes.user:id,name,image_url',
+        'comments.user:id,name,image_url'
+      ])
       ->withCount(['likes', 'comments'])
       ->latest()
       ->paginate($perPage);
@@ -67,7 +75,11 @@ class ArticleService
   public function getByCategory(string $category, int $perPage = self::PAGINATION_LIMIT): LengthAwarePaginator
   {
     return Article::where('category', $category)
-      ->with(['user:id,name,email,image_url'])
+      ->with([
+        'user:id,name,image_url',
+        'likes.user:id,name,image_url',
+        'comments.user:id,name,image_url'
+      ])
       ->withCount(['likes', 'comments'])
       ->latest()
       ->paginate($perPage);
@@ -83,7 +95,11 @@ class ArticleService
   public function getByAuthor(int $authorId, int $perPage = self::PAGINATION_LIMIT): LengthAwarePaginator
   {
     return Article::where('user_id', $authorId)
-      ->with(['user:id,name,email,image_url'])
+      ->with([
+        'user:id,name,image_url',
+        'likes.user:id,name,image_url',
+        'comments.user:id,name,image_url'
+      ])
       ->withCount(['likes', 'comments'])
       ->latest()
       ->paginate($perPage);

@@ -22,7 +22,11 @@ class ReviewFactory extends Factory
             'user_id' => User::inRandomOrder()->first()?->id,
             'place_id' => Place::inRandomOrder()->first()?->id,
             'content' => fake()->paragraph(fake()->numberBetween(2, 6)),
-            'image_urls' => '',
+            'image_urls' => [
+                fake()->imageUrl(640, 480, 'nature', true),
+                fake()->imageUrl(640, 480, 'city', true),
+                fake()->imageUrl(640, 480, 'food', true),
+            ],
             'rating' => fake()->numberBetween(1, 5),
             'total_like' => fake()->numberBetween(0, 150),
             'status' => fake()->boolean(95), // 95% chance of being approved

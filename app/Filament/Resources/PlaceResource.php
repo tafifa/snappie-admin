@@ -162,12 +162,12 @@ class PlaceResource extends Resource
                     ->schema([
                         Section::make('Menu')
                             ->schema([
-                                Forms\Components\FileUpload::make('additional_info.place_attributes.menu_image_url')
+                                Forms\Components\FileUpload::make('additional_info.menu_image_url')
                                     ->label('Gambar Menu')
                                     ->image()
                                     ->disk('public')
                                     ->directory('places'),
-                                Forms\Components\Repeater::make('additional_info.place_attributes.menu')
+                                Forms\Components\Repeater::make('additional_info.menu')
                                     ->label('Menu Favorit')
                                     ->schema([
                                         Group::make()
@@ -463,10 +463,10 @@ class PlaceResource extends Resource
                     ->schema([
                         InfolistSection::make('Menu')
                             ->schema([
-                                ImageEntry::make('additional_info.place_attributes.menu_image_url')
+                                ImageEntry::make('additional_info.menu_image_url')
                                     ->label('Gambar Menu')
                                     ->disk('public'),
-                                RepeatableEntry::make('additional_info.place_attributes.menu')
+                                RepeatableEntry::make('additional_info.menu')
                                     ->label('Menu Favorit')
                                     ->schema([
                                         ImageEntry::make('image_url')
@@ -495,11 +495,6 @@ class PlaceResource extends Resource
                                             ->schema([
                                                 RepeatableEntry::make('additional_info.place_attributes.facility')
                                                     ->label('Fasilitas')
-                                                    ->getStateUsing(function (Place $record): array {
-                                                        $addt = $record->additional_info['place_attributes']['facility'];
-                                                        dd($addt); 
-                                                        return $addt ?? [];
-                                                    })
                                                     ->schema([
                                                         TextEntry::make('name')->label('Nama'),
                                                         TextEntry::make('description')->label('Deskripsi'),

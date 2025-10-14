@@ -49,40 +49,70 @@ class PlaceFactory extends Factory
                 'place_detail' => [
                     'short_description' => fake()->sentence(6),
                     'address' => fake()->address(),
-                    'opening_hours' => fake()->time('H:i', '06:00', '12:00'),
-                    'closing_hours' => fake()->time('H:i', '17:00', '23:59'),
+                    'opening_hours' => fake()->time('H:i', '12:00'),
+                    'closing_hours' => fake()->time('H:i', '23:59'),
                     'opening_days' => [fake()->randomElement(['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu']), fake()->randomElement(['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'])],
                     'contact_number' => fake('id_ID')->phoneNumber(),
                     'website' => fake()->domainName(),
                 ],
                 'place_value' => fake()->randomElements($placeValueOptions, fake()->numberBetween(2, 4)),
-                'food_type' =>  fake()->randomElements($foodTypeOptions, fake()->numberBetween(2, 4)),
+                'food_type' => fake()->randomElements($foodTypeOptions, fake()->numberBetween(2, 4)),
+                'menu_image_url' => fake()->imageUrl(640, 480, 'drinks', true),
+                'menu' => collect(range(1, fake()->numberBetween(1, 3)))->map(function () use ($faker, $minPrice) {
+                    return [
+                        'name' => $faker->foodName(),
+                        'image_url' => fake()->imageUrl(640, 480, 'food', true),
+                        'price' => fake()->numberBetween($minPrice, $minPrice + 20000),
+                        'description' => fake()->sentence(3),
+                    ];
+                })->toArray(),
                 'place_attributes' => [
-                    'menu' => [
-                        'favorite1' => [
-                            'name' => $faker->foodName(),
-                            'image_url' => fake()->imageUrl(640, 480, 'food', true),
-                            'price' => fake()->numberBetween($minPrice, $minPrice + 20000),
+                    'facility' => collect(range(1, fake()->numberBetween(1, 5)))->map(function () {
+                        $facilities = ['WiFi Gratis', 'AC', 'Musholla', 'Toilet Bersih', 'Smoking Area', 'Outdoor Seating', 'Indoor Seating', 'Colokan Listrik', 'USB Charging Port', 'TV', 'Music Player', 'Playground Anak'];
+                        return [
+                            'name' => fake()->randomElement($facilities),
+                            'description' => fake()->sentence(5),
+                        ];
+                    })->toArray(),
+                    'parking' => collect(range(1, fake()->numberBetween(1, 5)))->map(function () {
+                        $parkings = ['Parkir Motor', 'Parkir Mobil', 'Valet Parking', 'Parkir Gratis', 'Parkir Berbayar', 'Parkir Luas', 'Parkir Terbatas'];
+                        return [
+                            'name' => fake()->randomElement($parkings),
+                            'description' => fake()->sentence(4),
+                        ];
+                    })->toArray(),
+                    'capacity' => collect(range(1, fake()->numberBetween(1, 5)))->map(function () {
+                        $capacities = ['Meja Kecil (2-4 orang)', 'Meja Sedang (5-8 orang)', 'Meja Besar (9-12 orang)', 'Private Room', 'Outdoor Table', 'Counter Seat'];
+                        return [
+                            'name' => fake()->randomElement($capacities),
+                            'description' => fake()->sentence(4),
+                        ];
+                    })->toArray(),
+                    'accessibility' => collect(range(1, fake()->numberBetween(1, 5)))->map(function () {
+                        $accessibilities = ['Wheelchair Accessible', 'Ramp/Landai', 'Lift/Elevator', 'Toilet Difabel', 'Jalur Khusus Difabel', 'Kursi Roda Tersedia'];
+                        return [
+                            'name' => fake()->randomElement($accessibilities),
+                            'description' => fake()->sentence(4),
+                        ];
+                    })->toArray(),
+                    'payment' => collect(range(1, fake()->numberBetween(1, 5)))->map(function () {
+                        $payments = ['Tunai', 'Debit Card', 'Credit Card', 'QRIS', 'GoPay', 'OVO', 'Dana', 'ShopeePay', 'LinkAja'];
+                        return [
+                            'name' => fake()->randomElement($payments),
                             'description' => fake()->sentence(3),
-                        ],
-                        'favorite2' => [
-                            'name' => $faker->foodName(),
-                            'image_url' => fake()->imageUrl(640, 480, 'food', true),
-                            'price' => fake()->numberBetween($minPrice, $minPrice + 20000),
-                            'description' => fake()->sentence(3),
-                        ],
-                    ],
-                    'menu_image_url' => fake()->imageUrl(640, 480, 'drinks', true),
-                    'facility' => [],
-                    'parking' => [],
-                    'capacity' => [],
-                    'accessibility' => [],
-                    'payment' => [],
-                    'service' => []
+                        ];
+                    })->toArray(),
+                    'service' => collect(range(1, fake()->numberBetween(1, 5)))->map(function () {
+                        $services = ['Dine In', 'Take Away', 'Delivery', 'Drive Thru', 'Reservation', 'Catering', 'Private Event', 'Live Music'];
+                        return [
+                            'name' => fake()->randomElement($services),
+                            'description' => fake()->sentence(4),
+                        ];
+                    })->toArray(),
                 ],
             ],
             'created_at' => fake()->dateTimeThisYear(),
-            'updated_at' => fn (array $attributes) => $attributes['created_at'],
+            'updated_at' => fn(array $attributes) => $attributes['created_at'],
         ];
     }
 }

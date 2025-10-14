@@ -85,19 +85,6 @@ class PlaceService
       ->paginate($perPage);
   }
 
-  // public function findNearby(float $latitude, float $longitude, float $radius = 5.0, int $perPage = 10): LengthAwarePaginator
-  // {
-  //   if ($latitude < -90 || $latitude > 90 || $longitude < -180 || $longitude > 180 || $radius <= 0) {
-  //     return new LengthAwarePaginator([], 0, $perPage);
-  //   }
-
-  //   return Place::with(['reviews', 'checkins'])
-  //     ->withCount(['reviews', 'checkins'])
-  //     ->selectRaw("*, ST_Distance(location, ST_GeomFromText('POINT({$longitude} {$latitude})', 4326)) as distance")
-  //     ->whereRaw("ST_Distance(location, ST_GeomFromText('POINT({$longitude} {$latitude})', 4326)) <= ?", [$radius * 1000])
-  //     ->orderBy('distance')
-  //     ->paginate($perPage);
-  // }
   /**
    * Find places nearby a location
    *
@@ -221,7 +208,7 @@ class PlaceService
     return Review::with(['user:id,name,email,image_url'])
       ->where('place_id', $placeId)
       ->orderBy('created_at', 'desc')
-      ->whereDate('created_at', '>=', Carbon::now()->startOfMonth())
+      // ->whereDate('created_at', '>=', Carbon::now()->startOfMonth())
       ->paginate($perPage);
   }
 }

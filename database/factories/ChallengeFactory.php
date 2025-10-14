@@ -22,7 +22,7 @@ class ChallengeFactory extends Factory
     return [
       'name' => 'Challenge: ' . fake()->words(3, true),
       'description' => fake()->sentence(10),
-      'image_url' => 'https://example.com/images/challenges/default.png',
+      'image_url' => fake()->imageUrl(640, 480, 'challenge', true),
       'exp_reward' => fake()->numberBetween(200, 1000),
       'started_at' => $started,
       'ended_at' => $started->clone()->addWeeks(fake()->numberBetween(1, 4)),

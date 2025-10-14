@@ -19,7 +19,7 @@ class AchievementFactory extends Factory
     return [
       'name' => 'Achievement ' . fake()->words(2, true),
       'description' => fake()->sentence(),
-      'image_url' => 'https://example.com/images/achievements/default.png',
+      'image_url' => fake()->imageUrl(640, 480, 'achievement', true),
       'coin_reward' => fake()->numberBetween(50, 250),
       'status' => true,
       'additional_info' => [
