@@ -125,9 +125,10 @@ class CheckinResource extends Resource
                             ->label('Check-in Image')
                             ->image()
                             ->maxSize(5120)
-                            ->helperText('Upload an image (max 5MB)')
+                            ->helperText('Upload an image (max 5MB) - will be automatically uploaded to Cloudinary')
                             ->disk('public')
-                            ->directory('checkins')
+                            ->directory('temp-checkins')
+                            ->visibility('public')
                             ->columnSpanFull(),
 
                         Forms\Components\KeyValue::make('additional_info')
@@ -317,8 +318,10 @@ class CheckinResource extends Resource
                             ->size(200)
                             ->square()
                             ->columnSpanFull()
-                            ->placeholder('Gambar tidak tersedia'),
-                    ]),
+                            ->placeholder('Gambar tidak tersedia')
+                            ->visible(fn ($record) => !empty($record->image_url)),
+                    ])
+                    ->visible(fn ($record) => !empty($record->image_url)),
 
                 // Section 4: Informasi Tambahan
                 Section::make('ℹ️ Informasi Tambahan')

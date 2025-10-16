@@ -89,9 +89,10 @@ class PostResource extends Resource
                             ->multiple()
                             ->maxFiles(5)
                             ->maxSize(5120)
-                            ->helperText('Upload up to 5 images (max 5MB each)')
+                            ->helperText('Upload up to 5 images (max 5MB each) - will be automatically uploaded to Cloudinary')
                             ->disk('public')
-                            ->directory('posts')
+                            ->directory('temp-posts')
+                            ->visibility('public')
                             ->columnSpanFull(),
 
                         Forms\Components\KeyValue::make('additional_info')
