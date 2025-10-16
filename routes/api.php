@@ -62,6 +62,16 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
             ->middleware('throttle:20,1');
     });
 
+    // Image/Video upload routes
+    Route::prefix('upload')->group(function () {
+        Route::post('/file', [App\Http\Controllers\Api\ImageUploadController::class, 'upload'])
+            ->middleware('throttle:30,1'); // Single file (image or video)
+        Route::post('/multiple', [App\Http\Controllers\Api\ImageUploadController::class, 'uploadMultiple'])
+            ->middleware('throttle:20,1'); // Multiple files (max 5)
+        Route::delete('/delete', [App\Http\Controllers\Api\ImageUploadController::class, 'delete'])
+            ->middleware('throttle:30,1');
+    });
+
     // Places routes
     Route::prefix('places')->group(function () {
         Route::get('/', [PlaceController::class, 'index'])
