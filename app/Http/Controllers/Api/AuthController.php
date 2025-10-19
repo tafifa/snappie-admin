@@ -82,12 +82,6 @@ class AuthController extends Controller
                 $e->errors()
             );
         } catch (\Exception $e) {
-            // Log::error('Login error in controller', [
-            //     'error' => $e->getMessage(),
-            //     'email' => $request->input('email'),
-            //     'trace' => $e->getTraceAsString()
-            // ]);
-
             return $this->errorResponse(
                 'Terjadi kesalahan saat login',
                 500,

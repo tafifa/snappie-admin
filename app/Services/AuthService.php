@@ -128,7 +128,7 @@ class AuthService
       // Validate credentials
       if (!$user) {
         throw ValidationException::withMessages([
-          'email' => ['Email/username tidak valid.']
+          'email' => ['Email/username tidak ditemukan.']
         ]);
       }
 
