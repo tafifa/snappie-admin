@@ -210,19 +210,23 @@ class LeaderboardService
 
   /**
    * Clear all leaderboard related cache
+   * Note: File cache driver doesn't support pattern matching, so we clear specific keys
    */
   public function clearLeaderboardCache(): void
   {
-    $patterns = [
-      'leaderboard:top_users:*',
-      'leaderboard:weekly:*',
-      'leaderboard:monthly:*',
-      'leaderboard:user_rank:*',
+    // Clear specific cache keys (file cache doesn't support wildcards)
+    // These will be regenerated on next request
+    $keysToClear = [
+      'leaderboard_monthly_10',
+      'leaderboard:weekly:10',
     ];
 
-    foreach ($patterns as $pattern) {
-      Cache::forget($pattern);
+    foreach ($keysToClear as $key) {
+      Cache::forget($key);
     }
+
+    // Note: For top_users and user_rank caches, they use dynamic keys with leaderboardId
+    // These will expire naturally or can be cleared when leaderboard is refreshed
 
     Log::info('Leaderboard cache cleared');
   }
