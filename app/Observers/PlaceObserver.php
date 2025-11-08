@@ -2,12 +2,12 @@
 
 namespace App\Observers;
 
-use App\Models\Post;
+use App\Models\Place;
 use App\Services\CloudinaryService;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 
-class PostObserver
+class PlaceObserver
 {
     protected CloudinaryService $cloudinaryService;
 
@@ -17,27 +17,27 @@ class PostObserver
     }
 
     /**
-     * Handle the Post "saving" event.
+     * Handle the Place "saving" event.
      * This runs before creating and updating.
      */
-    public function saving(Post $post): void
+    public function saving(Place $place): void
     {
-        $this->handleImageUpload($post);
+        $this->handleImageUpload($place);
     }
 
     /**
-     * Handle the Post "deleted" event.
+     * Handle the Place "deleted" event.
      */
-    public function deleted(Post $post): void
+    public function deleted(Place $place): void
     {
         // Delete all images from Cloudinary
-        if ($post->image_urls && is_array($post->image_urls)) {
-            foreach ($post->image_urls as $imageUrl) {
+        if ($place->image_urls && is_array($place->image_urls)) {
+            foreach ($place->image_urls as $imageUrl) {
                 if (str_contains($imageUrl, 'cloudinary.com')) {
                     try {
                         $this->cloudinaryService->deleteByUrl($imageUrl);
                     } catch (\Exception $e) {
-                        Log::warning("Failed to delete Cloudinary image for post {$post->id}: " . $e->getMessage());
+                        Log::warning("Failed to delete Cloudinary image for place {$place->id}: " . $e->getMessage());
                     }
                 }
             }
@@ -47,12 +47,12 @@ class PostObserver
     /**
      * Handle multiple images upload to Cloudinary
      */
-    protected function handleImageUpload(Post $post): void
+    protected function handleImageUpload(Place $place): void
     {
         // Check if image_urls is set and has changed
-        $imageUrls = $post->getAttributes()['image_urls'] ?? null;
-        
-        if (!$imageUrls || !$post->isDirty('image_urls')) {
+        $imageUrls = $place->getAttributes()['image_urls'] ?? null;
+
+        if (!$imageUrls || !$place->isDirty('image_urls')) {
             return;
         }
 
@@ -89,20 +89,20 @@ class PostObserver
                 
                 if (file_exists($fullPath)) {
                     // Upload to Cloudinary
-                    $result = $this->cloudinaryService->upload($fullPath, 'posts');
+                    $result = $this->cloudinaryService->upload($fullPath, 'places');
                     $cloudinaryUrls[] = $result['secure_url'];
                     
                     // Delete the local temporary file
                     Storage::disk('public')->delete($imageUrl);
-                    
-                    Log::info("Uploaded post image to Cloudinary: {$result['secure_url']}");
+
+                    Log::info("Uploaded place image to Cloudinary: {$result['secure_url']}");
                 } else {
                     // File doesn't exist, keep original value
                     $cloudinaryUrls[] = $imageUrl;
-                    Log::warning("Post image file not found: {$fullPath}");
+                    Log::warning("Place image file not found: {$fullPath}");
                 }
             } catch (\Exception $e) {
-                Log::error("Failed to upload post image to Cloudinary: " . $e->getMessage());
+                Log::error("Failed to upload place image to Cloudinary: " . $e->getMessage());
                 // Keep the original path if upload fails
                 $cloudinaryUrls[] = $imageUrl;
             }
@@ -110,7 +110,7 @@ class PostObserver
 
         // Update with Cloudinary URLs only if there were local files to upload
         if ($hasLocalFiles) {
-            $post->setAttribute('image_urls', $cloudinaryUrls);
+            $place->setAttribute('image_urls', $cloudinaryUrls);
         }
     }
 }

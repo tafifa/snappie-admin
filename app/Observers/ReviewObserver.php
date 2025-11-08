@@ -110,7 +110,7 @@ class ReviewObserver
 
         // Update with Cloudinary URLs only if there were local files to upload
         if ($hasLocalFiles) {
-            $review->setAttribute('image_urls', json_encode($cloudinaryUrls));
+            $review->setAttribute('image_urls', $cloudinaryUrls);
         }
     }
 }
