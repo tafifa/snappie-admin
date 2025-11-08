@@ -2,11 +2,5 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
-
-// Add login route for welcome page compatibility
-Route::get('/login', function () {
-    return redirect('/admin');
-})->name('login');
+// Filament panel handles the root path (/)
+// No need for manual routes here as Filament manages routing
