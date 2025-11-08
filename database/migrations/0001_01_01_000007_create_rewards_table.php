@@ -21,7 +21,7 @@ return new class extends Migration
             $table->timestamp('started_at')->nullable();
             $table->timestamp('ended_at')->nullable();
             $table->boolean('status')->default(true); // e.g., active/inactive
-            $table->jsonb('additional_info')->nullable(); // Stores flexible key-value pairs
+            $table->json('additional_info')->nullable(); // Stores flexible key-value pairs
             $table->timestamps();
 
             // Indexes for better performance

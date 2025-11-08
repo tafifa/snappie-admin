@@ -29,7 +29,7 @@ return new class extends Migration
             $table->integer('total_challenge')->default(0);
             $table->boolean('status')->default(true);
             $table->timestamp('last_login_at')->nullable();
-            $table->jsonb('additional_info')->nullable(); // Stores flexible key-value pairs, e.g., {"bio": "User bio", "preferences": {"theme": "dark"}}
+            $table->json('additional_info')->nullable(); // Stores flexible key-value pairs, e.g., {"bio": "User bio", "preferences": {"theme": "dark"}}
             $table->timestamps();
             
             // Indexes for better performance

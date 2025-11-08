@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('reward_id')->constrained('rewards')->onDelete('cascade');
             $table->boolean('status')->default(false);
-            $table->jsonb('additional_info')->nullable(); // Stores flexible key-value pairs, e.g., redemption code, status
+            $table->json('additional_info')->nullable(); // Stores flexible key-value pairs, e.g., redemption code, status
             $table->timestamps();
 
             // Indexes for better performance

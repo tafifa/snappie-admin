@@ -19,7 +19,7 @@ return new class extends Migration
             $table->float('longitude', 10, 6)->nullable();
             $table->text('image_url')->nullable();
             $table->boolean('status')->default(false);
-            $table->jsonb('additional_info')->nullable(); // Stores flexible key-value pairs, e.g., {"device": "mobile", "purpose": "leisure"}
+            $table->json('additional_info')->nullable(); // Stores flexible key-value pairs, e.g., {"device": "mobile", "purpose": "leisure"}
             $table->timestamps();
             
             // Indexes for better performance

@@ -18,7 +18,7 @@ return new class extends Migration
             $table->text('image_url')->nullable();
             $table->integer('coin_reward')->default(0);
             $table->boolean('status')->default(true); // e.g., active/inactive
-            $table->jsonb('additional_info')->nullable(); // Stores flexible key-value pairs
+            $table->json('additional_info')->nullable(); // Stores flexible key-value pairs
             $table->timestamps();
 
             // Indexes for better performance

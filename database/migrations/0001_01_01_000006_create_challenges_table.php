@@ -21,7 +21,7 @@ return new class extends Migration
             $table->timestamp('ended_at')->nullable();
             $table->enum('challenge_type', ['daily', 'weekly', 'special'])->nullable(); // e.g., 'daily', 'weekly', 'monthly'
             $table->boolean('status')->default(true); // e.g., active/inactive
-            $table->jsonb('additional_info')->nullable(); // Stores flexible key-value pairs
+            $table->json('additional_info')->nullable(); // Stores flexible key-value pairs
             $table->timestamps();
 
             // Indexes for better performance

@@ -13,11 +13,12 @@ return new class extends Migration
     {
         Schema::create('articles', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade'); // TODO: didnt use user table, just use author name
+            // TODO: add column link to article source
             $table->string('title');
             $table->string('category');
-            $table->text('content');
-            $table->jsonb('image_urls')->nullable();
+            $table->text('content'); // TODO: change to short_description
+            $table->json('image_urls')->nullable(); // TODO: just one image url
             $table->timestamps();
 
             // Indexes for better performance

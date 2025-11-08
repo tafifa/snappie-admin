@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('leaderboards', function (Blueprint $table) {
             $table->id();
             $table->boolean('status')->default(true);
-            $table->jsonb('leaderboard')->nullable();
+            $table->json('leaderboard')->nullable();
             $table->timestamp('started_at')->nullable();
             $table->timestamp('ended_at')->nullable();
             $table->timestamps();

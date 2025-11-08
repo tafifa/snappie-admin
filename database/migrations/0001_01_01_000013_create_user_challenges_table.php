@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('challenge_id')->constrained('challenges')->onDelete('cascade');
             $table->boolean('status')->default(false);
-            $table->jsonb('additional_info')->nullable(); // Stores flexible key-value pairs, e.g., progress, score
+            $table->json('additional_info')->nullable(); // Stores flexible key-value pairs, e.g., progress, score
             $table->timestamps();
 
             // Indexes for better performance

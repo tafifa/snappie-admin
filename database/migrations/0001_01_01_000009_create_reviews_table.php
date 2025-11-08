@@ -16,11 +16,11 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('place_id')->constrained('places')->onDelete('cascade');
             $table->text('content');
-            $table->jsonb('image_urls')->nullable();
+            $table->json('image_urls')->nullable();
             $table->integer('rating')->default(0); // Rating from 1 to 5
             $table->integer('total_like')->default(0); // Number of likes
             $table->boolean('status')->default(true); // For moderation
-            $table->jsonb('additional_info')->nullable(); // Stores flexible key-value pairs
+            $table->json('additional_info')->nullable(); // Stores flexible key-value pairs
             $table->timestamps();
 
             // Indexes for better performance

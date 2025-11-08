@@ -17,7 +17,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->float('latitude', 10, 6)->nullable();
             $table->float('longitude', 10, 6)->nullable();
-            $table->jsonb('image_urls')->nullable();
+            $table->json('image_urls')->nullable();
             $table->integer('coin_reward')->default(0);
             $table->integer('exp_reward')->default(0);
             $table->integer('min_price')->nullable()->default(0); // Minimum price for the place
@@ -27,7 +27,7 @@ return new class extends Migration
             $table->integer('total_checkin')->default(0);
             $table->boolean('status')->default(true);
             $table->boolean('partnership_status')->default(false);
-            $table->jsonb('additional_info')->nullable(); // Stores flexible key-value pairs, e.g., {"website": "example.com", "capacity": 100, "opening_hours": "9 AM - 5 PM", "contact_number": "123-456-7890"}
+            $table->json('additional_info')->nullable(); // Stores flexible key-value pairs, e.g., {"website": "example.com", "capacity": 100, "opening_hours": "9 AM - 5 PM", "contact_number": "123-456-7890"}
             $table->timestamps();
             
             // Indexes for better performance
