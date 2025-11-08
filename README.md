@@ -8,7 +8,7 @@
   <a href="https://laravel.com"><img src="https://img.shields.io/badge/Laravel-12.x-red" alt="Laravel 12"></a>
   <a href="https://filamentphp.com"><img src="https://img.shields.io/badge/Filament-3.3-orange" alt="Filament 3"></a>
   <a href="https://www.php.net"><img src="https://img.shields.io/badge/PHP-8.2+-blue" alt="PHP 8.2"></a>
-  <a href="https://www.postgresql.org"><img src="https://img.shields.io/badge/PostgreSQL-15+-4169e1" alt="PostgreSQL"></a>
+  <a href="https://www.mysql.com"><img src="https://img.shields.io/badge/MySQL-8.0+-4479A1" alt="MySQL"></a>
 </p>
 
 # Snappie Admin Panel
@@ -25,8 +25,6 @@ Snappie Admin is the operational command center for the Snappie ecosystem—a ga
 - [Tech Stack](#tech-stack)
 - [Quick Start](#quick-start)
 - [Daily Operations](#daily-operations)
-- [API Reference](#api-reference)
-- [Testing & QA](#testing--qa)
 - [Deployment Notes](#deployment-notes)
 - [Contributing](#contributing)
 
@@ -38,7 +36,6 @@ Snappie Admin is the operational command center for the Snappie ecosystem—a ga
 - **Composable CRUD resources** covering users, places, reviews, check-ins, coins, EXP, posts, and partnerships.
 - **Gamification engine tooling** to trigger missions, rewards, and coin/experience transactions.
 - **In-app social management** (posts, comments, likes, follows) with moderation queues.
-- **OpenAPI-backed mobile API** secured by Laravel Sanctum and documented for downstream SDK generation.
 
 ---
 
@@ -47,17 +44,15 @@ Snappie Admin is the operational command center for the Snappie ecosystem—a ga
 | Layer | Responsibility | Key Locations |
 | --- | --- | --- |
 | Presentation | Filament 3 admin UI, widgets, forms, tables | `app/Filament/Resources`, `app/Filament/Widgets` |
-| Application | HTTP controllers, request validation, middleware | `app/Http/Controllers/Api`, `app/Http/Requests`, `app/Http/Middleware` |
 | Domain | Eloquent models, attributes, relationships | `app/Models` |
-| Services | Reusable business workflows (auth, gamification, places, social feeds, notifications) | `app/Services` |
-| Infrastructure | Helpers, storage adapters, providers, queues | `app/Helpers`, `app/Providers`, `config/`, `bootstrap/` |
-| Data | Migrations, factories, seeders for Postgres schema | `database/migrations`, `database/seeders`, `database/factories` |
+| Services | Reusable business workflows (leaderboard, cloudinary uploads) | `app/Services` |
+| Infrastructure | Storage adapters, providers, observers | `app/Providers`, `app/Observers`, `config/`, `bootstrap/` |
+| Data | Migrations, factories, seeders for MySQL schema | `database/migrations`, `database/seeders`, `database/factories` |
 
 **Routing**
 
-- REST API lives under `routes/api.php`, versioned at `/api/v1`, with Sanctum-protected groups for authenticated flows.
-- Admin UI is bootstrapped via Filament (default path `/admin`).
-- Console and scheduled tasks are registered in `routes/console.php` and `app/Console`.
+- Admin UI is bootstrapped via Filament (default path `/`).
+- Console and scheduled tasks are registered in `app/Console`.
 
 ---
 
@@ -94,10 +89,10 @@ Snappie Admin is the operational command center for the Snappie ecosystem—a ga
 
 | Area | Tooling |
 | --- | --- |
-| Backend | Laravel 12, PHP 8.2+, Sanctum, Postgres 15 |
+| Backend | Laravel 12, PHP 8.2+, MySQL 8.0+ |
 | Admin UI | Filament 3.3, Tailwind CSS 4, Heroicons |
-| Frontend Build | Vite 6 + `@tailwindcss/vite`, Axios for API calls |
-| Dev Utilities | Composer 2, npm 10, Pest, Pint, Sail (optional), Docker Compose |
+| Frontend Build | Vite 6 + `@tailwindcss/vite` |
+| Dev Utilities | Composer 2, npm 10, Docker Compose (optional) |
 | Observability | Laravel logging stack, queue workers via `queue:listen` |
 
 ---
@@ -108,7 +103,7 @@ Snappie Admin is the operational command center for the Snappie ecosystem—a ga
 
 - PHP 8.2+
 - Composer 2.x
-- PostgreSQL 15+
+- MySQL 8.0+ atau MariaDB 10.3+
 - Node.js 18+
 - npm 10+
 - Git
@@ -131,7 +126,7 @@ Copy-Item .env.example .env
 php artisan key:generate
 
 # Database
-# Update .env with Postgres credentials before running:
+# Update .env with MySQL credentials before running:
 php artisan migrate --seed
 
 # Storage symlink for media access
@@ -141,7 +136,7 @@ php artisan storage:link
 ### Run locally
 
 ```pwsh
-# Laravel API & Filament admin
+# Filament admin panel
 php artisan serve
 
 # Vite asset dev server (optional if using Filament defaults)
@@ -151,7 +146,7 @@ npm run dev
 composer dev
 ```
 
-Visit the admin at `http://127.0.0.1:8000/admin` (create an admin user via seeder, tinker, or Filament user management).
+Visit the admin at `http://127.0.0.1:8000` (create an admin user via seeder or Filament user management).
 
 ---
 
@@ -169,55 +164,6 @@ Visit the admin at `http://127.0.0.1:8000/admin` (create an admin user via seede
 
 - Use column filters and saved table layouts for repeated moderation workflows.
 - Queue listeners (`php artisan queue:listen --tries=1`) handle async jobs like notifications—ensure they run in staging/production.
-- `app/Helpers/ApiResponseHelper.php` standardizes JSON payloads when extending the API.
-
----
-
-## API Reference
-
-- Source of truth: `docs/v2/openapi.yaml` (OpenAPI 3.0.3).
-- Base URL (local): `http://127.0.0.1:8000/api/v1`.
-- Authentication: Bearer tokens issued via Sanctum (`/api/v1/auth/login`).
-
-### Quick tooling
-
-```pwsh
-# Serve interactive docs (Swagger UI)
-
-
-# Validate spec
-npx @apidevtools/swagger-parser validate docs/v2/openapi.yaml
-```
-
-### Core endpoints
-
-- **Auth**: register, login, logout.
-- **User**: profile details, updates, follower graphs.
-- **Places**: listings, nearby search, detail with reviews.
-- **Gamification**: check-ins, achievements, coin/EXP transactions, rewards.
-- **Social**: posts, likes, comments, trending feed.
-- **Leaderboard**: weekly/monthly rankings, user rank lookup.
-
----
-
-## Testing & QA
-
-```pwsh
-# Clear cached config to avoid stale settings
-php artisan config:clear
-
-# Run full test suite (Pest)
-php artisan test
-
-# Run a focused test
-php artisan test --filter=LeaderboardTest
-
-# Static analysis & style
-./vendor/bin/pint
-```
-
-- Seed test data via `php artisan db:seed` for realistic fixtures.
-- Factories live under `database/factories` and are ready for high-volume data generation.
 
 ---
 
@@ -236,7 +182,7 @@ php artisan test --filter=LeaderboardTest
 5. Ensure `storage/` and `bootstrap/cache` are writable; run `php artisan storage:link` once per environment.
 6. Configure systemd/queue workers for `queue:work` or Horizon (if adopted later).
 
-Suggested baseline server: 2 vCPU, 4GB RAM, Postgres 15 managed service, S3-compatible storage for production media.
+Suggested baseline server: 2 vCPU, 4GB RAM, MySQL 8.0+ managed service, S3-compatible storage for production media.
 
 ---
 
@@ -244,8 +190,7 @@ Suggested baseline server: 2 vCPU, 4GB RAM, Postgres 15 managed service, S3-comp
 
 1. Fork and create a feature branch (`git checkout -b feature/awesome-improvement`).
 2. Follow PSR-12 and project conventions (Filament resource structure, dedicated services for complex logic).
-3. Add tests where the behaviour changes; run `php artisan test` before committing.
-4. Submit a pull request with a clear summary, screenshots for UI changes, and database migration notes if applicable.
+3. Submit a pull request with a clear summary, screenshots for UI changes, and database migration notes if applicable.
 
 ---
 
