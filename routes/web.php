@@ -1,6 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Providers\Filament\AdminPanelProvider;
 
-// Filament panel handles the root path (/)
-// No need for manual routes here as Filament manages routing
+Route::get('/', function () {
+    return redirect()->route('filament.admin.pages.dashboard');
+});

@@ -18,17 +18,6 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping()
             ->runInBackground();
 
-        // Update cache leaderboard setiap 5 menit untuk performa optimal
-        $schedule->command('leaderboard:update')
-            ->everyFiveMinutes()
-            ->withoutOverlapping()
-            ->runInBackground();
-
-        // Clear expired cache setiap 30 menit
-        $schedule->command('leaderboard:clear-cache')
-            ->everyThirtyMinutes()
-            ->runInBackground();
-
         // Reset monthly leaderboard (jika diperlukan untuk kompetisi bulanan)
         $schedule->command('leaderboard:reset')
             ->monthlyOn(1, '00:59')
@@ -41,7 +30,5 @@ class Kernel extends ConsoleKernel
     protected function commands(): void
     {
         $this->load(__DIR__.'/Commands');
-
-        require base_path('routes/console.php');
     }
 }
