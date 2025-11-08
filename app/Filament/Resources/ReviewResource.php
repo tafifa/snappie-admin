@@ -145,6 +145,7 @@ class ReviewResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn (Builder $query) => $query->with(['user', 'place']))
             ->columns([
                 Tables\Columns\TextColumn::make('user.name')
                     ->label('User')
@@ -280,6 +281,7 @@ class ReviewResource extends Resource
                 ]),
             ])
             ->defaultSort('created_at', 'desc')
+            ->defaultPaginationPageOption(25)
             ->emptyStateHeading('No reviews found')
             ->emptyStateDescription('Once users start reviewing places, they will appear here.')
             ->emptyStateIcon('heroicon-o-star');
@@ -381,12 +383,20 @@ class ReviewResource extends Resource
     
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::where('status', false)->count() ?: null;
+        return \Illuminate\Support\Facades\Cache::remember(
+            'navigation_badge_reviews',
+            now()->addMinutes(10),
+            fn () => static::getModel()::where('status', false)->count() ?: null
+        );
     }
     
     public static function getNavigationBadgeColor(): ?string
     {
-        $pendingCount = static::getModel()::where('status', false)->count();
+        $pendingCount = \Illuminate\Support\Facades\Cache::remember(
+            'navigation_badge_reviews',
+            now()->addMinutes(10),
+            fn () => static::getModel()::where('status', false)->count()
+        );
         return $pendingCount > 0 ? 'warning' : null;
     }
     

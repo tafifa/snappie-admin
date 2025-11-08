@@ -189,6 +189,7 @@ class LeaderboardResource extends Resource
                 ]),
             ])
             ->defaultSort('created_at', 'desc')
+            ->defaultPaginationPageOption(25)
             ->poll('60s');
     }
 

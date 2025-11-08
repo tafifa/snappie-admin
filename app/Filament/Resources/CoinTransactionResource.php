@@ -82,6 +82,7 @@ class CoinTransactionResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn (Builder $query) => $query->with(['user']))
             ->columns([
                 Tables\Columns\TextColumn::make('id')
                     ->label('ID')
@@ -162,6 +163,7 @@ class CoinTransactionResource extends Resource
                 ]),
             ])
             ->defaultSort('created_at', 'desc')
+            ->defaultPaginationPageOption(25)
             ->poll('30s');
     }
 

@@ -145,6 +145,7 @@ class UserResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn (Builder $query) => $query->with([]))
             ->columns([
                 Tables\Columns\ImageColumn::make('image_url')
                     ->label('Avatar')
@@ -173,67 +174,6 @@ class UserResource extends Resource
                     ->copyable()
                     ->icon('heroicon-m-envelope')
                     ->limit(30),
-
-                Tables\Columns\TextColumn::make('total_coin')
-                    ->label('Coin')
-                    ->numeric()
-                    ->sortable()
-                    ->badge()
-                    ->color('warning')
-                    ->icon('heroicon-m-currency-dollar'),
-
-                Tables\Columns\TextColumn::make('total_exp')
-                    ->label('EXP')
-                    ->numeric()
-                    ->sortable()
-                    ->badge()
-                    ->color('success')
-                    ->icon('heroicon-m-star'),
-
-                Tables\Columns\TextColumn::make('total_following')
-                    ->label('Following')
-                    ->numeric()
-                    ->sortable()
-                    ->badge()
-                    ->color('info')
-                    ->icon('heroicon-m-user-plus')
-                    ->toggleable(),
-
-                Tables\Columns\TextColumn::make('total_follower')
-                    ->label('Followers')
-                    ->numeric()
-                    ->sortable()
-                    ->badge()
-                    ->color('primary')
-                    ->icon('heroicon-m-users')
-                    ->toggleable(),
-
-                Tables\Columns\TextColumn::make('total_checkin')
-                    ->label('Check-ins')
-                    ->numeric()
-                    ->sortable()
-                    ->badge()
-                    ->color('success')
-                    ->icon('heroicon-m-map-pin')
-                    ->toggleable(),
-
-                Tables\Columns\TextColumn::make('total_review')
-                    ->label('Reviews')
-                    ->numeric()
-                    ->sortable()
-                    ->badge()
-                    ->color('warning')
-                    ->icon('heroicon-m-chat-bubble-left-ellipsis')
-                    ->toggleable(),
-
-                Tables\Columns\TextColumn::make('total_achievement')
-                    ->label('Achievements')
-                    ->numeric()
-                    ->sortable()
-                    ->badge()
-                    ->color('success')
-                    ->icon('heroicon-m-trophy')
-                    ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\IconColumn::make('status')
                     ->label('Status')
@@ -337,6 +277,7 @@ class UserResource extends Resource
                 ]),
             ])
             ->defaultSort('created_at', 'desc')
+            ->defaultPaginationPageOption(25)
             ->emptyStateHeading('No users found')
             ->emptyStateDescription('Once users register, they will appear here.')
             ->emptyStateIcon('heroicon-o-user-group');
@@ -589,7 +530,11 @@ class UserResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::where('status', true)->count() ?: null;
+        return \Illuminate\Support\Facades\Cache::remember(
+            'navigation_badge_users',
+            now()->addMinutes(10),
+            fn () => static::getModel()::where('status', true)->count() ?: null
+        );
     }
 
     public static function getGlobalSearchEloquentQuery(): Builder

@@ -470,8 +470,14 @@ class RewardResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        $activeCount = static::getModel()::where('status', true)->count();
-        return $activeCount > 0 ? (string) $activeCount : null;
+        return \Illuminate\Support\Facades\Cache::remember(
+            'navigation_badge_rewards',
+            now()->addMinutes(10),
+            function () {
+                $activeCount = static::getModel()::where('status', true)->count();
+                return $activeCount > 0 ? (string) $activeCount : null;
+            }
+        );
     }
 
     public static function getGlobalSearchAttributes(): array

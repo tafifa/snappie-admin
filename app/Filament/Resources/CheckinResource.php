@@ -146,6 +146,7 @@ class CheckinResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn (Builder $query) => $query->with(['user', 'place']))
             ->columns([
                 Tables\Columns\TextColumn::make('user.name')
                     ->label('User')
@@ -255,6 +256,7 @@ class CheckinResource extends Resource
                 ]),
             ])
             ->defaultSort('created_at', 'desc')
+            ->defaultPaginationPageOption(25)
             ->emptyStateHeading('No check-ins found')
             ->emptyStateDescription('Once users start checking in to places, they will appear here.')
             ->emptyStateIcon('heroicon-o-map-pin');
@@ -371,7 +373,11 @@ class CheckinResource extends Resource
     
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::where('status', false)->count() ?: null;
+        return \Illuminate\Support\Facades\Cache::remember(
+            'navigation_badge_checkins',
+            now()->addMinutes(10),
+            fn () => static::getModel()::where('status', false)->count() ?: null
+        );
     }
     
     public static function getGlobalSearchEloquentQuery(): Builder

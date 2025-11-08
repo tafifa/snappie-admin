@@ -267,12 +267,6 @@ class PlaceResource extends Resource
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('min_price')
-                    ->money('IDR')
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('max_price')
-                    ->money('IDR')
-                    ->sortable(),
                 Tables\Columns\TextColumn::make('avg_rating')
                     ->sortable(),
                 Tables\Columns\IconColumn::make('status')
@@ -314,7 +308,8 @@ class PlaceResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->defaultPaginationPageOption(25);
     }
 
     public static function infolist(Infolist $infolist): Infolist
@@ -471,7 +466,7 @@ class PlaceResource extends Resource
                                     ->schema([
                                         ImageEntry::make('image_url')
                                             ->label('Gambar')
-                                            ->disk('public'),    
+                                            ->disk('public'),
                                         TextEntry::make('name')
                                             ->label('Nama Menu'),
                                         TextEntry::make('price')

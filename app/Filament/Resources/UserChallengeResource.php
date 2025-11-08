@@ -103,6 +103,7 @@ class UserChallengeResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn (Builder $query) => $query->with(['user', 'challenge']))
             ->columns([
                 Tables\Columns\TextColumn::make('user.name')
                     ->label('Pengguna')
@@ -451,8 +452,14 @@ class UserChallengeResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        $completedCount = static::getModel()::where('status', true)->count();
-        return $completedCount > 0 ? (string) $completedCount : null;
+        return \Illuminate\Support\Facades\Cache::remember(
+            'navigation_badge_user_challenges',
+            now()->addMinutes(10),
+            function () {
+                $completedCount = static::getModel()::where('status', true)->count();
+                return $completedCount > 0 ? (string) $completedCount : null;
+            }
+        );
     }
 
     public static function getGlobalSearchAttributes(): array

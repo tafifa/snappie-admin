@@ -103,6 +103,7 @@ class UserRewardResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn (Builder $query) => $query->with(['user', 'reward']))
             ->columns([
                 Tables\Columns\TextColumn::make('user.name')
                     ->label('Pengguna')
@@ -480,8 +481,14 @@ class UserRewardResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        $claimedCount = static::getModel()::where('status', true)->count();
-        return $claimedCount > 0 ? (string) $claimedCount : null;
+        return \Illuminate\Support\Facades\Cache::remember(
+            'navigation_badge_user_rewards',
+            now()->addMinutes(10),
+            function () {
+                $claimedCount = static::getModel()::where('status', true)->count();
+                return $claimedCount > 0 ? (string) $claimedCount : null;
+            }
+        );
     }
 
     public static function getGlobalSearchAttributes(): array
