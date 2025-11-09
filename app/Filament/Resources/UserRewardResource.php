@@ -121,28 +121,6 @@ class UserRewardResource extends Resource
                     ->icon('heroicon-m-gift')
                     ->limit(30),
 
-                Tables\Columns\TextColumn::make('reward.coin_requirement')
-                    ->label('Coin Requirement')
-                    ->numeric()
-                    ->sortable()
-                    ->badge()
-                    ->color('warning')
-                    ->icon('heroicon-m-currency-dollar')
-                    ->toggleable(),
-
-                Tables\Columns\TextColumn::make('reward.stock')
-                    ->label('Stock Tersisa')
-                    ->numeric()
-                    ->sortable()
-                    ->badge()
-                    ->color(fn (?int $state): string => match (true) {
-                        $state === null => 'gray',
-                        $state <= 0 => 'danger',
-                        default => 'success',
-                    })
-                    ->icon('heroicon-m-cube')
-                    ->toggleable(),
-
                 Tables\Columns\IconColumn::make('status')
                     ->label('Status')
                     ->boolean()
@@ -248,37 +226,6 @@ class UserRewardResource extends Resource
                     ->action(fn (UserReward $record) => $record->update(['status' => false]))
                     ->requiresConfirmation()
                     ->visible(fn (UserReward $record): bool => $record->status),
-
-                // Tables\Actions\Action::make('claim')
-                //     ->label('Klaim')
-                //     ->icon('heroicon-o-check-circle')
-                //     ->color('success')
-                //     ->action(fn (UserReward $record) => $record->update(['status' => true]))
-                //     ->requiresConfirmation()
-                //     ->visible(fn (UserReward $record): bool => !$record->status),
-
-                // Tables\Actions\Action::make('unclaim')
-                //     ->label('Batalkan Klaim')
-                //     ->icon('heroicon-o-x-circle')
-                //     ->color('warning')
-                //     ->action(fn (UserReward $record) => $record->update(['status' => false]))
-                //     ->requiresConfirmation()
-                //     ->visible(fn (UserReward $record): bool => $record->status),
-
-                // Tables\Actions\Action::make('update_quantity')
-                //     ->label('Update Quantity')
-                //     ->icon('heroicon-o-hashtag')
-                //     ->color('info')
-                //     ->form([
-                //         Forms\Components\TextInput::make('quantity')
-                //             ->label('Jumlah')
-                //             ->numeric()
-                //             ->minValue(1)
-                //             ->required(),
-                //     ])
-                //     ->action(function (UserReward $record, array $data): void {
-                //         $record->update(['quantity' => $data['quantity']]);
-                //     }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -323,16 +270,12 @@ class UserRewardResource extends Resource
                                     ->weight(FontWeight::Bold)
                                     ->icon('heroicon-m-gift'),
                             ]),
-
-                        Infolists\Components\TextEntry::make('reward.description')
-                            ->label('Deskripsi Reward')
-                            ->columnSpanFull(),
                     ]),
 
-                // Section 2: Status & Quantity
-                Infolists\Components\Section::make('📦 Status & Quantity')
+                // Section 2: Status & Reward Cost
+                Infolists\Components\Section::make('📦 Status & Reward Cost')
                     ->schema([
-                        Infolists\Components\Grid::make(3)
+                        Infolists\Components\Grid::make(2)
                             ->schema([
                                 Infolists\Components\IconEntry::make('status')
                                     ->label('Status')
@@ -342,95 +285,11 @@ class UserRewardResource extends Resource
                                     ->trueColor('success')
                                     ->falseColor('warning'),
 
-                                Infolists\Components\TextEntry::make('quantity')
-                                    ->label('Jumlah')
-                                    ->badge()
-                                    ->color('info')
-                                    ->icon('heroicon-m-hashtag'),
-
-                                Infolists\Components\TextEntry::make('total_cost')
-                                    ->label('Total Cost')
-                                    ->getStateUsing(fn (UserReward $record): int => $record->quantity * $record->reward->coin_requirement)
-                                    ->badge()
-                                    ->color('danger')
-                                    ->icon('heroicon-m-calculator'),
-                            ]),
-                    ]),
-
-                // Section 3: Informasi Reward
-                Infolists\Components\Section::make('🎁 Informasi Reward')
-                    ->schema([
-                        Infolists\Components\Grid::make(3)
-                            ->schema([
                                 Infolists\Components\TextEntry::make('reward.coin_requirement')
                                     ->label('Coin Requirement')
                                     ->badge()
-                                    ->color('warning')
+                                    ->color('danger')
                                     ->icon('heroicon-m-currency-dollar'),
-
-                                Infolists\Components\TextEntry::make('reward.stock')
-                                    ->label('Stock Tersisa')
-                                    ->badge()
-                                    ->color(fn (?int $state): string => match (true) {
-                                        $state === null => 'gray',
-                                        $state <= 0 => 'danger',
-                                        $state <= 10 => 'warning',
-                                        $state <= 50 => 'info',
-                                        default => 'success',
-                                    })
-                                    ->icon('heroicon-m-cube'),
-
-                                Infolists\Components\IconEntry::make('reward.status')
-                                    ->label('Status Reward')
-                                    ->boolean()
-                                    ->trueIcon('heroicon-o-check-circle')
-                                    ->falseIcon('heroicon-o-x-circle')
-                                    ->trueColor('success')
-                                    ->falseColor('danger'),
-                            ]),
-                    ]),
-
-                // Section 4: Periode Reward
-                Infolists\Components\Section::make('📅 Periode Reward')
-                    ->schema([
-                        Infolists\Components\Grid::make(2)
-                            ->schema([
-                                Infolists\Components\TextEntry::make('reward.started_at')
-                                    ->label('Dimulai')
-                                    ->dateTime('d M Y H:i')
-                                    ->icon('heroicon-m-play')
-                                    ->placeholder('Tidak ditentukan'),
-
-                                Infolists\Components\TextEntry::make('reward.ended_at')
-                                    ->label('Berakhir')
-                                    ->dateTime('d M Y H:i')
-                                    ->icon('heroicon-m-stop')
-                                    ->placeholder('Tidak ditentukan'),
-                            ]),
-                    ]),
-
-                // Section 5: Statistik User
-                Infolists\Components\Section::make('📊 Statistik User')
-                    ->schema([
-                        Infolists\Components\Grid::make(3)
-                            ->schema([
-                                Infolists\Components\TextEntry::make('user.total_reward')
-                                    ->label('Total Reward')
-                                    ->badge()
-                                    ->color('info')
-                                    ->icon('heroicon-m-gift'),
-
-                                Infolists\Components\TextEntry::make('user.total_coin')
-                                    ->label('Total Coin')
-                                    ->badge()
-                                    ->color('warning')
-                                    ->icon('heroicon-m-currency-dollar'),
-
-                                Infolists\Components\TextEntry::make('user.level')
-                                    ->label('Level')
-                                    ->badge()
-                                    ->color('success')
-                                    ->icon('heroicon-m-trophy'),
                             ]),
                     ]),
 
