@@ -35,12 +35,10 @@ class ArticleResource extends Resource
             ->schema([
                 Forms\Components\Section::make('Article Information')
                     ->schema([
-                        Forms\Components\Select::make('user_id')
+                        Forms\Components\TextInput::make('author')
                             ->label('Author')
-                            ->relationship('user', 'name')
                             ->required()
-                            ->searchable()
-                            ->preload(),
+                            ->maxLength(255),
                         
                         Forms\Components\TextInput::make('category')
                                 ->required()
@@ -51,7 +49,7 @@ class ArticleResource extends Resource
                             ->maxLength(255)
                             ->columnSpanFull(),
 
-                        Forms\Components\RichEditor::make('content')
+                        Forms\Components\RichEditor::make('description')
                             ->required()
                             ->columnSpanFull(),
                     ])
@@ -59,15 +57,18 @@ class ArticleResource extends Resource
 
                 Forms\Components\Section::make('Media & Additional Information')
                     ->schema([
-                        Forms\Components\FileUpload::make('image_urls')
-                            ->label('Article Images')
+                        Forms\Components\FileUpload::make('image_url')
+                            ->label('Article Image')
                             ->image()
-                            ->multiple()
-                            ->maxFiles(5)
                             ->maxSize(5120)
-                            ->helperText('Upload up to 5 images (max 5MB each)')
+                            ->helperText('Upload an image (max 5MB)')
                             ->disk('public')
                             ->directory('articles')
+                            ->columnSpanFull(),
+
+                        Forms\Components\TextInput::make('link')
+                            ->label('External Link')
+                            ->maxLength(2048)
                             ->columnSpanFull(),
                     ]),
             ]);
@@ -76,9 +77,8 @@ class ArticleResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn (Builder $query) => $query->with(['user']))
             ->columns([
-                Tables\Columns\TextColumn::make('user.name')
+                Tables\Columns\TextColumn::make('author')
                     ->label('Author')
                     ->icon('heroicon-m-user')
                     ->sortable()
@@ -117,10 +117,13 @@ class ArticleResource extends Resource
                             ->toArray();
                     }),
 
-                Tables\Filters\SelectFilter::make('user')
-                    ->relationship('user', 'name')
-                    ->searchable()
-                    ->preload(),
+                Tables\Filters\SelectFilter::make('author')
+                    ->options(function () {
+                        return Article::distinct('author')
+                            ->pluck('author', 'author')
+                            ->filter()
+                            ->toArray();
+                    }),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
@@ -151,7 +154,7 @@ class ArticleResource extends Resource
                                     ->size('lg')
                                     ->columnSpanFull(),
 
-                                TextEntry::make('user.name')
+                                TextEntry::make('author')
                                     ->label('Author')
                                     ->badge()
                                     ->color('info')
@@ -164,7 +167,7 @@ class ArticleResource extends Resource
                                     ->icon('heroicon-m-tag'),
                             ]),
 
-                        TextEntry::make('content')
+                        TextEntry::make('description')
                             ->label('Content')
                             ->html()
                             ->columnSpanFull(),
@@ -173,12 +176,23 @@ class ArticleResource extends Resource
                 // Section 2: Media
                 Section::make('🖼️ Media')
                     ->schema([
-                        ImageEntry::make('image_urls')
-                            ->label('Article Images')
+                        ImageEntry::make('image_url')
+                            ->label('Article Image')
                             ->size(200)
                             ->square()
                             ->columnSpanFull()
                             ->placeholder('Gambar tidak tersedia'),
+                    ])
+                    ->collapsible(),
+
+                // Section 2.1: Link
+                Section::make('🔗 Link')
+                    ->schema([
+                        TextEntry::make('link')
+                            ->label('External Link')
+                            ->url(fn ($state) => blank($state) ? null : $state)
+                            ->icon('heroicon-m-link')
+                            ->copyable(),
                     ])
                     ->collapsible(),
 

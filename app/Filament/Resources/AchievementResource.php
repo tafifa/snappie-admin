@@ -144,15 +144,6 @@ class AchievementResource extends Resource
                     ->icon('heroicon-m-currency-dollar')
                     ->toggleable(),
                     
-                Tables\Columns\TextColumn::make('users_count')
-                    ->label('Total Pengguna')
-                    ->counts('users')
-                    ->badge()
-                    ->color('info')
-                    ->icon('heroicon-m-users')
-                    ->sortable()
-                    ->toggleable(),
-                    
                 Tables\Columns\IconColumn::make('status')
                     ->label('Status')
                     ->boolean()

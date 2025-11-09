@@ -108,15 +108,6 @@ class UserAchievementResource extends Resource
                     ->weight(FontWeight::Medium)
                     ->icon('heroicon-m-trophy')
                     ->limit(30),
-    
-                Tables\Columns\TextColumn::make('achievement.coin_reward')
-                    ->label('Coin Reward')
-                    ->numeric()
-                    ->sortable()
-                    ->badge()
-                    ->color('warning')
-                    ->icon('heroicon-m-currency-dollar')
-                    ->toggleable(),
 
                 Tables\Columns\IconColumn::make('status')
                     ->label('Status')
@@ -134,12 +125,6 @@ class UserAchievementResource extends Resource
                     ->tooltip(function (UserAchievement $record): string {
                         return 'Achievement diperoleh pada: ' . $record->created_at->format('d M Y H:i');
                     }),
-
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->label('Diperbarui')
-                    ->dateTime('d M Y H:i')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\TernaryFilter::make('status')
@@ -253,16 +238,12 @@ class UserAchievementResource extends Resource
                                     ->weight(FontWeight::Bold)
                                     ->icon('heroicon-m-trophy'),
                             ]),
-
-                        Infolists\Components\TextEntry::make('achievement.description')
-                            ->label('Deskripsi Achievement')
-                            ->columnSpanFull(),
                     ]),
 
                 // Section 2: Status & Reward
                 Infolists\Components\Section::make('✅ Status & Reward')
                     ->schema([
-                        Infolists\Components\Grid::make(2)
+                        Infolists\Components\Grid::make(3)
                             ->schema([
                                 Infolists\Components\IconEntry::make('status')
                                     ->label('Status')
@@ -271,37 +252,26 @@ class UserAchievementResource extends Resource
                                     ->falseIcon('heroicon-o-clock')
                                     ->trueColor('success')
                                     ->falseColor('warning'),
+                                
+                                // TODO: Add progress description
+                                Infolists\Components\TextEntry::make('progress')
+                                    ->label('Progress')
+                                    ->suffix('%')
+                                    ->badge()
+                                    ->color(fn (?int $state): string => match (true) {
+                                        $state >= 100 => 'success',
+                                        $state >= 75 => 'info',
+                                        $state >= 50 => 'warning',
+                                        $state >= 25 => 'gray',
+                                        default => 'danger',
+                                    })
+                                    ->icon('heroicon-m-chart-bar'),
 
                                 Infolists\Components\TextEntry::make('achievement.coin_reward')
                                     ->label('Coin Reward')
                                     ->badge()
                                     ->color('warning')
                                     ->icon('heroicon-m-currency-dollar'),
-                            ]),
-                    ]),
-
-                // Section 3: Statistik User
-                Infolists\Components\Section::make('📊 Statistik User')
-                    ->schema([
-                        Infolists\Components\Grid::make(3)
-                            ->schema([
-                                Infolists\Components\TextEntry::make('user.total_achievement')
-                                    ->label('Total Achievement')
-                                    ->badge()
-                                    ->color('info')
-                                    ->icon('heroicon-m-star'),
-
-                                Infolists\Components\TextEntry::make('user.total_coin')
-                                    ->label('Total Coin')
-                                    ->badge()
-                                    ->color('warning')
-                                    ->icon('heroicon-m-currency-dollar'),
-
-                                Infolists\Components\TextEntry::make('user.total_exp')
-                                    ->label('Total EXP')
-                                    ->badge()
-                                    ->color('success')
-                                    ->icon('heroicon-m-star'),
                             ]),
                     ]),
 

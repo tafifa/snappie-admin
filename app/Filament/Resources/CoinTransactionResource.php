@@ -58,23 +58,14 @@ class CoinTransactionResource extends Resource
                     ]),
 
                 Forms\Components\Section::make('🔗 Related Information')
-                    ->description('Informasi terkait sumber transaksi')
+                    ->description('Metadata detail transaksi (opsional)')
                     ->schema([
-                        Forms\Components\Grid::make(2)
-                            ->schema([
-                                Forms\Components\TextInput::make('related_to_type')
-                                    ->label('Related Type')
-                                    ->required()
-                                    ->helperText('Tipe model yang terkait (e.g., App\\Models\\Checkin)')
-                                    ->suffixIcon('heroicon-m-tag'),
-
-                                Forms\Components\TextInput::make('related_to_id')
-                                    ->label('Related ID')
-                                    ->numeric()
-                                    ->required()
-                                    ->helperText('ID dari model yang terkait')
-                                    ->suffixIcon('heroicon-m-hashtag'),
-                            ]),
+                        Forms\Components\KeyValue::make('metadata')
+                            ->label('Metadata')
+                            ->keyLabel('Key')
+                            ->valueLabel('Value')
+                            ->addActionLabel('Tambah pasangan key-value')
+                            ->columnSpanFull(),
                     ]),
             ]);
     }
@@ -84,16 +75,10 @@ class CoinTransactionResource extends Resource
         return $table
             ->modifyQueryUsing(fn (Builder $query) => $query->with(['user']))
             ->columns([
-                Tables\Columns\TextColumn::make('id')
-                    ->label('ID')
-                    ->sortable()
-                    ->searchable(),
-
                 Tables\Columns\TextColumn::make('user.name')
                     ->label('User')
                     ->sortable()
                     ->searchable()
-                    ->description(fn (CoinTransaction $record): string => $record->user->email ?? '')
                     ->icon('heroicon-m-user'),
 
                 Tables\Columns\TextColumn::make('amount')
@@ -103,22 +88,15 @@ class CoinTransactionResource extends Resource
                     ->color(fn (int $state): string => $state >= 0 ? 'success' : 'danger')
                     ->formatStateUsing(fn (int $state): string => ($state >= 0 ? '+' : '') . number_format($state) . ' coins'),
 
-                Tables\Columns\TextColumn::make('related_to_type')
-                    ->label('Source Type')
-                    ->formatStateUsing(fn (string $state): string => class_basename($state))
+                Tables\Columns\TextColumn::make('metadata.from')
+                    ->label('Source')
                     ->badge()
                     ->color('info'),
-
-                Tables\Columns\TextColumn::make('related_to_id')
-                    ->label('Source ID')
-                    ->sortable(),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Transaction Date')
                     ->dateTime()
                     ->sortable()
-                    ->since()
-                    ->description(fn (CoinTransaction $record): string => $record->created_at->format('M d, Y H:i')),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('user_id')
@@ -179,39 +157,25 @@ class CoinTransactionResource extends Resource
                                     ->label('Transaction ID')
                                     ->badge()
                                     ->color('gray'),
+                                Infolists\Components\TextEntry::make('user.name')
+                                    ->label('User Name')
+                                    ->icon('heroicon-m-user'),
                                 Infolists\Components\TextEntry::make('amount')
                                     ->label('Amount')
                                     ->badge()
                                     ->color(fn (int $state): string => $state >= 0 ? 'success' : 'danger')
                                     ->formatStateUsing(fn (int $state): string => ($state >= 0 ? '+' : '') . number_format($state) . ' coins'),
-                            ])->columns(2),
+                            ])->columns(3),
 
-                        Infolists\Components\Section::make('👤 User Information')
+                        Infolists\Components\Section::make('🧾 Metadata')
                             ->schema([
-                                Infolists\Components\TextEntry::make('user.name')
-                                    ->label('User Name')
-                                    ->icon('heroicon-m-user'),
-                                Infolists\Components\TextEntry::make('user.email')
-                                    ->label('Email')
-                                    ->icon('heroicon-m-envelope'),
-                                Infolists\Components\TextEntry::make('user.total_coin')
-                                    ->label('Current Total Coins')
-                                    ->badge()
-                                    ->color('warning')
-                                    ->formatStateUsing(fn (int $state): string => number_format($state) . ' coins'),
-                            ])->columns(2),
-
-                        Infolists\Components\Section::make('🔗 Source Information')
-                            ->schema([
-                                Infolists\Components\TextEntry::make('related_to_type')
-                                    ->label('Source Type')
-                                    ->formatStateUsing(fn (string $state): string => class_basename($state))
+                                Infolists\Components\TextEntry::make('metadata.from')
+                                    ->label('Source')
                                     ->badge()
                                     ->color('info'),
-                                Infolists\Components\TextEntry::make('related_to_id')
-                                    ->label('Source ID')
-                                    ->badge()
-                                    ->color('gray'),
+                                Infolists\Components\TextEntry::make('metadata.description')
+                                    ->label('Notes')
+                                    ->prose(),
                             ])->columns(2),
 
                         Infolists\Components\Section::make('📅 Timeline')

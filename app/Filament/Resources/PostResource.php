@@ -19,6 +19,7 @@ use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Components\ImageEntry;
 use Filament\Infolists\Components\KeyValueEntry;
 use Filament\Infolists\Components\Grid;
+use Filament\Infolists\Components\RepeatableEntry;
 
 class PostResource extends Resource
 {
@@ -260,9 +261,20 @@ class PostResource extends Resource
                 // Section 4: Additional Information
                 Section::make('ℹ️ Additional Information')
                     ->schema([
-                        KeyValueEntry::make('additional_info')
-                            ->label('Additional Data')
-                            ->columnSpanFull(),
+                        TextEntry::make('additional_info.hashtags')
+                            ->label('Hashtags')
+                            ->formatStateUsing(function ($state) {
+                                if (is_array($state)) {
+                                    return implode(', ', array_map(fn ($v) => is_scalar($v) ? (string) $v : json_encode($v), $state));
+                                }
+                                return $state ?? '-';
+                            }),
+                        TextEntry::make('additional_info.location_details')
+                            ->label('Location Details')
+                            ->placeholder('Tidak ada')
+                            ->formatStateUsing(fn ($state) => $state ?? '-')
+                            ,
+                        
                     ])
                     ->collapsible(),
 

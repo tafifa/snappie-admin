@@ -164,13 +164,6 @@ class ReviewResource extends Resource
                     ->sortable()
                     ->alignCenter(),
 
-                Tables\Columns\TextColumn::make('total_like')
-                    ->label('Likes')
-                    ->numeric()
-                    ->sortable()
-                    ->alignCenter()
-                    ->badge()
-                    ->color('info'),
 
                 Tables\Columns\IconColumn::make('status')
                     ->label('Status')
@@ -230,9 +223,6 @@ class ReviewResource extends Resource
                 Filter::make('low_rating')
                     ->label('Low Rating (1-2 stars)')
                     ->query(fn (Builder $query): Builder => $query->where('rating', '<=', 2)),
-                Filter::make('popular')
-                    ->label('Popular (5+ likes)')
-                    ->query(fn (Builder $query): Builder => $query->where('total_like', '>=', 5)),
                 Filter::make('today')
                     ->label('Today')
                     ->query(fn (Builder $query): Builder => $query->whereDate('created_at', today())),
@@ -310,11 +300,6 @@ class ReviewResource extends Resource
                                 ->label('Rating')
                                 ->formatStateUsing(fn (string $state): string => str_repeat('⭐', (int) $state) . " ({$state}/5)")
                                 ->color('warning'),
-                            TextEntry::make('total_like')
-                                ->label('Total Likes')
-                                ->numeric()
-                                ->badge()
-                                ->color('info'),
                             TextEntry::make('status')
                                 ->label('Status')
                                 ->formatStateUsing(fn (bool $state): string => $state ? 'Approved' : 'Pending Review')

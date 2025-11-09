@@ -121,44 +121,6 @@ class UserChallengeResource extends Resource
                     ->icon('heroicon-m-fire')
                     ->limit(30),
 
-                Tables\Columns\TextColumn::make('challenge.challenge_type')
-                    ->label('Tipe')
-                    ->searchable()
-                    ->sortable()
-                    ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'daily' => 'info',
-                        'weekly' => 'warning',
-                        'monthly' => 'success',
-                        'special' => 'danger',
-                        default => 'gray',
-                    })
-                    ->icon('heroicon-m-tag'),
-
-                Tables\Columns\TextColumn::make('progress')
-                    ->label('Progress')
-                    ->numeric()
-                    ->suffix('%')
-                    ->sortable()
-                    ->badge()
-                    ->color(fn (?int $state): string => match (true) {
-                        $state >= 100 => 'success',
-                        $state >= 75 => 'info',
-                        $state >= 50 => 'warning',
-                        $state >= 25 => 'gray',
-                        default => 'danger',
-                    })
-                    ->icon('heroicon-m-chart-bar'),
-
-                Tables\Columns\TextColumn::make('challenge.exp_reward')
-                    ->label('EXP Reward')
-                    ->numeric()
-                    ->sortable()
-                    ->badge()
-                    ->color('success')
-                    ->icon('heroicon-m-star')
-                    ->toggleable(),
-
                 Tables\Columns\IconColumn::make('status')
                     ->label('Status')
                     ->boolean()
@@ -168,19 +130,13 @@ class UserChallengeResource extends Resource
                     ->falseColor('warning')
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('created_at')
-                    ->label('Dimulai')
+                Tables\Columns\TextColumn::make('updated_at')
+                    ->label('Diperoleh')
                     ->dateTime('d M Y H:i')
                     ->sortable()
                     ->tooltip(function (UserChallenge $record): string {
-                        return 'Challenge dimulai pada: ' . $record->created_at->format('d M Y H:i');
+                        return 'Challenge diperoleh pada: ' . $record->updated_at->format('d M Y H:i');
                     }),
-
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->label('Diperbarui')
-                    ->dateTime('d M Y H:i')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\TernaryFilter::make('status')
@@ -310,21 +266,6 @@ class UserChallengeResource extends Resource
                                     ->weight(FontWeight::Bold)
                                     ->icon('heroicon-m-fire'),
                             ]),
-
-                        Infolists\Components\TextEntry::make('challenge.description')
-                            ->label('Deskripsi Challenge')
-                            ->columnSpanFull(),
-
-                        Infolists\Components\TextEntry::make('challenge.challenge_type')
-                            ->label('Tipe Challenge')
-                            ->badge()
-                            ->color(fn (string $state): string => match ($state) {
-                                'daily' => 'info',
-                                'weekly' => 'warning',
-                                'monthly' => 'success',
-                                'special' => 'danger',
-                                default => 'gray',
-                            }),
                     ]),
 
                 // Section 2: Status & Progress
@@ -339,7 +280,8 @@ class UserChallengeResource extends Resource
                                     ->falseIcon('heroicon-o-clock')
                                     ->trueColor('success')
                                     ->falseColor('warning'),
-
+                                
+                                // TODO: Add progress description
                                 Infolists\Components\TextEntry::make('progress')
                                     ->label('Progress')
                                     ->suffix('%')
@@ -358,50 +300,6 @@ class UserChallengeResource extends Resource
                                     ->badge()
                                     ->color('success')
                                     ->icon('heroicon-m-star'),
-                            ]),
-                    ]),
-
-                // Section 3: Periode Challenge
-                Infolists\Components\Section::make('📅 Periode Challenge')
-                    ->schema([
-                        Infolists\Components\Grid::make(2)
-                            ->schema([
-                                Infolists\Components\TextEntry::make('challenge.started_at')
-                                    ->label('Dimulai')
-                                    ->dateTime('d M Y H:i')
-                                    ->icon('heroicon-m-play')
-                                    ->placeholder('Tidak ditentukan'),
-
-                                Infolists\Components\TextEntry::make('challenge.ended_at')
-                                    ->label('Berakhir')
-                                    ->dateTime('d M Y H:i')
-                                    ->icon('heroicon-m-stop')
-                                    ->placeholder('Tidak ditentukan'),
-                            ]),
-                    ]),
-
-                // Section 4: Statistik User
-                Infolists\Components\Section::make('📊 Statistik User')
-                    ->schema([
-                        Infolists\Components\Grid::make(3)
-                            ->schema([
-                                Infolists\Components\TextEntry::make('user.total_challenge')
-                                    ->label('Total Challenge')
-                                    ->badge()
-                                    ->color('info')
-                                    ->icon('heroicon-m-fire'),
-
-                                Infolists\Components\TextEntry::make('user.total_exp')
-                                    ->label('Total EXP')
-                                    ->badge()
-                                    ->color('success')
-                                    ->icon('heroicon-m-star'),
-
-                                Infolists\Components\TextEntry::make('user.level')
-                                    ->label('Level')
-                                    ->badge()
-                                    ->color('warning')
-                                    ->icon('heroicon-m-trophy'),
                             ]),
                     ]),
 

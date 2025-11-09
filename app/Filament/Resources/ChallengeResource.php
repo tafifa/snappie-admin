@@ -180,15 +180,6 @@ class ChallengeResource extends Resource
                     })
                     ->toggleable(),
 
-                Tables\Columns\TextColumn::make('users_count')
-                    ->label('Peserta')
-                    ->counts('users')
-                    ->badge()
-                    ->color('info')
-                    ->icon('heroicon-m-users')
-                    ->sortable()
-                    ->toggleable(),
-
                 Tables\Columns\IconColumn::make('status')
                     ->label('Status')
                     ->boolean()
