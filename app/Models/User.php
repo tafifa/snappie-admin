@@ -165,14 +165,6 @@ class User extends Model
     }
 
     /**
-     * Mendapatkan semua artikel yang ditulis oleh pengguna.
-     */
-    public function articles()
-    {
-        return $this->hasMany(Article::class);
-    }
-
-    /**
      * Mendapatkan semua pencapaian yang dimiliki pengguna.
      */
     public function userAchievements()
@@ -271,6 +263,11 @@ class User extends Model
         return $this->belongsToMany(User::class, 'user_follows', 'follower_id', 'following_id')
             ->using(UserFollow::class)
             ->withTimestamps();
+    }
+
+    public function tokens()
+    {
+        return $this->morphMany(PersonalAccessTokens::class, 'tokenable');
     }
 
     // --- QUERY SCOPES ---
