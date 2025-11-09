@@ -14,10 +14,9 @@ return new class extends Migration
         Schema::create('user_comments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->morphs('related_to'); // For polymorphic relations (posts, other comments)
+            $table->foreignId('post_id')->constrained('posts')->onDelete('cascade');
             $table->text('comment');
             $table->integer('total_like')->default(0);
-            $table->integer('total_reply')->default(0);
             $table->timestamps();
 
             // Indexes for better performance

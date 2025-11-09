@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('coin_transactions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->morphs('related_to'); // For polymorphic relations (e.g., checkins, achievement, challenge)
             $table->integer('amount'); // Amount of coin transacted
+            $table->json('metadata')->nullable(); // Metadata for transaction details
             $table->timestamps();
 
             // Indexes for better performance

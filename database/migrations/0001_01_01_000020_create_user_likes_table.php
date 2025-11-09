@@ -18,7 +18,6 @@ return new class extends Migration
             $table->timestamps();
 
             // Indexes for better performance
-
             $table->index('user_id');
             $table->index('created_at');
         });
