@@ -20,7 +20,7 @@ class UserLikeFactory extends Factory
     {
         $likeableModels = [
             \App\Models\Post::class,
-            \App\Models\Review::class,
+            \App\Models\UserComment::class,
         ];
 
         $likeable = null;

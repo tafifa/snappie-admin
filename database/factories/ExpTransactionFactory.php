@@ -17,25 +17,13 @@ class ExpTransactionFactory extends Factory
      */
     public function definition(): array
     {
-        $transactableModels = [
-            \App\Models\Checkin::class,
-            \App\Models\Review::class,
-            \App\Models\UserChallenge::class,
-        ];
-
-        $transactable = null;
-
-        do {
-            $selectedModel = fake()->randomElement($transactableModels);
-            
-            $transactable = $selectedModel::inRandomOrder()->first();
-        } while (!$transactable);
-
         return [
-            'user_id' => User::factory(),
-            'related_to_type' => get_class($transactable),
-            'related_to_id' => $transactable->id,
+            'user_id' => User::inRandomOrder()->first()?->id,
             'amount' => fake()->numberBetween(50, 200),
+            'metadata' => [
+                'from' => fake()->randomElement(['checkin', 'review', 'user_challenge', 'user_reward']),
+                'description' => fake()->sentence(),
+            ],
             'created_at' => fake()->dateTimeBetween('-1 year', 'now'),
             'updated_at' => fn (array $attributes) => $attributes['created_at'],
         ];

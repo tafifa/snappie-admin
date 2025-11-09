@@ -28,7 +28,6 @@ class ReviewFactory extends Factory
                 fake()->imageUrl(640, 480, 'food', true),
             ],
             'rating' => fake()->numberBetween(1, 5),
-            'total_like' => fake()->numberBetween(0, 150),
             'status' => fake()->boolean(95), // 95% chance of being approved
             'additional_info' => [
                 'review_type' => fake()->randomElement(['positive', 'negative', 'neutral']),
