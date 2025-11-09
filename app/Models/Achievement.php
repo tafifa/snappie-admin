@@ -61,15 +61,6 @@ class Achievement extends Model
             ->withTimestamps();
     }
 
-    /**
-     * Mendapatkan model yang menjadi sumber transaksi ini (polimorfik).
-     * Bisa berupa CoinTransaction dan ExpTransaction.
-     */
-    public function coinTransactions()
-    {
-        return $this->morphMany(CoinTransaction::class, 'related_to');
-    }
-
     // --- QUERY SCOPES ---
 
     /**

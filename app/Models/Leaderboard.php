@@ -66,15 +66,6 @@ class Leaderboard extends Model
         'exp',
     ];
 
-    /**
-     * Mendapatkan model yang menjadi sumber transaksi ini (polimorfik).
-     * Bisa berupa ExpTransaction.
-     */
-    public function expTransactions()
-    {
-        return $this->morphMany(ExpTransaction::class, 'related_to');
-    }
-
     // --- QUERY SCOPES ---
 
     /**

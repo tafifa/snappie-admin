@@ -17,16 +17,15 @@ class Article extends Model
     protected $table = 'articles';
 
     protected $fillable = [
-        'user_id',
+        'author',
         'title',
         'category',
-        'content',
-        'image_urls',
-        'additional_info',
+        'description',
+        'image_url',
+        'link',
     ];
 
     protected $casts = [
-        'image_urls' => 'json',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
@@ -39,36 +38,12 @@ class Article extends Model
     public static function rules()
     {
         return [
-            'user_id' => 'required|exists:users,id',
+            'author' => 'required|string|max:255',
             'title' => 'required|string|max:255',
             'category' => 'required|string|max:255',
-            'content' => 'required|string',
-            'image_urls' => 'nullable|json',
-            'additional_info' => 'nullable|json',
+            'description' => 'required|string',
+            'image_url' => 'nullable|string',
+            'link' => 'nullable|string',
         ];
-    }
-
-    /**
-     * Get the user that owns the article.
-     */
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    /**
-     * Get the likes for the article.
-     */
-    public function likes()
-    {
-        return $this->morphMany(UserLike::class, 'related_to');
-    }
-
-    /**
-     * Get the comments for the article.
-     */
-    public function comments()
-    {
-        return $this->morphMany(UserComment::class, 'related_to');
     }
 }

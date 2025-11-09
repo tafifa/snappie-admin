@@ -86,22 +86,4 @@ class Checkin extends Model
     {
         return $this->belongsTo(Place::class);
     }
-
-    /**
-     * Mendapatkan model yang menjadi sumber transaksi ini (polimorfik).
-     * Bisa berupa CoinTransaction dan ExpTransaction.
-     */
-    public function coinTransactions()
-    {
-        return $this->morphMany(CoinTransaction::class, 'related_to');
-    }
-
-    /**
-     * Mendapatkan model yang menjadi sumber transaksi ini (polimorfik).
-     * Bisa berupa ExpTransaction.
-     */
-    public function expTransactions()
-    {
-        return $this->morphMany(ExpTransaction::class, 'related_to');
-    }
 }

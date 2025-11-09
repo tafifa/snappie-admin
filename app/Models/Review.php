@@ -29,7 +29,6 @@ class Review extends Model
         'content',
         'rating',
         'image_urls',
-        'total_like',
         'status',
         'additional_info',
     ];
@@ -42,7 +41,6 @@ class Review extends Model
     protected $casts = [
         'rating' => 'integer',
         'image_urls' => 'json',
-        'total_like' => 'integer',
         'status' => 'boolean',
         'additional_info' => 'json',
         'created_at' => 'datetime',
@@ -62,7 +60,6 @@ class Review extends Model
             'content' => 'nullable|string|max:1000',
             'rating' => 'required|integer|min:1|max:5',
             'image_urls' => 'nullable|json',
-            'total_like' => 'integer|min:0',
             'status' => 'boolean',
             'additional_info' => 'nullable|json',
         ];
@@ -89,32 +86,6 @@ class Review extends Model
     public function place(): BelongsTo
     {
         return $this->belongsTo(Place::class);
-    }
-
-    /**
-     * Get the likes for the review.
-     */
-    public function likes()
-    {
-        return $this->morphMany(UserLike::class, 'related_to');
-    }
-
-    /**
-     * Mendapatkan model yang menjadi sumber transaksi ini (polimorfik).
-     * Bisa berupa CoinTransaction dan ExpTransaction.
-     */
-    public function coinTransactions()
-    {
-        return $this->morphMany(CoinTransaction::class, 'related_to');
-    }
-
-    /**
-     * Mendapatkan model yang menjadi sumber transaksi ini (polimorfik).
-     * Bisa berupa ExpTransaction.
-     */
-    public function expTransactions()
-    {
-        return $this->morphMany(ExpTransaction::class, 'related_to');
     }
     
     // --- QUERY SCOPES ---

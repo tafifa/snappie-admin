@@ -23,13 +23,13 @@ class CoinTransaction extends Model
      */
     protected $fillable = [
         'user_id',
-        'related_to_id',
-        'related_to_type',
         'amount',
+        'metadata',
     ];
 
     protected $casts = [
         'amount' => 'integer',
+        'metadata' => 'json',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
@@ -43,9 +43,8 @@ class CoinTransaction extends Model
     {
         return [
             'user_id' => 'required|exists:users,id',
-            'related_to_id' => 'required|integer',
-            'related_to_type' => 'required|string|max:50',
             'amount' => 'required|integer',
+            'metadata' => 'required|json',
         ];
     }
 
@@ -55,14 +54,5 @@ class CoinTransaction extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
-    }
-
-    /**
-     * Mendapatkan model yang menjadi sumber transaksi ini (polimorfik).
-     * Bisa berupa Checkin, Review, Achievement, dan Reward.
-     */
-    public function relatedTo()
-    {
-        return $this->morphTo();
     }
 }
