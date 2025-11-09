@@ -19,26 +19,11 @@ class UserCommentFactory extends Factory
      */
     public function definition(): array
     {
-        $commentableModels = [
-            \App\Models\Post::class,
-            \App\Models\UserComment::class, // For nested comments/replies
-        ];
-
-        $commentable = null;
-
-        do {
-            $selectedModel = fake()->randomElement($commentableModels);
-            
-            $commentable = $selectedModel::inRandomOrder()->first();
-        } while (!$commentable);
-
         return [
             'user_id' => User::inRandomOrder()->first()?->id,
-            'related_to_type' => get_class($commentable),
-            'related_to_id' => $commentable->id,
+            'post_id' => Post::inRandomOrder()->first()?->id,
             'comment' => fake()->sentence(fake()->numberBetween(5, 20)),
             'total_like' => fake()->numberBetween(0, 50),
-            'total_reply' => fake()->numberBetween(0, 10),
             'created_at' => fake()->dateTimeBetween('-1 year', 'now'),
             'updated_at' => fn (array $attributes) => $attributes['created_at'],
         ];

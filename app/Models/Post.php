@@ -77,7 +77,7 @@ class Post extends Model
      */
     public function comments()
     {
-        return $this->morphMany(UserComment::class, 'related_to');
+        return $this->hasMany(UserComment::class, 'post_id');
     }
 
     /**

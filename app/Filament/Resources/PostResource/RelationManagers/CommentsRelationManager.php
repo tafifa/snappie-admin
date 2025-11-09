@@ -80,11 +80,8 @@ class CommentsRelationManager extends RelationManager
 
                 Tables\Columns\TextColumn::make('total_comment')
                     ->label('Replies')
-                    ->numeric()
-                    ->badge()
-                    ->color('info')
-                    ->icon('heroicon-m-chat-bubble-left-ellipsis')
-                    ->sortable(),
+                    ->state(fn () => null)
+                    ->hidden(),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Posted At')

@@ -18,11 +18,9 @@ class UserComment extends Model
 
     protected $fillable = [
         'user_id',
-        'related_to_id',
-        'related_to_type',
+        'post_id',
         'comment',
         'total_like',
-        'total_comment',
     ];
 
     /**
@@ -32,7 +30,6 @@ class UserComment extends Model
      */
     protected $casts = [
         'total_like' => 'integer',
-        'total_comment' => 'integer',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
@@ -46,11 +43,9 @@ class UserComment extends Model
     {
         return [
             'user_id' => 'required|exists:users,id',
-            'related_to_id' => 'required|integer',
-            'related_to_type' => 'required|string|max:255',
+            'post_id' => 'required|exists:posts,id',
             'comment' => 'required|string|max:1000',
             'total_like' => 'integer',
-            'total_comment' => 'integer',
         ];
     }
 
@@ -59,13 +54,13 @@ class UserComment extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function relatedTo()
-    {
-        return $this->morphTo();
-    }
-
     public function likes()
     {
         return $this->morphMany(UserLike::class, 'related_to');
+    }
+
+    public function post()
+    {
+        return $this->belongsTo(Post::class);
     }
 }
