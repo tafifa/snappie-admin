@@ -36,23 +36,6 @@ class RecentActivity extends BaseWidget
                     ->icon('heroicon-m-map-pin')
                     ->limit(25),
                     
-                Tables\Columns\TextColumn::make('location')
-                    ->label('Location')
-                    ->formatStateUsing(function ($record) {
-                        if ($record->latitude && $record->longitude) {
-                            return number_format($record->latitude, 4) . ', ' . number_format($record->longitude, 4);
-                        }
-                        return 'No GPS';
-                    })
-                    ->tooltip(function ($record) {
-                        if ($record->latitude && $record->longitude) {
-                            return "Lat: {$record->latitude}, Lng: {$record->longitude}";
-                        }
-                        return 'No GPS coordinates available';
-                    })
-                    ->badge()
-                    ->color(fn ($record) => ($record->latitude && $record->longitude) ? 'success' : 'gray')
-                    ->icon('heroicon-m-map'),
                     
                 Tables\Columns\IconColumn::make('status')
                     ->label('Status')

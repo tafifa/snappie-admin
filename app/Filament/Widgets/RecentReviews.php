@@ -6,10 +6,11 @@ use App\Models\Review;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
+use Filament\Support\Enums\FontWeight;
 
 class RecentReviews extends BaseWidget
 {
-    protected static ?string $heading = 'Recent Reviews';
+    protected static ?string $heading = '📝 Recent Reviews';
     
     protected int | string | array $columnSpan = 'full';
 
@@ -21,24 +22,28 @@ class RecentReviews extends BaseWidget
                 Tables\Columns\TextColumn::make('user.name')
                     ->label('User')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->weight(FontWeight::Medium)
+                    ->icon('heroicon-m-user')
+                    ->limit(20),
+                    
                 Tables\Columns\TextColumn::make('place.name')
                     ->label('Place')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->weight(FontWeight::Medium)
+                    ->icon('heroicon-m-map-pin')
+                    ->limit(25),
 
-                Tables\Columns\BadgeColumn::make('status')
+                Tables\Columns\IconColumn::make('status')
                     ->label('Status')
-                    ->colors([
-                        'warning' => 'pending',
-                        'success' => 'approved',
-                        'danger' => 'rejected',
-                        'primary' => 'flagged',
-                    ]),
-                Tables\Columns\TextColumn::make('content')
-                    ->label('Review')
-                    ->limit(50)
-                    ->placeholder('No content'),
+                    ->boolean()
+                    ->trueIcon('heroicon-o-check-circle')
+                    ->falseIcon('heroicon-o-clock')
+                    ->trueColor('success')
+                    ->falseColor('warning')
+                    ->sortable(),
+                    
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Posted')
                     ->since()
