@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\ExpTransaction;
 use App\Models\User;
 use App\Models\Leaderboard;
 use Illuminate\Support\Carbon;
@@ -20,11 +21,11 @@ class LeaderboardService
   /**
    * Get top users from active leaderboard JSON data
    */
-  public function getTopUsers(int $leaderboardId, int $limit = 10): Collection
+  public function getTopUsers(int $leaderboardId): Collection
   {
-    $cacheKey = "leaderboard:top_users:{$limit}:{$leaderboardId}";
+    $cacheKey = "leaderboard:top_users:{$leaderboardId}";
 
-    return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($limit, $leaderboardId) {
+    return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($leaderboardId) {
       $leaderboardData = Leaderboard::where('id', $leaderboardId)->first();
 
       if (!$leaderboardData || !$leaderboardData->leaderboard) {
@@ -32,7 +33,7 @@ class LeaderboardService
       }
 
       // Get data from JSON column and limit results
-      $leaderboardData = collect($leaderboardData->leaderboard)->take($limit);
+      $leaderboardData = collect($leaderboardData->leaderboard);
 
       return $leaderboardData;
     });
@@ -41,65 +42,22 @@ class LeaderboardService
   /**
    * Get user's current rank from active leaderboard
    */
-  public function getUserRank(int $userId, int $leaderboardId): ?int
+  public function getUserRank(array $payload)
   {
-    $cacheKey = "leaderboard:user_rank:{$userId}:{$leaderboardId}";
+    $userId = $payload['user_id'];
+    $leaderboardId = $payload['leaderboard_id'];
 
-    return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($userId, $leaderboardId) {
-      $leaderboardData = Leaderboard::where('id', $leaderboardId)->first();
+    $leaderboardData = Leaderboard::find($leaderboardId);
 
-      if (!$leaderboardData || !$leaderboardData->leaderboard) {
-        return null;
-      }
+    if (!$leaderboardData || !$leaderboardData->leaderboard) {
+      throw new \Exception('Leaderboard not found');
+    }
 
-      // Search for user in leaderboard JSON data
-      $leaderboardData = collect($leaderboardData->leaderboard);
-      $userEntry = $leaderboardData->firstWhere('user_id', $userId);
+    // Search for user in leaderboard JSON data
+    $leaderboardData = collect($leaderboardData->leaderboard);
+    $userEntry = $leaderboardData->firstWhere('user_id', $userId);
 
-      return $userEntry ? $userEntry['rank'] : null;
-    });
-  }
-
-  /**
-   * Get top users for this week from active leaderboard
-   */
-  public function getTopUserThisWeek(int $limit = 10): array
-  {
-    $cacheKey = "leaderboard:weekly:{$limit}";
-
-    return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($limit) {
-      $startOfWeek = now()->startOfWeek();
-
-      // Get users with EXP gained this week
-      $leaderboard = User::select(['users.id','users.name', 'users.username', 'users.image_url', 'users.total_checkin'])
-        ->selectRaw('COALESCE(SUM(exp_transactions.amount), 0) as weekly_exp')
-        ->leftJoin('exp_transactions', function ($join) use ($startOfWeek) {
-          $join->on('users.id', '=', 'exp_transactions.user_id')
-            ->where('exp_transactions.created_at', '>=', $startOfWeek);
-        })
-        ->groupBy('users.id', 'users.name', 'users.username', 'users.image_url', 'users.total_checkin')
-        ->havingRaw('COALESCE(SUM(exp_transactions.amount), 0) > 0')
-        ->orderByRaw('COALESCE(SUM(exp_transactions.amount), 0) desc')
-        ->orderBy('users.total_checkin', 'desc') // Tiebreaker
-        ->limit($limit)
-        ->get()
-        ->toArray(); // Convert the Collection to Array
-
-      // Add ranking
-      $rank = 1;
-      return array_map(function ($user) use (&$rank) {
-        return [
-          'rank' => $rank++,
-          'user_id' => $user['id'],
-          'name' => $user['name'],
-          'username' => $user['username'],
-          'total_exp' => $user['weekly_exp'],
-          'total_checkin' => $user['total_checkin'],
-          'image_url' => $user['image_url'],
-          'period' => 'weekly'
-        ];
-      }, $leaderboard);
-    });
+    return $userEntry ?? null;
   }
 
   /**
@@ -108,34 +66,62 @@ class LeaderboardService
    * @param int $limit
    * @return Collection
    */
-  public function getTopUsersThisMonth(int $limit = self::DEFAULT_LIMIT): array
+  public function getTopUsersThisMonth(int $limit = 10): array
   {
-    $cacheKey = "leaderboard_monthly_{$limit}";
+    $leaderboard = ExpTransaction::select('user_id', DB::raw('SUM(amount) as total_exp'))
+      ->where('created_at', '>=', Carbon::now()->startOfMonth())
+      ->where('created_at', '<=', Carbon::now()->endOfMonth())
+      ->groupBy('user_id')
+      ->orderBy('total_exp', 'desc')
+      ->limit($limit)
+      ->get()
+      ->toArray(); // Convert to array
 
-    return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($limit) {
-      // Get the top users from the database, sorted by total_exp and total_checkin (tiebreaker)
-      $leaderboard = User::select(['id','name', 'username', 'image_url', 'total_exp', 'total_checkin'])
-        ->orderBy('total_exp', 'desc')
-        ->orderBy('total_checkin', 'desc') // Tiebreaker
-        ->limit($limit)
-        ->get()
-        ->toArray(); // Convert to array
+    // Add ranking
+    $rank = 1;
+    return array_map(function ($user) use (&$rank) {
+      // Find user data by user_id
+      $userData = User::find($user['user_id']);
+      return [
+        'rank' => $rank++,
+        'user_id' => $user['user_id'],
+        'name' => $userData ? $userData->name : null,
+        'username' => $userData ? $userData->username : null,
+        'image_url' => $userData ? $userData->image_url : null,
+        'total_exp' => $user['total_exp'],
+        'total_checkin' => $userData ? $userData->total_checkin : null,
+        'period' => 'monthly'
+      ];
+    }, $leaderboard);
+  }
 
-      // Add ranking
-      $rank = 1;
-      return array_map(function ($user) use (&$rank) {
-        return [
-          'rank' => $rank++,
-          'user_id' => $user['id'],
-          'name' => $user['name'],
-          'username' => $user['username'],
-          'image_url' => $user['image_url'],
-          'total_exp' => $user['total_exp'],
-          'total_checkin' => $user['total_checkin'],
-          'period' => 'monthly'
-        ];
-      }, $leaderboard);
-    });
+  public function getTopUserThisWeek(int $limit = 10): array
+  {
+    $leaderboard = ExpTransaction::select('user_id', DB::raw('SUM(amount) as total_exp'))
+      ->where('created_at', '>=', Carbon::now()->startOfWeek())
+      ->where('created_at', '<=', Carbon::now()->endOfWeek())
+      ->groupBy('user_id')
+      ->orderBy('total_exp', 'desc')
+      ->limit($limit)
+      ->get()
+      ->toArray(); // Convert to array
+
+    // Add ranking
+    $rank = 1;
+    return array_map(function ($user) use (&$rank) {
+      // Find user data by user_id
+      $userData = User::find($user['user_id']);
+      return [
+        'rank' => $rank++,
+        'user_id' => $user['user_id'],
+        'name' => $userData ? $userData->name : null,
+        'username' => $userData ? $userData->username : null,
+        'image_url' => $userData ? $userData->image_url : null,
+        'total_exp' => $user['total_exp'],
+        'total_checkin' => $userData ? $userData->total_checkin : null,
+        'period' => 'weekly'
+      ];
+    }, $leaderboard);
   }
 
   /**

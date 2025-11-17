@@ -42,4 +42,7 @@ return [
         'upload_preset' => env('CLOUDINARY_UPLOAD_PRESET', 'uploads'),
     ],
 
+    'api' => [
+        'public_key' => env('PUBLIC_API_KEY'),
+    ],
 ];

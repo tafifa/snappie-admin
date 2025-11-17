@@ -11,6 +11,9 @@ use App\Observers\CheckinObserver;
 use App\Observers\ReviewObserver;
 use App\Observers\PostObserver;
 use App\Observers\PlaceObserver;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Http\Request;
+use Illuminate\Cache\RateLimiting\Limit;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -32,5 +35,11 @@ class AppServiceProvider extends ServiceProvider
         Review::observe(ReviewObserver::class);
         Post::observe(PostObserver::class);
         Place::observe(PlaceObserver::class);
+
+        RateLimiter::for('api', function (Request $request) {
+            return [
+                Limit::perMinute(15)->by(optional($request->user())->id ?: $request->ip()),
+            ];
+        });
     }
 }

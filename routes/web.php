@@ -12,6 +12,6 @@ Route::get('/docs', function () {
 });
 
 Route::get('/docs/openapi.yaml', function () {
-    $path = dirname(base_path()) . DIRECTORY_SEPARATOR . 'docs' . DIRECTORY_SEPARATOR . 'snappie.openapi.yaml';
+    $path = base_path('Default module.openapi.yaml');
     return response()->file($path, ['Content-Type' => 'application/yaml']);
 });
