@@ -79,6 +79,8 @@ class AuthenticationController
                 'token' => $result['token'],
                 'token_type' => 'Bearer',
                 'expires_at' => $result['expires_at']->toIso8601String(),
+                'refresh_token' => $result['refresh_token'],
+                'refresh_token_expires_at' => $result['refresh_expires_at']->toIso8601String(),
             ],
         ]);
     }
@@ -99,6 +101,33 @@ class AuthenticationController
             'success' => true,
             'message' => 'Logout berhasil!',
             'logged_out_at' => $result['logged_out_at'],
+        ]);
+    }
+
+    public function refreshToken(Request $request): JsonResponse
+    {
+        $payload = $request->validate([
+            'refresh_token' => ['required', 'string'],
+        ]);
+        $result = $this->service->refreshToken($payload['refresh_token']);
+
+        if (($result['status'] ?? 200) !== 200) {
+            return response()->json([
+                'success' => false,
+                'message' => $result['error'] ?? 'Token refresh gagal!',
+            ], $result['status']);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Token refreshed successfully',
+            'data' => [
+                'token' => $result['token'],
+                'token_type' => 'Bearer',
+                'expires_at' => $result['expires_at']->toIso8601String(),
+                'refresh_token' => $result['refresh_token'],
+                'refresh_token_expires_at' => $result['refresh_expires_at']->toIso8601String(),
+            ],
         ]);
     }
 }

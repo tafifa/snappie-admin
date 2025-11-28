@@ -19,6 +19,7 @@ Route::middleware('api')->prefix('v2')->group(function () {
         Route::prefix('auth')->group(function () {
             Route::post('/register', [AuthenticationController::class, 'register']);
             Route::post('/login', [AuthenticationController::class, 'login']);
+            Route::post('/refresh', [AuthenticationController::class, 'refreshToken']);
         });
     });
 
