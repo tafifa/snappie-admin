@@ -92,15 +92,34 @@ class PostResource extends Resource
                             ->maxSize(5120)
                             ->helperText('Upload up to 5 images (max 5MB each) - will be automatically uploaded to Cloudinary')
                             ->disk('public')
-                            ->directory('temp-posts')
-                            ->visibility('public')
+                            ->directory('posts')
                             ->columnSpanFull(),
 
-                        Forms\Components\KeyValue::make('additional_info')
-                            ->label('Additional Information')
-                            ->keyLabel('Key')
-                            ->valueLabel('Value')
-                            ->columnSpanFull(),
+                        Forms\Components\Textarea::make('additional_info')
+                            ->label('Additional Information (JSON)')
+                            ->placeholder('{"hashtags": ["tag1", "tag2"], "location_details": "details"}')
+                            ->rows(4)
+                            ->columnSpanFull()
+                            ->helperText('Enter valid JSON format. Example: {"hashtags": ["travel", "food"], "location_details": "Near beach"}')
+                            ->nullable()
+                            ->dehydrateStateUsing(function ($state) {
+                                if (empty($state)) {
+                                    return null;
+                                }
+                                // If it's already an array, encode it
+                                if (is_array($state)) {
+                                    return $state;
+                                }
+                                // If it's a JSON string, decode and return
+                                $decoded = json_decode($state, true);
+                                return $decoded !== null ? $decoded : null;
+                            })
+                            ->formatStateUsing(function ($state) {
+                                if (is_array($state)) {
+                                    return json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+                                }
+                                return $state;
+                            }),
                     ]),
             ]);
     }
