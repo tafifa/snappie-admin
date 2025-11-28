@@ -21,10 +21,11 @@ class PlacesController
         }
         if (!is_null($request->query('partner'))) $filters['partnershipStatus'] = $request->query('partner');
         if (!is_null($request->query('active_only'))) $filters['status'] = $request->query('active_only');
-        if ($request->query('latitude') && $request->query('longitude') && $request->query('radius')) {
+        if ($request->query('latitude') && $request->query('longitude')) {
             $filters['latitude'] = (float) $request->query('latitude');
             $filters['longitude'] = (float) $request->query('longitude');
-            $filters['radius'] = (float) $request->query('radius');
+            // $filters['radius'] = (float) $request->query('radius');
+            $filters['radius'] = 5;
         }
         if ($request->query('page')) $filters['page'] = (int) $request->query('page');
         $foodType = $request->query('food_type');
