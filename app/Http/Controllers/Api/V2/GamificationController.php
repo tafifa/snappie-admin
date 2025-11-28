@@ -122,7 +122,11 @@ class GamificationController
             // Panggil service
             $result = $this->service->createReview($user, $payload);
 
-            return response()->json($result, 201);
+            return response()->json([
+                'success' => true,
+                'message' => 'Review created successfully',
+                'data' => $result
+            ], 201);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'success' => false,

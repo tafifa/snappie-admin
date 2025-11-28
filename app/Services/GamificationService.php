@@ -157,7 +157,7 @@ class GamificationService
                 'place_id' => $payload['place_id'],
                 'latitude' => $payload['latitude'] ?? null,
                 'longitude' => $payload['longitude'] ?? null,
-                'image_url' => $payload['proof_image_url'] ?? null,
+                'image_url' => $payload['image_url'] ?? null,
                 'additional_info' => $payload['additional_info'] ?? null,
                 'status' => true,
             ]);
@@ -179,10 +179,10 @@ class GamificationService
             ];
 
             // Transaksi coin
-            $this->addCoins($user->id, $coinsEarned, $metadata);
+            $this->addCoins($user, $coinsEarned, $metadata);
             
             // Transaksi exp
-            $this->addExp($user->id, $expEarned, $metadata);
+            $this->addExp($user, $expEarned, $metadata);
 
             return $checkin->toArray();
         });
@@ -264,10 +264,10 @@ class GamificationService
             ];
 
             // Transaksi coin
-            $this->addCoins($user->id, $coinsEarned, $metadata);
+            $this->addCoins($user, $coinsEarned, $metadata);
             
             // Transaksi exp
-            $this->addExp($user->id, $expEarned, $metadata);
+            $this->addExp($user, $expEarned, $metadata);
 
             return $review->toArray();
         });
@@ -319,7 +319,7 @@ class GamificationService
             ];
 
             // Berikan reward
-            $this->addCoins($user->id, $achievement->coin_reward, $metadata);
+            $this->addCoins($user, $achievement->coin_reward, $metadata);
 
             return $userAchievement->toArray();
         });
@@ -371,7 +371,7 @@ class GamificationService
             ];
 
             // Berikan reward
-            $this->addExp($user->id, $challenge->exp_reward, $metadata);
+            $this->addExp($user, $challenge->exp_reward, $metadata);
 
             return $userChallenge->toArray();
         });
