@@ -23,6 +23,7 @@ class PlaceObserver
     public function saving(Place $place): void
     {
         $this->handleImageUpload($place);
+        $this->handleMenuImageUpload($place);
     }
 
     /**
@@ -69,48 +70,93 @@ class PlaceObserver
         $hasLocalFiles = false;
 
         foreach ($imageUrls as $imageUrl) {
-            // Skip if already a Cloudinary URL
-            if (str_contains($imageUrl, 'cloudinary.com')) {
-                $cloudinaryUrls[] = $imageUrl;
-                continue;
-            }
+            $cloudinaryUrls[] = $this->uploadIfNeeded($imageUrl, 'places', $hasLocalFiles);
+        }
 
-            // Skip if it's an external URL
-            if (str_starts_with($imageUrl, 'http://') || str_starts_with($imageUrl, 'https://')) {
-                $cloudinaryUrls[] = $imageUrl;
-                continue;
-            }
+        if ($hasLocalFiles) {
+            $place->setAttribute('image_urls', $cloudinaryUrls);
+        }
+    }
 
-            // It's a local path, needs to be uploaded
-            $hasLocalFiles = true;
-            
-            try {
-                $fullPath = Storage::disk('public')->path($imageUrl);
-                
-                if (file_exists($fullPath)) {
-                    // Upload to Cloudinary
-                    $result = $this->cloudinaryService->upload($fullPath, 'places');
-                    $cloudinaryUrls[] = $result['secure_url'];
-                    
-                    // Delete the local temporary file
-                    Storage::disk('public')->delete($imageUrl);
+    /**
+     * Ensure menu images that live inside additional_info are uploaded as well.
+     */
+    protected function handleMenuImageUpload(Place $place): void
+    {
+        $additionalInfo = $place->getAttributes()['additional_info'] ?? null;
 
-                    Log::info("Uploaded place image to Cloudinary: {$result['secure_url']}");
-                } else {
-                    // File doesn't exist, keep original value
-                    $cloudinaryUrls[] = $imageUrl;
-                    Log::warning("Place image file not found: {$fullPath}");
+        if (!$additionalInfo) {
+            return;
+        }
+
+        if (is_string($additionalInfo)) {
+            $additionalInfo = json_decode($additionalInfo, true);
+        }
+
+        if (!is_array($additionalInfo) || empty($additionalInfo)) {
+            return;
+        }
+
+        $hasLocalFiles = false;
+
+        if (!empty($additionalInfo['menu_image_url'])) {
+            $additionalInfo['menu_image_url'] = $this->uploadIfNeeded(
+                $additionalInfo['menu_image_url'],
+                'places',
+                $hasLocalFiles
+            );
+        }
+
+        if (!empty($additionalInfo['menu']) && is_array($additionalInfo['menu'])) {
+            foreach ($additionalInfo['menu'] as $index => $menuItem) {
+                if (empty($menuItem['image_url'])) {
+                    continue;
                 }
-            } catch (\Exception $e) {
-                Log::error("Failed to upload place image to Cloudinary: " . $e->getMessage());
-                // Keep the original path if upload fails
-                $cloudinaryUrls[] = $imageUrl;
+
+                $additionalInfo['menu'][$index]['image_url'] = $this->uploadIfNeeded(
+                    $menuItem['image_url'],
+                    'places',
+                    $hasLocalFiles
+                );
             }
         }
 
-        // Update with Cloudinary URLs only if there were local files to upload
         if ($hasLocalFiles) {
-            $place->setAttribute('image_urls', $cloudinaryUrls);
+            $place->setAttribute('additional_info', $additionalInfo);
+        }
+    }
+
+    /**
+     * Upload a local file path to Cloudinary if required and return its final URL.
+     */
+    protected function uploadIfNeeded(?string $path, string $folder, bool &$hasLocalFiles): ?string
+    {
+        if (!$path) {
+            return $path;
+        }
+
+        if (str_contains($path, 'cloudinary.com') || str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            return $path;
+        }
+
+        $hasLocalFiles = true;
+
+        try {
+            $fullPath = Storage::disk('public')->path($path);
+
+            if (file_exists($fullPath)) {
+                $result = $this->cloudinaryService->upload($fullPath, $folder);
+                Storage::disk('public')->delete($path);
+                Log::info("Uploaded place image to Cloudinary: {$result['secure_url']}");
+
+                return $result['secure_url'];
+            }
+
+            Log::warning("Place image file not found: {$fullPath}");
+            return $path;
+        } catch (\Exception $e) {
+            Log::error("Failed to upload place image to Cloudinary: " . $e->getMessage());
+            return $path;
         }
     }
 }
