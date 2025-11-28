@@ -15,7 +15,7 @@ class PlacesService
         
         // Load reviews untuk place ini
         $place->load(['reviews' => function ($query) {
-            $query->approved()->latest()->limit(5);
+            $query->approved()->latest()->limit(5)->with(['user:id,name,image_url']);
         }]);
         
         return $place->toArray();
@@ -83,7 +83,7 @@ class PlacesService
             $radius = (float) $filters['radius'];
 
             \Illuminate\Support\Facades\Log::debug('========================');
-            \Illuminate\Support\Facades\Log::debug(['lat' => $lat, 'lng' => $lng, 'radius' => $radius]);
+            \Illuminate\Support\Facades\Log::debug('Location filter parameters', ['lat' => $lat, 'lng' => $lng, 'radius' => $radius]);
             \Illuminate\Support\Facades\Log::debug('========================');
 
             $query->whereNotNull('latitude')
@@ -151,7 +151,10 @@ class PlacesService
 
     public function reviews(int $placeId, array $filters = [], int $perPage = 10, ?int $page = null): array
     {
-        $query = \App\Models\Review::query()->approved()->where('place_id', $placeId);
+        $query = \App\Models\Review::query()
+            ->approved()
+            ->where('place_id', $placeId)
+            ->with(['user:id,name,image_url']);
 
         if (isset($filters['rating'])) {
             $query->where('rating', (int) $filters['rating']);
