@@ -353,10 +353,7 @@ class UserChallengeResource extends Resource
         return \Illuminate\Support\Facades\Cache::remember(
             'navigation_badge_user_challenges',
             now()->addMinutes(10),
-            function () {
-                $completedCount = static::getModel()::where('status', true)->count();
-                return $completedCount > 0 ? (string) $completedCount : null;
-            }
+            fn () => (string) static::getModel()::where('status', false)->count()
         );
     }
 

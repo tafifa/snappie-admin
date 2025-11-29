@@ -26,7 +26,7 @@ class ChallengeResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Challenges';
 
-    protected static ?string $navigationGroup = 'Gamification';
+    protected static ?string $navigationGroup = 'Gamification Management';
 
     protected static ?int $navigationSort = 2;
 
@@ -421,18 +421,6 @@ class ChallengeResource extends Resource
             'view' => Pages\ViewChallenge::route('/{record}'),
             'edit' => Pages\EditChallenge::route('/{record}/edit'),
         ];
-    }
-
-    public static function getNavigationBadge(): ?string
-    {
-        return \Illuminate\Support\Facades\Cache::remember(
-            'navigation_badge_challenges',
-            now()->addMinutes(10),
-            function () {
-                $activeCount = static::getModel()::where('status', true)->count();
-                return $activeCount > 0 ? (string) $activeCount : null;
-            }
-        );
     }
 
     public static function getGlobalSearchAttributes(): array

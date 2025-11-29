@@ -27,7 +27,7 @@ class PostResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-chat-bubble-left-right';
 
-    protected static ?string $navigationGroup = 'Content Management';
+    protected static ?string $navigationGroup = 'Activity Management';
 
     protected static ?int $navigationSort = 2;
 
@@ -335,5 +335,14 @@ class PostResource extends Resource
             'view' => Pages\ViewPost::route('/{record}'),
             'edit' => Pages\EditPost::route('/{record}/edit'),
         ];
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        return \Illuminate\Support\Facades\Cache::remember(
+            'navigation_badge_posts',
+            now()->addMinutes(10),
+            fn () => (string) static::getModel()::where('status', false)->count()
+        );
     }
 }

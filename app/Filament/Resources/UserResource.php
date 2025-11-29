@@ -528,15 +528,6 @@ class UserResource extends Resource
         ];
     }
 
-    public static function getNavigationBadge(): ?string
-    {
-        return \Illuminate\Support\Facades\Cache::remember(
-            'navigation_badge_users',
-            now()->addMinutes(10),
-            fn () => static::getModel()::where('status', true)->count() ?: null
-        );
-    }
-
     public static function getGlobalSearchEloquentQuery(): Builder
     {
         return parent::getGlobalSearchEloquentQuery();

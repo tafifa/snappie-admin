@@ -371,18 +371,8 @@ class ReviewResource extends Resource
         return \Illuminate\Support\Facades\Cache::remember(
             'navigation_badge_reviews',
             now()->addMinutes(10),
-            fn () => static::getModel()::where('status', false)->count() ?: null
-        );
-    }
-    
-    public static function getNavigationBadgeColor(): ?string
-    {
-        $pendingCount = \Illuminate\Support\Facades\Cache::remember(
-            'navigation_badge_reviews',
-            now()->addMinutes(10),
             fn () => static::getModel()::where('status', false)->count()
         );
-        return $pendingCount > 0 ? 'warning' : null;
     }
     
     public static function getGlobalSearchEloquentQuery(): Builder

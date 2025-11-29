@@ -26,7 +26,7 @@ class RewardResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Rewards';
 
-    protected static ?string $navigationGroup = 'Gamification';
+    protected static ?string $navigationGroup = 'Gamification Management';
 
     protected static ?int $navigationSort = 3;
 
@@ -457,18 +457,6 @@ class RewardResource extends Resource
             'view' => Pages\ViewReward::route('/{record}'),
             'edit' => Pages\EditReward::route('/{record}/edit'),
         ];
-    }
-
-    public static function getNavigationBadge(): ?string
-    {
-        return \Illuminate\Support\Facades\Cache::remember(
-            'navigation_badge_rewards',
-            now()->addMinutes(10),
-            function () {
-                $activeCount = static::getModel()::where('status', true)->count();
-                return $activeCount > 0 ? (string) $activeCount : null;
-            }
-        );
     }
 
     public static function getGlobalSearchAttributes(): array

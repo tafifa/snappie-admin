@@ -42,28 +42,28 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        User::factory(10)->create();
-        Place::factory(20)->create();
+        // User::factory(10)->create();
+        // Place::factory(20)->create();
 
-        Achievement::factory(5)->create();
-        Challenge::factory(5)->create();
-        Reward::factory(5)->create();
+        // Achievement::factory(5)->create();
+        // Challenge::factory(5)->create();
+        // Reward::factory(5)->create();
         
-        Article::factory(15)->create();
-        Checkin::factory(15)->create();
-        Review::factory(15)->create();
-        Post::factory(15)->create();
+        // Article::factory(15)->create();
+        // Checkin::factory(15)->create();
+        // Review::factory(15)->create();
+        // Post::factory(15)->create();
 
-        UserAchievement::factory(20)->create();
-        UserChallenge::factory(20)->create();
-        UserReward::factory(20)->create();
+        // UserAchievement::factory(20)->create();
+        // UserChallenge::factory(20)->create();
+        // UserReward::factory(20)->create();
 
-        CoinTransaction::factory(20)->create();
-        ExpTransaction::factory(20)->create();
+        // CoinTransaction::factory(20)->create();
+        // ExpTransaction::factory(20)->create();
         
-        UserFollow::factory(20)->create();
-        UserComment::factory(20)->create();
-        UserLike::factory(20)->create();
+        // UserFollow::factory(20)->create();
+        // UserComment::factory(20)->create();
+        // UserLike::factory(20)->create();
 
         $this->command->info('Seeding complete!');
         $this->command->info('========================');

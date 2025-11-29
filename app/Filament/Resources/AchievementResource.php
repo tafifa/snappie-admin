@@ -26,7 +26,7 @@ class AchievementResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Achievements';
 
-    protected static ?string $navigationGroup = 'Gamification';
+    protected static ?string $navigationGroup = 'Gamification Management';
 
     protected static ?int $navigationSort = 1;
 
@@ -339,18 +339,6 @@ class AchievementResource extends Resource
             'view' => Pages\ViewAchievement::route('/{record}'),
             'edit' => Pages\EditAchievement::route('/{record}/edit'),
         ];
-    }
-
-    public static function getNavigationBadge(): ?string
-    {
-        return \Illuminate\Support\Facades\Cache::remember(
-            'navigation_badge_achievements',
-            now()->addMinutes(10),
-            function () {
-                $activeCount = static::getModel()::where('status', true)->count();
-                return $activeCount > 0 ? (string) $activeCount : null;
-            }
-        );
     }
 
     public static function getGlobalSearchAttributes(): array

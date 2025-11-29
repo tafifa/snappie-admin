@@ -376,7 +376,7 @@ class CheckinResource extends Resource
         return \Illuminate\Support\Facades\Cache::remember(
             'navigation_badge_checkins',
             now()->addMinutes(10),
-            fn () => static::getModel()::where('status', false)->count() ?: null
+            fn () => static::getModel()::where('status', false)->count()
         );
     }
     

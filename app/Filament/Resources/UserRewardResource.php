@@ -343,10 +343,7 @@ class UserRewardResource extends Resource
         return \Illuminate\Support\Facades\Cache::remember(
             'navigation_badge_user_rewards',
             now()->addMinutes(10),
-            function () {
-                $claimedCount = static::getModel()::where('status', true)->count();
-                return $claimedCount > 0 ? (string) $claimedCount : null;
-            }
+            fn () => (string) static::getModel()::where('status', false)->count()
         );
     }
 
