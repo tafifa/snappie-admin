@@ -91,17 +91,11 @@ class PlaceResource extends Resource
                                     ->required()
                                     ->numeric()
                                     ->prefix('IDR'),
-                                Forms\Components\TextInput::make('avg_rating')
-                                    ->required()
-                                    ->numeric()
-                                    ->minValue(1)->maxValue(5),
                             ]),
-                        Section::make('Rewards & Statistik')
+                        Section::make('Rewards')
                             ->schema([
                                 Forms\Components\TextInput::make('coin_reward')->numeric(),
                                 Forms\Components\TextInput::make('exp_reward')->numeric(),
-                                Forms\Components\TextInput::make('total_review')->numeric(),
-                                Forms\Components\TextInput::make('total_checkin')->numeric(),
                             ]),
 
                         Section::make('Lokasi')
@@ -135,6 +129,8 @@ class PlaceResource extends Resource
                                             ->label('Alamat'),
                                         Forms\Components\TimePicker::make('additional_info.place_detail.opening_hours')
                                             ->label('Jam Buka'),
+                                        Forms\Components\TimePicker::make('additional_info.place_detail.closing_hours')
+                                            ->label('Jam Tutup'),
                                         Forms\Components\TextInput::make('additional_info.place_detail.contact_number')
                                             ->label('Nomor Kontak')
                                             ->tel(),
@@ -425,11 +421,13 @@ class PlaceResource extends Resource
                                     ->label('Alamat'),
                                 TextEntry::make('additional_info.place_detail.opening_hours')
                                     ->label('Jam Buka'),
+                                TextEntry::make('additional_info.place_detail.closing_hours')
+                                    ->label('Jam Tutup'),
                                 TextEntry::make('additional_info.place_detail.contact_number')
                                     ->label('Nomor Kontak'),
                                 TextEntry::make('additional_info.place_detail.website')
                                     ->label('Website')
-                                    ->url('additional_info.place_detail.website')
+                                    ->url(fn ($record) => $record->additional_info['place_detail']['website'] ?? null)
                                     ->openUrlInNewTab(),
                                 TextEntry::make('additional_info.place_detail.opening_days')
                                     ->label('Hari Buka')
