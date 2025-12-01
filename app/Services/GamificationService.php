@@ -274,6 +274,61 @@ class GamificationService
     }
 
     /**
+     * Mengupdate ulasan yang sudah ada.
+     * @param User $user
+     * @param int $review_id
+     * @param array $payload - { rating, content, image_urls, additional_info }
+     * @return array
+     */
+    public function updateReview(User $user, int $review_id, array $payload): array
+    {
+        return DB::transaction(function () use ($user, $review_id, $payload) {
+            $review = \App\Models\Review::find($review_id);
+            if (!$review) {
+                throw new \InvalidArgumentException('Review not found');
+            }
+
+            // Pastikan user adalah pemilik review
+            if ($review->user_id !== $user->id) {
+                throw new \InvalidArgumentException('You are not authorized to update this review');
+            }
+
+            // Update fields yang diberikan
+            if (isset($payload['rating'])) {
+                $review->rating = $payload['rating'];
+            }
+            if (array_key_exists('content', $payload)) {
+                $review->content = $payload['content'];
+            }
+            if (array_key_exists('image_urls', $payload)) {
+                $review->image_urls = $payload['image_urls'];
+            }
+            if (array_key_exists('additional_info', $payload)) {
+                $review->additional_info = $payload['additional_info'];
+            }
+
+            $review->save();
+
+            // Hitung ulang rata-rata rating jika rating berubah
+            if (isset($payload['rating'])) {
+                $reviewStats = \App\Models\Review::where('place_id', $review->place_id)
+                    ->selectRaw('COUNT(id) as review_count, SUM(rating) as total_rating')
+                    ->first();
+
+                $newAvgRating = $reviewStats->review_count > 0
+                    ? round($reviewStats->total_rating / $reviewStats->review_count, 2)
+                    : 0;
+
+                \App\Models\Place::where('id', $review->place_id)->update([
+                    'avg_rating' => $newAvgRating,
+                ]);
+            }
+
+            return $review->toArray();
+        });
+    }
+
+    /**
      * Memberikan achievement kepada pengguna jika belum dimiliki.
      * @param User $user
      * @param int $achievement_id

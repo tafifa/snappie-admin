@@ -84,6 +84,14 @@ class GamificationController
                 'message' => 'Validation failed',
                 'errors' => $e->errors()
             ], 400);
+        } catch (\InvalidArgumentException $e) {
+            $errorMessage = $e->getMessage();
+            // Return 404 for not found, 409 for conflict/duplicate
+            $status = str_contains($errorMessage, 'not found') ? 404 : 409;
+            return response()->json([
+                'success' => false,
+                'message' => $errorMessage,
+            ], $status);
         } catch (\Exception $e) {
             $status = ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpException) ? $e->getStatusCode() : 500;
             $errorMessage = $e->getMessage();
@@ -133,6 +141,14 @@ class GamificationController
                 'message' => 'Validation failed',
                 'errors' => $e->errors()
             ], 400);
+        } catch (\InvalidArgumentException $e) {
+            $errorMessage = $e->getMessage();
+            // Return 404 for not found, 409 for conflict/duplicate
+            $status = str_contains($errorMessage, 'not found') ? 404 : 409;
+            return response()->json([
+                'success' => false,
+                'message' => $errorMessage,
+            ], $status);
         } catch (\Exception $e) {
             $status = ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpException) ? $e->getStatusCode() : 500;
             $errorMessage = $e->getMessage();
@@ -152,6 +168,54 @@ class GamificationController
                 'message' => $status === 500 ? 'Internal server error' : $errorMessage,
                 'error' => $errorMessage,
             ], $status);
+        }
+    }
+
+    public function updateReview(Request $request, int $review_id): JsonResponse
+    {
+        try {
+            $user = $request->user();
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized'
+                ], 401);
+            }
+
+            $payload = $request->validate([
+                'rating' => 'sometimes|integer|min:1|max:5',
+                'content' => 'sometimes|nullable|string',
+                'image_urls' => 'sometimes|nullable|array',
+                'image_urls.*' => 'string',
+                'additional_info' => 'sometimes|nullable|array',
+            ]);
+
+            $result = $this->service->updateReview($user, $review_id, $payload);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Review updated successfully',
+                'data' => $result
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 400);
+        } catch (\InvalidArgumentException $e) {
+            $errorMessage = $e->getMessage();
+            $status = str_contains($errorMessage, 'not found') ? 404 : 403;
+            return response()->json([
+                'success' => false,
+                'message' => $errorMessage,
+            ], $status);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Internal server error',
+                'error' => $e->getMessage(),
+            ], 500);
         }
     }
 
@@ -198,8 +262,7 @@ class GamificationController
                 return response()->json([
                     'success' => false,
                     'message' => $errorMessage,
-                    'error' => $errorMessage,
-                ], 400);
+                ], 409);
             }
             
             $status = ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpException) ? $e->getStatusCode() : 500;
@@ -254,8 +317,7 @@ class GamificationController
                 return response()->json([
                     'success' => false,
                     'message' => $errorMessage,
-                    'error' => $errorMessage,
-                ], 400);
+                ], 409);
             }
             
             $status = ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpException) ? $e->getStatusCode() : 500;
@@ -318,8 +380,7 @@ class GamificationController
                 return response()->json([
                     'success' => false,
                     'message' => 'Reward out of stock',
-                    'error' => $errorMessage,
-                ], 400);
+                ], 409);
             }
             
             if (str_contains($errorMessage, 'tidak aktif') || str_contains($errorMessage, 'not active')) {
