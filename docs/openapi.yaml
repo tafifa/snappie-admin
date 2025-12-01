@@ -1,0 +1,2341 @@
+openapi: 3.0.3
+info:
+  title: Snappie API
+  description: |
+    API untuk aplikasi Snappie - Platform gamifikasi dan sosial untuk eksplorasi kuliner dan wisata di Pontianak.
+    
+    ## Authentication
+    API menggunakan Bearer Token authentication. Setelah login, gunakan token yang diberikan di header `Authorization: Bearer {token}`.
+    
+    ## Rate Limiting
+    API memiliki rate limiting untuk mencegah penyalahgunaan.
+    
+    ## Response Format
+    Semua response menggunakan format JSON dengan struktur:
+    ```json
+    {
+      "success": boolean,
+      "message": string,
+      "data": object|array|null
+    }
+    ```
+  version: 2.0.0
+  contact:
+    name: Snappie Team
+    email: support@snappie.id
+
+servers:
+  - url: /api/v2
+    description: API Version 2
+
+tags:
+  - name: Health
+    description: Health check endpoint
+  - name: Authentication
+    description: User authentication (register, login, logout, refresh token)
+  - name: Users
+    description: User profile and saved items management
+  - name: Places
+    description: Places/restaurants discovery and details
+  - name: Articles
+    description: Articles and blog posts
+  - name: Gamification
+    description: Check-ins, reviews, achievements, challenges, and rewards
+  - name: Social
+    description: Posts, comments, likes, and follows
+  - name: Leaderboard
+    description: Weekly and monthly leaderboards
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Access token obtained from login endpoint
+
+  schemas:
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+        data:
+          type: object
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+        error:
+          type: string
+
+    ValidationErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: Validation failed
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+
+    PaginationMeta:
+      type: object
+      properties:
+        items:
+          type: array
+        total:
+          type: integer
+        current_page:
+          type: integer
+        per_page:
+          type: integer
+        last_page:
+          type: integer
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        image_url:
+          type: string
+          format: uri
+        total_coin:
+          type: integer
+        total_exp:
+          type: integer
+        total_following:
+          type: integer
+        total_follower:
+          type: integer
+        total_checkin:
+          type: integer
+        total_post:
+          type: integer
+        total_review:
+          type: integer
+        total_achievement:
+          type: integer
+        total_challenge:
+          type: integer
+        status:
+          type: boolean
+        last_login_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Place:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        image_url:
+          type: string
+          format: uri
+        image_urls:
+          type: array
+          items:
+            type: string
+            format: uri
+        avg_rating:
+          type: number
+          format: float
+        total_review:
+          type: integer
+        total_checkin:
+          type: integer
+        min_price:
+          type: integer
+        max_price:
+          type: integer
+        partnership_status:
+          type: boolean
+        status:
+          type: boolean
+
+    Article:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        author:
+          type: string
+        category:
+          type: string
+        description:
+          type: string
+        image_url:
+          type: string
+          format: uri
+        link:
+          type: string
+          format: uri
+        created_at:
+          type: string
+          format: date-time
+
+    Review:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        place_id:
+          type: integer
+        content:
+          type: string
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        image_urls:
+          type: array
+          items:
+            type: string
+            format: uri
+        status:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    Checkin:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        place_id:
+          type: integer
+        latitude:
+          type: number
+          format: float
+        longitude:
+          type: number
+          format: float
+        image_url:
+          type: string
+          format: uri
+        status:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    Post:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        place_id:
+          type: integer
+        content:
+          type: string
+        image_urls:
+          type: array
+          items:
+            type: string
+            format: uri
+        total_like:
+          type: integer
+        total_comment:
+          type: integer
+        status:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    Achievement:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        image_url:
+          type: string
+          format: uri
+        coin_reward:
+          type: integer
+        status:
+          type: boolean
+
+    Challenge:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        image_url:
+          type: string
+          format: uri
+        exp_reward:
+          type: integer
+        started_at:
+          type: string
+          format: date-time
+        ended_at:
+          type: string
+          format: date-time
+        challenge_type:
+          type: string
+          enum: [daily, weekly, special]
+        status:
+          type: boolean
+
+    Reward:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        image_url:
+          type: string
+          format: uri
+        coin_requirement:
+          type: integer
+        stock:
+          type: integer
+        status:
+          type: boolean
+
+    LeaderboardEntry:
+      type: object
+      properties:
+        rank:
+          type: integer
+        user_id:
+          type: integer
+        name:
+          type: string
+        username:
+          type: string
+        image_url:
+          type: string
+          format: uri
+        total_exp:
+          type: integer
+        total_checkin:
+          type: integer
+        period:
+          type: string
+          enum: [weekly, monthly]
+
+  responses:
+    UnauthorizedError:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: Unauthorized
+
+    NotFoundError:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: Resource not found
+
+    ConflictError:
+      description: Conflict - duplicate or already exists
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: Resource already exists
+
+    ValidationError:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationErrorResponse'
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: Internal server error
+
+paths:
+  # Health
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      description: Check if the API is running
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: OK
+
+  # Authentication
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - name
+                - gender
+                - image_url
+                - username
+                - food_type
+                - place_value
+              properties:
+                email:
+                  type: string
+                  format: email
+                name:
+                  type: string
+                  maxLength: 255
+                gender:
+                  type: string
+                  enum: [male, female, other]
+                image_url:
+                  type: string
+                  format: uri
+                  maxLength: 500
+                username:
+                  type: string
+                  maxLength: 255
+                food_type:
+                  type: array
+                  items:
+                    type: string
+                  minItems: 3
+                  maxItems: 3
+                place_value:
+                  type: array
+                  items:
+                    type: string
+                  minItems: 3
+                  maxItems: 3
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: User registered successfully
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      email:
+                        type: string
+                      name:
+                        type: string
+                      username:
+                        type: string
+                      image_url:
+                        type: string
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  description: Email or username
+                remember:
+                  type: boolean
+                  default: false
+                force_logout_other_devices:
+                  type: boolean
+                  default: false
+                  description: Force logout from other devices if there's an active session
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Login berhasil!
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          email:
+                            type: string
+                          name:
+                            type: string
+                          username:
+                            type: string
+                          image_url:
+                            type: string
+                      token:
+                        type: string
+                        description: Access token (valid for 2 hours)
+                      token_type:
+                        type: string
+                        example: Bearer
+                      expires_at:
+                        type: string
+                        format: date-time
+                      refresh_token:
+                        type: string
+                        description: Refresh token (valid for 30 days)
+                      refresh_token_expires_at:
+                        type: string
+                        format: date-time
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '409':
+          description: Active session exists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      has_active_session:
+                        type: boolean
+                        example: true
+
+  /auth/refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - refresh_token
+              properties:
+                refresh_token:
+                  type: string
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Token refreshed successfully
+                  data:
+                    type: object
+                    properties:
+                      token:
+                        type: string
+                      token_type:
+                        type: string
+                        example: Bearer
+                      expires_at:
+                        type: string
+                        format: date-time
+                      refresh_token:
+                        type: string
+                      refresh_token_expires_at:
+                        type: string
+                        format: date-time
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: Logout user
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Logout berhasil!
+                  logged_out_at:
+                    type: string
+                    format: date-time
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  # Users
+  /users/profile:
+    get:
+      tags:
+        - Users
+      summary: Get current user profile
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        $ref: '#/components/schemas/User'
+                      stats:
+                        type: object
+                      preferences:
+                        type: object
+                      settings:
+                        type: object
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+    post:
+      tags:
+        - Users
+      summary: Update current user profile
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  maxLength: 255
+                gender:
+                  type: string
+                image_url:
+                  type: string
+                  format: uri
+                phone:
+                  type: string
+                date_of_birth:
+                  type: string
+                  format: date
+                bio:
+                  type: string
+                privacy_settings:
+                  type: object
+                  properties:
+                    profile_visibility:
+                      type: string
+                    location_sharing:
+                      type: boolean
+                notification_preferences:
+                  type: object
+                  properties:
+                    email_notifications:
+                      type: boolean
+                    push_notifications:
+                      type: boolean
+      responses:
+        '200':
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /users/saved:
+    get:
+      tags:
+        - Users
+      summary: Get saved places and posts
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Saved items retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      saved_places:
+                        type: array
+                        items:
+                          type: integer
+                      saved_posts:
+                        type: array
+                        items:
+                          type: integer
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+    post:
+      tags:
+        - Users
+      summary: Update saved places and posts
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                saved_places:
+                  type: array
+                  items:
+                    type: integer
+                  description: Array of place IDs to save
+                saved_posts:
+                  type: array
+                  items:
+                    type: integer
+                  description: Array of post IDs to save
+      responses:
+        '200':
+          description: Saved items updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /users/id/{user_id}:
+    get:
+      tags:
+        - Users
+      summary: Get user by ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /users/id/{user_id}/activities:
+    get:
+      tags:
+        - Users
+      summary: Get user activities
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Activities retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      reviews:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Review'
+                      posts:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Post'
+                      user_achievements:
+                        type: array
+                      user_challenges:
+                        type: array
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /users/id/{user_id}/stats:
+    get:
+      tags:
+        - Users
+      summary: Get user statistics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Stats retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      activity:
+                        type: object
+                      social:
+                        type: object
+                      gamification:
+                        type: object
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  # Places
+  /places:
+    get:
+      tags:
+        - Places
+      summary: List places with filters
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: min_rating
+          in: query
+          schema:
+            type: number
+        - name: min_price
+          in: query
+          schema:
+            type: integer
+        - name: max_price
+          in: query
+          schema:
+            type: integer
+        - name: partner
+          in: query
+          schema:
+            type: boolean
+        - name: active_only
+          in: query
+          schema:
+            type: boolean
+        - name: latitude
+          in: query
+          schema:
+            type: number
+        - name: longitude
+          in: query
+          schema:
+            type: number
+        - name: food_type
+          in: query
+          schema:
+            type: string
+          description: Comma-separated food types
+        - name: place_value
+          in: query
+          schema:
+            type: string
+          description: Comma-separated place values
+      responses:
+        '200':
+          description: Places retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /places/id/{place_id}:
+    get:
+      tags:
+        - Places
+      summary: Get place details
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: place_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Place retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Place'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /places/id/{place_id}/reviews:
+    get:
+      tags:
+        - Places
+      summary: Get reviews for a place
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: place_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: rating
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 5
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [recent, top]
+        - name: created_from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: created_to
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Reviews retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Review'
+                      total:
+                        type: integer
+                      current_page:
+                        type: integer
+                      per_page:
+                        type: integer
+                      last_page:
+                        type: integer
+                      summary:
+                        type: object
+                        properties:
+                          average_rating:
+                            type: number
+                          total_reviews:
+                            type: integer
+                          histogram:
+                            type: object
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /places/id/{place_id}/checkins:
+    get:
+      tags:
+        - Places
+      summary: Get check-ins for a place
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: place_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: created_from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: created_to
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Check-ins retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /places/id/{place_id}/posts:
+    get:
+      tags:
+        - Places
+      summary: Get posts for a place
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: place_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [recent, popular]
+        - name: created_from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: created_to
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Posts retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  # Articles
+  /articles:
+    get:
+      tags:
+        - Articles
+      summary: List articles
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: author
+          in: query
+          schema:
+            type: string
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Articles retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /articles/id/{article_id}:
+    get:
+      tags:
+        - Articles
+      summary: Get article details
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: article_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Article retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Article'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  # Gamification
+  /gamification/achievements:
+    get:
+      tags:
+        - Gamification
+      summary: List all achievements
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Achievements retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Achievement'
+                      total:
+                        type: integer
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /gamification/challenges:
+    get:
+      tags:
+        - Gamification
+      summary: List all challenges
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Challenges retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Challenge'
+                      total:
+                        type: integer
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /gamification/rewards:
+    get:
+      tags:
+        - Gamification
+      summary: List all rewards
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Rewards retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Reward'
+                      total:
+                        type: integer
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /gamification/coins/transactions:
+    get:
+      tags:
+        - Gamification
+      summary: Get coin transactions history
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: page
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Coin transactions retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      transactions:
+                        type: array
+                      pagination:
+                        type: object
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /gamification/exp/transactions:
+    get:
+      tags:
+        - Gamification
+      summary: Get EXP transactions history
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: page
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: EXP transactions retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      transactions:
+                        type: array
+                      pagination:
+                        type: object
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /gamification/checkin:
+    post:
+      tags:
+        - Gamification
+      summary: Create a check-in
+      description: Check-in at a place. Limited to 1 check-in per place per calendar month.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - place_id
+              properties:
+                place_id:
+                  type: integer
+                latitude:
+                  type: number
+                  format: float
+                longitude:
+                  type: number
+                  format: float
+                image_url:
+                  type: string
+                  format: uri
+                additional_info:
+                  type: object
+      responses:
+        '201':
+          description: Check-in created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Checkin'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: Place not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Already checked in this month
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: You have already checked in at this place this month.
+
+  /gamification/review:
+    post:
+      tags:
+        - Gamification
+      summary: Create a review
+      description: Create a review for a place. Limited to 1 review per place per calendar month.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - place_id
+                - rating
+              properties:
+                place_id:
+                  type: integer
+                rating:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                content:
+                  type: string
+                image_urls:
+                  type: array
+                  items:
+                    type: string
+                    format: uri
+                additional_info:
+                  type: object
+      responses:
+        '201':
+          description: Review created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Review'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '409':
+          description: Already reviewed this month
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /gamification/review/{review_id}:
+    put:
+      tags:
+        - Gamification
+      summary: Update a review
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: review_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                rating:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                content:
+                  type: string
+                image_urls:
+                  type: array
+                  items:
+                    type: string
+                    format: uri
+                additional_info:
+                  type: object
+      responses:
+        '200':
+          description: Review updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Review'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          description: Not authorized to update this review
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /gamification/achievements/{achievement_id}/grant:
+    post:
+      tags:
+        - Gamification
+      summary: Grant an achievement to user
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: achievement_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                additional_info:
+                  type: object
+      responses:
+        '201':
+          description: Achievement granted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '409':
+          description: User already has this achievement
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /gamification/challenges/{challenge_id}/complete:
+    post:
+      tags:
+        - Gamification
+      summary: Complete a challenge
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: challenge_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                additional_info:
+                  type: object
+      responses:
+        '201':
+          description: Challenge completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '409':
+          description: Challenge already completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /gamification/rewards/{reward_id}/redeem:
+    post:
+      tags:
+        - Gamification
+      summary: Redeem a reward
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: reward_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                additional_info:
+                  type: object
+      responses:
+        '201':
+          description: Reward redeemed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Insufficient coins or reward not active
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '409':
+          description: Reward out of stock
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Social
+  /social/posts:
+    get:
+      tags:
+        - Social
+      summary: List posts
+      description: Get posts. Use `trending` query param for trending posts, `following` for posts from followed users.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: trending
+          in: query
+          schema:
+            type: boolean
+          description: Get trending posts
+        - name: following
+          in: query
+          schema:
+            type: boolean
+          description: Get posts from followed users
+      responses:
+        '200':
+          description: Posts retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+    post:
+      tags:
+        - Social
+      summary: Create a post
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - place_id
+                - content
+              properties:
+                place_id:
+                  type: integer
+                content:
+                  type: string
+                  maxLength: 5000
+                image_urls:
+                  type: array
+                  items:
+                    type: string
+                    format: uri
+                additional_info:
+                  type: object
+      responses:
+        '201':
+          description: Post created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Post'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '409':
+          description: Place not active
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /social/posts/id/{post_id}:
+    get:
+      tags:
+        - Social
+      summary: Get post details
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: post_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Post retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Post'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /social/posts/id/{post_id}/likes:
+    get:
+      tags:
+        - Social
+      summary: Get likes for a post
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: post_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Likes retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /social/posts/id/{post_id}/like:
+    post:
+      tags:
+        - Social
+      summary: Like/unlike a post
+      description: Toggle like on a post. Returns true if liked, false if unliked.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: post_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Post liked/unliked successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Post liked
+                  data:
+                    type: boolean
+                    description: true if liked, false if unliked
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /social/posts/id/{post_id}/comments:
+    get:
+      tags:
+        - Social
+      summary: Get comments for a post
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: post_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Comments retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /social/posts/id/{post_id}/comment:
+    post:
+      tags:
+        - Social
+      summary: Comment on a post
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: post_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - comment
+              properties:
+                comment:
+                  type: string
+                  maxLength: 255
+      responses:
+        '201':
+          description: Comment created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /social/comments/id/{comment_id}/likes:
+    get:
+      tags:
+        - Social
+      summary: Get likes for a comment
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: comment_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Comment likes retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /social/comments/id/{comment_id}/like:
+    post:
+      tags:
+        - Social
+      summary: Like/unlike a comment
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: comment_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Comment liked/unliked successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /social/follow:
+    get:
+      tags:
+        - Social
+      summary: Get follow data
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: query
+          schema:
+            type: integer
+          description: User ID to get follow data for. Defaults to current user.
+      responses:
+        '200':
+          description: Follow data retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      followers:
+                        type: array
+                      total_followers:
+                        type: integer
+                      following:
+                        type: array
+                      total_following:
+                        type: integer
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /social/follow/id/{user_id}:
+    post:
+      tags:
+        - Social
+      summary: Follow/unfollow a user
+      description: Toggle follow on a user. Returns true if followed, false if unfollowed.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Follow/unfollow successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Follow successfully
+                  data:
+                    type: boolean
+                    description: true if followed, false if unfollowed
+        '400':
+          description: Cannot follow yourself
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  # Leaderboard
+  /leaderboard/weekly:
+    get:
+      tags:
+        - Leaderboard
+      summary: Get weekly leaderboard
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Weekly leaderboard retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LeaderboardEntry'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /leaderboard/monthly:
+    get:
+      tags:
+        - Leaderboard
+      summary: Get monthly leaderboard
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Monthly leaderboard retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LeaderboardEntry'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /leaderboard/id/{leaderboard_id}:
+    get:
+      tags:
+        - Leaderboard
+      summary: Get leaderboard by ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: leaderboard_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Leaderboard retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LeaderboardEntry'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /leaderboard/rank:
+    get:
+      tags:
+        - Leaderboard
+      summary: Get user rank in leaderboard
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: leaderboard_id
+          in: query
+          schema:
+            type: integer
+          description: Leaderboard ID. Defaults to latest leaderboard.
+        - name: user_id
+          in: query
+          schema:
+            type: integer
+          description: User ID. Defaults to current user.
+      responses:
+        '200':
+          description: User rank retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/LeaderboardEntry'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'

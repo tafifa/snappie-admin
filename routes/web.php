@@ -10,8 +10,3 @@ Route::get('/', function () {
 Route::get('/docs', function () {
     return view('docs.swagger');
 });
-
-Route::get('/docs/openapi.yaml', function () {
-    $path = base_path('Default module.openapi.yaml');
-    return response()->file($path, ['Content-Type' => 'application/yaml']);
-});
