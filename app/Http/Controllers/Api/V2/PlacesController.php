@@ -79,4 +79,35 @@ class PlacesController
             'data' => $result,
         ]);
     }
+
+    public function checkins(int $place_id, Request $request): JsonResponse
+    {
+        $filters = [];
+        if ($request->query('created_from')) $filters['created_from'] = (string) $request->query('created_from');
+        if ($request->query('created_to')) $filters['created_to'] = (string) $request->query('created_to');
+        $perPage = (int) ($request->query('per_page', 10));
+        $page = $request->query('page') ? (int) $request->query('page') : null;
+        $result = $this->service->checkins($place_id, $filters, $perPage, $page);
+        return response()->json([
+            'success' => true,
+            'message' => 'Checkins retrieved successfully',
+            'data' => $result,
+        ]);
+    }
+
+    public function posts(int $place_id, Request $request): JsonResponse
+    {
+        $filters = [];
+        if ($request->query('created_from')) $filters['created_from'] = (string) $request->query('created_from');
+        if ($request->query('created_to')) $filters['created_to'] = (string) $request->query('created_to');
+        if ($request->query('sort_by')) $filters['sort_by'] = (string) $request->query('sort_by');
+        $perPage = (int) ($request->query('per_page', 10));
+        $page = $request->query('page') ? (int) $request->query('page') : null;
+        $result = $this->service->posts($place_id, $filters, $perPage, $page);
+        return response()->json([
+            'success' => true,
+            'message' => 'Posts retrieved successfully',
+            'data' => $result,
+        ]);
+    }
 }

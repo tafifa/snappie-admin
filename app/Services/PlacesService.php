@@ -199,4 +199,69 @@ class PlacesService
             ],
         ];
     }
+
+    public function checkins(int $placeId, array $filters = [], int $perPage = 10, ?int $page = null): array
+    {
+        $query = \App\Models\Checkin::query()
+            ->where('place_id', $placeId)
+            ->where('status', true)
+            ->with(['user:id,name,image_url']);
+
+        $from = $filters['created_from'] ?? null;
+        $to = $filters['created_to'] ?? null;
+        if ($from && $to) {
+            $query->whereBetween('created_at', [$from, $to]);
+        } elseif ($from) {
+            $query->where('created_at', '>=', $from);
+        } elseif ($to) {
+            $query->where('created_at', '<=', $to);
+        }
+
+        $query->orderBy('created_at', 'desc');
+
+        $checkins = $page ? $query->paginate($perPage, ['*'], 'page', (int) $page) : $query->paginate($perPage);
+
+        return [
+            'items' => $checkins->items(),
+            'total' => (int) $checkins->total(),
+            'current_page' => (int) $checkins->currentPage(),
+            'per_page' => (int) $checkins->perPage(),
+            'last_page' => (int) $checkins->lastPage(),
+        ];
+    }
+
+    public function posts(int $placeId, array $filters = [], int $perPage = 10, ?int $page = null): array
+    {
+        $query = \App\Models\Post::query()
+            ->where('place_id', $placeId)
+            ->active()
+            ->with(['user:id,name,image_url']);
+
+        $from = $filters['created_from'] ?? null;
+        $to = $filters['created_to'] ?? null;
+        if ($from && $to) {
+            $query->whereBetween('created_at', [$from, $to]);
+        } elseif ($from) {
+            $query->where('created_at', '>=', $from);
+        } elseif ($to) {
+            $query->where('created_at', '<=', $to);
+        }
+
+        $sort = $filters['sort_by'] ?? 'recent';
+        if ($sort === 'popular') {
+            $query->orderBy('total_like', 'desc')->orderBy('created_at', 'desc');
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
+
+        $posts = $page ? $query->paginate($perPage, ['*'], 'page', (int) $page) : $query->paginate($perPage);
+
+        return [
+            'items' => $posts->items(),
+            'total' => (int) $posts->total(),
+            'current_page' => (int) $posts->currentPage(),
+            'per_page' => (int) $posts->perPage(),
+            'last_page' => (int) $posts->lastPage(),
+        ];
+    }
 }
