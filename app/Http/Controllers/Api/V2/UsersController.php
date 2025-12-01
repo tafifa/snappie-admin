@@ -122,4 +122,48 @@ class UsersController
             'data' => $stats,
         ]);
     }
+
+    public function updateSaved(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized',
+            ], 401);
+        }
+
+        $payload = $request->validate([
+            'saved_places' => ['sometimes', 'array'],
+            'saved_places.*' => ['integer', 'exists:places,id'],
+            'saved_posts' => ['sometimes', 'array'],
+            'saved_posts.*' => ['integer', 'exists:posts,id'],
+        ]);
+
+        $updated = $this->service->updateSaved($user->id, $payload);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Saved items updated successfully',
+            'data' => $updated?->additional_info['user_saved'] ?? null,
+        ]);
+    }
+
+    public function getSaved(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized',
+            ], 401);
+        }
+
+        $saved = $this->service->getSaved($user->id);
+        return response()->json([
+            'success' => true,
+            'message' => 'Saved items retrieved successfully',
+            'data' => $saved,
+        ]);
+    }
 }

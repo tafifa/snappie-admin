@@ -82,7 +82,7 @@ class UsersService
             return null;
         }
 
-        $add = $user->additional_info;
+        $add = is_array($user->additional_info) ? $user->additional_info : (array) $user->additional_info;
         $add['user_detail']['gender'] = $payload['gender'] ?? ($add['user_detail']['gender'] ?? null);
         $add['user_detail']['phone'] = $payload['phone'] ?? ($add['user_detail']['phone'] ?? '');
         $add['user_detail']['date_of_birth'] = $payload['date_of_birth'] ?? ($add['user_detail']['date_of_birth'] ?? '');
@@ -219,6 +219,53 @@ class UsersService
             'current_page' => (int) $users->currentPage(),
             'per_page' => (int) $users->perPage(),
             'last_page' => (int) $users->lastPage(),
+        ];
+    }
+
+    public function updateSaved(int $userId, array $payload): ?User
+    {
+        $user = User::find($userId);
+        if (!$user) {
+            return null;
+        }
+
+        $add = $user->additional_info ?? [];
+        
+        // Initialize user_saved if not exists
+        if (!isset($add['user_saved'])) {
+            $add['user_saved'] = [
+                'saved_places' => [],
+                'saved_posts' => [],
+            ];
+        }
+
+        // Store saved_places directly as array
+        if (isset($payload['saved_places'])) {
+            $add['user_saved']['saved_places'] = array_values(array_unique($payload['saved_places']));
+        }
+
+        // Store saved_posts directly as array
+        if (isset($payload['saved_posts'])) {
+            $add['user_saved']['saved_posts'] = array_values(array_unique($payload['saved_posts']));
+        }
+
+        $user->additional_info = $add;
+        $user->save();
+
+        return $user;
+    }
+
+    public function getSaved(int $userId): ?array
+    {
+        $user = User::find($userId);
+        if (!$user) {
+            return null;
+        }
+
+        $add = $user->additional_info ?? [];
+        return $add['user_saved'] ?? [
+            'saved_places' => [],
+            'saved_posts' => [],
         ];
     }
 }

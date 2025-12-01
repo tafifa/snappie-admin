@@ -34,6 +34,8 @@ Route::middleware('api')->prefix('v2')->group(function () {
         Route::prefix('users')->group(function () {
             Route::get('/profile', [UsersController::class, 'profile']);
             Route::post('/profile', [UsersController::class, 'updateProfile']);
+            Route::get('/saved', [UsersController::class, 'getSaved']);
+            Route::post('/saved', [UsersController::class, 'updateSaved']);
 
             Route::get('/id/{user_id}', [UsersController::class, 'show']);
             Route::get('/id/{user_id}/activities', [UsersController::class, 'activities']);
@@ -45,6 +47,8 @@ Route::middleware('api')->prefix('v2')->group(function () {
             Route::get('/', [PlacesController::class, 'index']);
             Route::get('/id/{place_id}', [PlacesController::class, 'show']);
             Route::get('/id/{place_id}/reviews', [PlacesController::class, 'reviews']);
+            Route::get('/id/{place_id}/checkins', [PlacesController::class, 'checkins']);
+            Route::get('/id/{place_id}/posts', [PlacesController::class, 'posts']);
         });
 
         // Articles
@@ -64,6 +68,7 @@ Route::middleware('api')->prefix('v2')->group(function () {
 
             Route::post('/checkin', [GamificationController::class, 'checkin']);
             Route::post('/review', [GamificationController::class, 'review']);
+            Route::put('/review/{review_id}', [GamificationController::class, 'updateReview']);
 
             Route::post('/achievements/{achievement_id}/grant', [GamificationController::class, 'grantAchievement']);
             Route::post('/challenges/{challenge_id}/complete', [GamificationController::class, 'completeChallenge']);
