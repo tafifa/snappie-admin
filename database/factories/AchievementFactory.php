@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Smknstd\FakerPicsumImages\FakerPicsumImagesProvider;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Achievement>
@@ -16,10 +17,13 @@ class AchievementFactory extends Factory
    */
   public function definition(): array
   {
+    $faker = fake();
+    $faker->addProvider(new FakerPicsumImagesProvider($faker));
+
     return [
       'name' => 'Achievement ' . fake()->words(2, true),
       'description' => fake()->sentence(),
-      'image_url' => fake()->imageUrl(640, 480, 'achievement', true),
+      'image_url' => $faker->imageUrl(640, 480),
       'coin_reward' => fake()->numberBetween(50, 250),
       'status' => true,
       'additional_info' => [

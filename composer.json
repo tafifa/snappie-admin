@@ -15,7 +15,8 @@
         "laravel/tinker": "^2.10.1"
     },
     "require-dev": {
-        "fakerphp/faker": "^1.23"
+        "fakerphp/faker": "^1.23",
+        "smknstd/fakerphp-picsum-images": "^1.0"
     },
     "autoload": {
         "psr-4": {
@@ -56,6 +57,9 @@
         "sort-packages": true,
         "allow-plugins": {
             "php-http/discovery": true
+        },
+        "audit": {
+            "ignore": ["PKSA-365x-2zjk-pt47", "PKSA-g5js-3ypd-k2kr"]
         }
     },
     "minimum-stability": "stable",

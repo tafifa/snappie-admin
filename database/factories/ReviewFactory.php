@@ -5,6 +5,7 @@ namespace Database\Factories;
 use App\Models\Place;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Smknstd\FakerPicsumImages\FakerPicsumImagesProvider;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Review>
@@ -18,14 +19,17 @@ class ReviewFactory extends Factory
      */
     public function definition(): array
     {
+        $faker = fake();
+        $faker->addProvider(new FakerPicsumImagesProvider($faker));
+
         return [
             'user_id' => User::inRandomOrder()->first()?->id,
             'place_id' => Place::inRandomOrder()->first()?->id,
             'content' => fake()->paragraph(fake()->numberBetween(2, 6)),
             'image_urls' => [
-                fake()->imageUrl(640, 480, 'nature', true),
-                fake()->imageUrl(640, 480, 'city', true),
-                fake()->imageUrl(640, 480, 'food', true),
+                $faker->imageUrl(640, 480),
+                $faker->imageUrl(640, 480),
+                $faker->imageUrl(640, 480),
             ],
             'rating' => fake()->numberBetween(1, 5),
             'status' => fake()->boolean(95), // 95% chance of being approved

@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Carbon;
+use Smknstd\FakerPicsumImages\FakerPicsumImagesProvider;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Reward>
@@ -17,10 +18,13 @@ class RewardFactory extends Factory
      */
     public function definition(): array
     {
+        $faker = fake();
+        $faker->addProvider(new FakerPicsumImagesProvider($faker));
+
         return [
             'name' => 'Reward: ' . fake()->words(3, true),
             'description' => fake()->sentence(12),
-            'image_url' => fake()->imageUrl(640, 480, 'nature', true),
+            'image_url' => $faker->imageUrl(640, 480),
             'coin_requirement' => fake()->numberBetween(500, 5000),
             'stock' => fake()->numberBetween(10, 100),
             'started_at' => Carbon::now(),

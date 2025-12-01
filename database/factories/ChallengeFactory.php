@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Carbon;
+use Smknstd\FakerPicsumImages\FakerPicsumImagesProvider;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Challenge>
@@ -17,12 +18,15 @@ class ChallengeFactory extends Factory
    */
   public function definition(): array
   {
+    $faker = fake();
+    $faker->addProvider(new FakerPicsumImagesProvider($faker));
+
     $started = Carbon::instance(fake()->dateTimeThisMonth());
 
     return [
       'name' => 'Challenge: ' . fake()->words(3, true),
       'description' => fake()->sentence(10),
-      'image_url' => fake()->imageUrl(640, 480, 'challenge', true),
+      'image_url' => $faker->imageUrl(640, 480),
       'exp_reward' => fake()->numberBetween(200, 1000),
       'started_at' => $started,
       'ended_at' => $started->clone()->addWeeks(fake()->numberBetween(1, 4)),

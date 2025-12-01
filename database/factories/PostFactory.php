@@ -5,6 +5,7 @@ namespace Database\Factories;
 use App\Models\User;
 use App\Models\Place;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Smknstd\FakerPicsumImages\FakerPicsumImagesProvider;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Post>
@@ -18,14 +19,17 @@ class PostFactory extends Factory
      */
     public function definition(): array
     {
+        $faker = fake();
+        $faker->addProvider(new FakerPicsumImagesProvider($faker));
+
         return [
             'user_id' => User::inRandomOrder()->first()?->id,
             'place_id' => Place::inRandomOrder()->first()?->id,
             'content' => fake()->paragraph(fake()->numberBetween(2, 5)),
             'image_urls' => [
-                fake()->imageUrl(640, 480, 'nature', true),
-                fake()->imageUrl(640, 480, 'city', true),
-                fake()->imageUrl(640, 480, 'food', true),
+                $faker->imageUrl(640, 480),
+                $faker->imageUrl(640, 480),
+                $faker->imageUrl(640, 480),
             ],
             'total_like' => fake()->numberBetween(0, 500),
             'total_comment' => fake()->numberBetween(0, 100),

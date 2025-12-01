@@ -5,6 +5,7 @@ namespace Database\Factories;
 use App\Models\Place;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Smknstd\FakerPicsumImages\FakerPicsumImagesProvider;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Checkin>
@@ -18,6 +19,9 @@ class CheckinFactory extends Factory
      */
     public function definition(): array
     {
+        $faker = fake();
+        $faker->addProvider(new FakerPicsumImagesProvider($faker));
+
         // This closure ensures the latitude and longitude match the selected place.
         $place = Place::inRandomOrder()->first();
         
@@ -37,7 +41,7 @@ class CheckinFactory extends Factory
             'place_id' => $place->id,
             'latitude' => $latitude,
             'longitude' => $longitude,
-            'image_url' => fake()->imageUrl(640, 480, 'nature', true), // 60% chance of having an image
+            'image_url' => $faker->imageUrl(640, 480),
             'status' => true, // Assuming most seeded check-ins are valid
             'additional_info' => [
                 'device' => fake()->randomElement(['mobile_android', 'mobile_ios']),

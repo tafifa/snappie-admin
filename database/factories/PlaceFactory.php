@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use FakerRestaurant\Provider\id_ID\Restaurant;
+use Smknstd\FakerPicsumImages\FakerPicsumImagesProvider;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -19,6 +20,7 @@ class PlaceFactory extends Factory
     {
         $faker = \Faker\Factory::create('id_ID');
         $faker->addProvider(new Restaurant($faker));
+        $faker->addProvider(new FakerPicsumImagesProvider($faker));
 
         $minPrice = fake()->numberBetween(1, 10) * 10000; // e.g., 10000 to 100000
         $latitude = fake()->latitude(-0.1, 0.1); // Coordinates around Pontianak
@@ -32,9 +34,9 @@ class PlaceFactory extends Factory
             'longitude' => $longitude,
             'latitude' => $latitude,
             'image_urls' => [
-                fake()->imageUrl(640, 480, 'nature', true),
-                fake()->imageUrl(640, 480, 'city', true),
-                fake()->imageUrl(640, 480, 'food', true),
+                $faker->imageUrl(640, 480),
+                $faker->imageUrl(640, 480),
+                $faker->imageUrl(640, 480),
             ],
             'coin_reward' => fake()->numberBetween(10, 200),
             'exp_reward' => fake()->numberBetween(50, 500),
@@ -55,13 +57,13 @@ class PlaceFactory extends Factory
                     'contact_number' => fake('id_ID')->phoneNumber(),
                     'website' => fake()->domainName(),
                 ],
-                'place_value' => fake()->randomElements($placeValueOptions, fake()->numberBetween(2, 4)),
-                'food_type' => fake()->randomElements($foodTypeOptions, fake()->numberBetween(2, 4)),
-                'menu_image_url' => fake()->imageUrl(640, 480, 'drinks', true),
+                'place_value' => fake()->randomElements($placeValueOptions, 4),
+                'food_type' => fake()->randomElements($foodTypeOptions, 4),
+                'menu_image_url' => $faker->imageUrl(640, 480),
                 'menu' => collect(range(1, fake()->numberBetween(1, 3)))->map(function () use ($faker, $minPrice) {
                     return [
                         'name' => $faker->foodName(),
-                        'image_url' => fake()->imageUrl(640, 480, 'food', true),
+                        'image_url' => $faker->imageUrl(640, 480),
                         'price' => fake()->numberBetween($minPrice, $minPrice + 20000),
                         'description' => fake()->sentence(3),
                     ];
