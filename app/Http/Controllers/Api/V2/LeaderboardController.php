@@ -27,41 +27,76 @@ class LeaderboardController
     {
         try {
             $leaderboard = $this->service->getTopUsers($leaderboardId);
+            if ($leaderboard->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Leaderboard not found',
+                ], 404);
+            }
             return response()->json([
                 'success' => true,
                 'message' => 'Leaderboard detail', 
                 'data' => $leaderboard,
             ]);
         } catch (\Exception $e) {
+            $errorMessage = $e->getMessage();
+            if (str_contains($errorMessage, 'not found')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Leaderboard not found',
+                ], 404);
+            }
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to retrieve leaderboard detail',
-                'error' => $e->getMessage(),
+                'error' => $errorMessage,
             ], 500);
         }
     }
 
     public function userRank(Request $request): JsonResponse
     {
-        $payload = $request->validate([
-            'leaderboard_id' => 'nullable|integer',
-            'user_id' => 'nullable|integer',
-        ]);
+        try {
+            $payload = $request->validate([
+                'leaderboard_id' => 'nullable|integer',
+                'user_id' => 'nullable|integer',
+            ]);
 
-        // Set default values if not provided
-        if (!isset($payload['user_id'])) {
-            $payload['user_id'] = $request->user()->id;
+            // Set default values if not provided
+            if (!isset($payload['user_id'])) {
+                $payload['user_id'] = $request->user()->id;
+            }
+
+            if (!isset($payload['leaderboard_id'])) {
+                $payload['leaderboard_id'] = Leaderboard::latest()->value('id');
+            }
+
+            if (!$payload['leaderboard_id']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No leaderboard available',
+                ], 404);
+            }
+
+            $rank = $this->service->getUserRank($payload);
+            return response()->json([
+                'success' => true, 
+                'message' => 'Latest leaderboard retrieved successfully', 
+                'data' => $rank ?? null,
+            ]);
+        } catch (\Exception $e) {
+            $errorMessage = $e->getMessage();
+            if (str_contains($errorMessage, 'not found')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Leaderboard not found',
+                ], 404);
+            }
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve user rank',
+                'error' => $errorMessage,
+            ], 500);
         }
-
-        if (!isset($payload['leaderboard_id'])) {
-            $payload['leaderboard_id'] = Leaderboard::latest()->value('id');
-        }
-
-        $rank = $this->service->getUserRank($payload);
-        return response()->json([
-            'success' => true, 
-            'message' => 'Latest leaderboard retrieved successfully', 
-            'data' => $rank ?? "User not found",
-        ]);
     }
 }

@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 
 class SocialService
 {
-    public function getPosts(int $perPage = 10, ?int $page = null): array
+    public function getPosts(int $perPage = 10, ?int $page = null, array $filters = []): array
     {
         $query = Post::query()
             ->active()
@@ -187,6 +187,11 @@ class SocialService
      */
     public function followUser(User $follower, int $followedId): bool
     {
+        $userToFollow = User::find($followedId);
+        if (!$userToFollow) {
+            throw new \InvalidArgumentException('User not found');
+        }
+
         return DB::transaction(function () use ($follower, $followedId) {
             $follow = \App\Models\UserFollow::where('follower_id', $follower->id)
                 ->where('following_id', $followedId)
@@ -242,6 +247,11 @@ class SocialService
      */
     public function likePost(int $userId, int $postId): bool
     {
+        $post = Post::find($postId);
+        if (!$post) {
+            throw new \InvalidArgumentException('Post not found');
+        }
+
         // Check if the user is already liking
         $like = \App\Models\UserLike::where('user_id', $userId)
             ->where('related_to_type', \App\Models\Post::class)
@@ -311,6 +321,11 @@ class SocialService
      */
     public function likeComment(int $userId, int $commentId): bool
     {
+        $comment = \App\Models\UserComment::find($commentId);
+        if (!$comment) {
+            throw new \InvalidArgumentException('Comment not found');
+        }
+
         // Check if the user is already liking
         $like = \App\Models\UserLike::where('user_id', $userId)
             ->where('related_to_type', \App\Models\UserComment::class)

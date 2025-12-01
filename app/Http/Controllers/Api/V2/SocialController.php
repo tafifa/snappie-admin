@@ -87,6 +87,13 @@ class SocialController
                 'message' => 'Post created successfully',
                 'data'    => $post,
             ], 201);
+        } catch (\InvalidArgumentException $e) {
+            $errorMessage = $e->getMessage();
+            $status = str_contains($errorMessage, 'not found') ? 404 : 409;
+            return response()->json([
+                'success' => false,
+                'message' => $errorMessage,
+            ], $status);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -107,12 +114,26 @@ class SocialController
                 ], 401);
             }
 
+            if ($user->id === $user_id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You cannot follow yourself'
+                ], 400);
+            }
+
             $followed = $this->service->followUser($user, $user_id);
             return response()->json([
                 'success' => true, 
                 'message' => ($followed ? 'Follow' : 'Unfollow') . ' successfully',
                 'data' => $followed,
             ]);
+        } catch (\InvalidArgumentException $e) {
+            $errorMessage = $e->getMessage();
+            $status = str_contains($errorMessage, 'not found') ? 404 : 400;
+            return response()->json([
+                'success' => false,
+                'message' => $errorMessage,
+            ], $status);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -163,6 +184,11 @@ class SocialController
                 'message' => 'Post '.($liked ? 'liked' : 'unliked'),
                 'data' => $liked,
             ]);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 404);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -210,7 +236,12 @@ class SocialController
                 'success' => true, 
                 'message' => 'Comment created',
                 'data' => $data,
-            ]);
+            ], 201);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 404);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -254,6 +285,11 @@ class SocialController
                 'success' => true, 
                 'message' => 'Comment '.($liked ? 'liked' : 'unliked'),
             ]);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 404);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
