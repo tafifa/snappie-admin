@@ -26,6 +26,7 @@ class Article extends Model
     ];
 
     protected $casts = [
+        'id' => 'integer',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];

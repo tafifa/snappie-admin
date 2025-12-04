@@ -32,6 +32,9 @@ class UserFollow extends Pivot
      * @var array<string, string>
      */
     protected $casts = [
+        "id" => "integer",
+        "follower_id" => "integer",
+        "following_id" => "integer",
         "created_at" => "datetime",
         "updated_at" => "datetime",
     ];

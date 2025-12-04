@@ -29,6 +29,7 @@ class Challenge extends Model
     ];
 
     protected $casts = [
+        'id' => 'integer',
         'exp_reward' => 'integer',
         'started_at' => 'datetime',
         'ended_at' => 'datetime',

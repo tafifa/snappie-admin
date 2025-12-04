@@ -37,6 +37,9 @@ class Checkin extends Model
      * @var array<string, string>
      */
     protected $casts = [
+        'id' => 'integer',
+        'user_id' => 'integer',
+        'place_id' => 'integer',
         'latitude' => 'float',
         'longitude' => 'float',
         'status' => 'boolean',

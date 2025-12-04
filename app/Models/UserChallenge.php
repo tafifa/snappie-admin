@@ -26,6 +26,9 @@ class UserChallenge extends Pivot
     ];
 
     protected $casts = [
+        'id' => 'integer',
+        'user_id' => 'integer',
+        'challenge_id' => 'integer',
         'status' => 'boolean',
         'additional_info' => 'json',
         'created_at' => 'datetime',

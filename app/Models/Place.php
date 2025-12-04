@@ -49,6 +49,7 @@ class Place extends Model
      * @var array<string, string>
      */
     protected $casts = [
+        'id' => 'integer',
         'longitude' => 'float',
         'latitude' => 'float',
         'image_urls' => 'json',

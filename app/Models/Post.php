@@ -28,6 +28,9 @@ class Post extends Model
     ];
 
     protected $casts = [
+        'id' => 'integer',
+        'user_id' => 'integer',
+        'place_id' => 'integer',
         'image_urls' => 'json',
         'total_like' => 'integer',
         'total_comment' => 'integer',

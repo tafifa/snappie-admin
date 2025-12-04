@@ -29,6 +29,9 @@ class UserComment extends Model
      * @var array<string, string>
      */
     protected $casts = [
+        'id' => 'integer',
+        'user_id' => 'integer',
+        'post_id' => 'integer',
         'total_like' => 'integer',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',

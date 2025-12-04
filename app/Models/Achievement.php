@@ -26,6 +26,7 @@ class Achievement extends Model
     ];
 
     protected $casts = [
+        'id' => 'integer',
         'additional_info' => 'json',
         'coin_reward' => 'integer',
         'status' => 'boolean',

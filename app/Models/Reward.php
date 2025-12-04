@@ -32,6 +32,7 @@ class Reward extends Model
     ];
 
     protected $casts = [
+        'id' => 'integer',
         'coin_requirement' => 'integer',
         'stock' => 'integer',
         'started_at' => 'datetime',

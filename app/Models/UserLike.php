@@ -28,6 +28,9 @@ class UserLike extends Model
      * @var array<string, string>
      */
     protected $casts = [
+        'id' => 'integer',
+        'user_id' => 'integer',
+        'related_to_id' => 'integer',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];

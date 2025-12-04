@@ -28,6 +28,8 @@ class ExpTransaction extends Model
     ];
 
     protected $casts = [
+        'id' => 'integer',
+        'user_id' => 'integer',
         'amount' => 'integer',
         'metadata' => 'json',
         'created_at' => 'datetime',

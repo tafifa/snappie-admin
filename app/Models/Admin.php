@@ -22,6 +22,7 @@ class Admin extends Authenticatable
     protected function casts(): array
     {
         return [
+            'id' => 'integer',
             'password' => 'hashed',
         ];
     }

@@ -34,6 +34,7 @@ class Leaderboard extends Model
      * @var array<string, string>
      */
     protected $casts = [
+        'id' => 'integer',
         'status' => 'boolean',
         'leaderboard' => 'json',
         'started_at' => 'datetime',

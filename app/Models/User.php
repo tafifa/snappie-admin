@@ -48,6 +48,7 @@ class User extends Model
      * @var array<string, string>
      */
     protected $casts = [
+        'id' => 'integer',
         'total_coin' => 'integer',
         'total_exp' => 'integer',
         'total_following' => 'integer',
