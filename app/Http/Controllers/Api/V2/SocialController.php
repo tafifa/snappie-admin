@@ -151,8 +151,9 @@ class SocialController
             ]);
 
             $userId = $validated['user_id'] ?? $request->user()->id;
+            $currentUserId = $request->user()->id;
             
-            $data = $this->service->getFollowData($userId);
+            $data = $this->service->getFollowData($userId, $currentUserId);
             return response()->json([
                 'success' => true, 
                 'message' => 'Follow data', 
