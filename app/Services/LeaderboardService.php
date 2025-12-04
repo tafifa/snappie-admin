@@ -69,7 +69,8 @@ class LeaderboardService
   public function getTopUsersThisMonth(int $limit = 10): array
   {
     $leaderboard = ExpTransaction::select('user_id', DB::raw('SUM(amount) as total_exp'))
-      ->where('created_at', '>=', Carbon::now()->startOfMonth())
+      // ->where('created_at', '>=', Carbon::now()->startOfMonth())
+      ->where('created_at', '>=', Carbon::now()->startOfYear())
       ->where('created_at', '<=', Carbon::now()->endOfMonth())
       ->groupBy('user_id')
       ->orderBy('total_exp', 'desc')
@@ -88,7 +89,7 @@ class LeaderboardService
         'name' => $userData ? $userData->name : null,
         'username' => $userData ? $userData->username : null,
         'image_url' => $userData ? $userData->image_url : null,
-        'total_exp' => $user['total_exp'],
+        'total_exp' => (int) $user['total_exp'],
         'total_checkin' => $userData ? $userData->total_checkin : null,
         'period' => 'monthly'
       ];
@@ -117,7 +118,7 @@ class LeaderboardService
         'name' => $userData ? $userData->name : null,
         'username' => $userData ? $userData->username : null,
         'image_url' => $userData ? $userData->image_url : null,
-        'total_exp' => $user['total_exp'],
+        'total_exp' => (int) $user['total_exp'],
         'total_checkin' => $userData ? $userData->total_checkin : null,
         'period' => 'weekly'
       ];
