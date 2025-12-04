@@ -40,6 +40,12 @@ Route::middleware('api')->prefix('v2')->group(function () {
             Route::get('/id/{user_id}', [UsersController::class, 'show']);
             Route::get('/id/{user_id}/activities', [UsersController::class, 'activities']);
             Route::get('/id/{user_id}/stats', [UsersController::class, 'stats']);
+            Route::get('/id/{user_id}/checkins', [UsersController::class, 'checkins']);
+            Route::get('/id/{user_id}/rewards', [UsersController::class, 'rewards']);
+            Route::get('/id/{user_id}/reviews', [UsersController::class, 'reviews']);
+            Route::get('/id/{user_id}/posts', [UsersController::class, 'posts']);
+            Route::get('/id/{user_id}/achievements', [UsersController::class, 'achievements']);
+            Route::get('/id/{user_id}/challenges', [UsersController::class, 'challenges']);
         });
 
         // Places

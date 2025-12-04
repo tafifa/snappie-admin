@@ -263,9 +263,164 @@ class UsersService
         }
 
         $add = $user->additional_info ?? [];
-        return $add['user_saved'] ?? [
+        $savedIds = $add['user_saved'] ?? [
             'saved_places' => [],
             'saved_posts' => [],
+        ];
+
+        // Fetch saved places with details
+        $savedPlaces = [];
+        if (!empty($savedIds['saved_places'])) {
+            $places = \App\Models\Place::whereIn('id', $savedIds['saved_places'])->get();
+            $savedPlaces = $places->map(function ($place) {
+                return [
+                    'id' => $place->id,
+                    'name' => $place->name,
+                    'image_url' => is_array($place->image_urls) ? ($place->image_urls[0] ?? null) : $place->image_urls,
+                    'short_description' => \Illuminate\Support\Str::limit($place->description ?? '', 100),
+                    'rating' => (float) ($place->avg_rating ?? 0),
+                ];
+            })->toArray();
+        }
+
+        // Fetch saved posts with details
+        $savedPosts = [];
+        if (!empty($savedIds['saved_posts'])) {
+            $posts = \App\Models\Post::with('user:id,name')->whereIn('id', $savedIds['saved_posts'])->get();
+            $savedPosts = $posts->map(function ($post) {
+                return [
+                    'id' => $post->id,
+                    'image_url' => is_array($post->image_urls) ? ($post->image_urls[0] ?? null) : $post->image_urls,
+                    'content_preview' => \Illuminate\Support\Str::limit($post->content ?? '', 100),
+                    'user_name' => $post->user->name ?? null,
+                    'like_count' => (int) $post->total_like,
+                ];
+            })->toArray();
+        }
+
+        return [
+            'saved_places' => $savedPlaces,
+            'saved_posts' => $savedPosts,
+        ];
+    }
+
+    /**
+     * Get user checkins with pagination.
+     */
+    public function getCheckins(int $userId, int $perPage = 10, ?int $page = null): array
+    {
+        $query = \App\Models\Checkin::where('user_id', $userId)
+            ->with('place:id,name,image_urls')
+            ->orderBy('created_at', 'desc');
+
+        $checkins = $page ? $query->paginate($perPage, ['*'], 'page', $page) : $query->paginate($perPage);
+
+        return [
+            'items' => $checkins->items(),
+            'total' => (int) $checkins->total(),
+            'current_page' => (int) $checkins->currentPage(),
+            'per_page' => (int) $checkins->perPage(),
+            'last_page' => (int) $checkins->lastPage(),
+        ];
+    }
+
+    /**
+     * Get user reviews with pagination.
+     */
+    public function getReviews(int $userId, int $perPage = 10, ?int $page = null): array
+    {
+        $query = \App\Models\Review::where('user_id', $userId)
+            ->with([
+                'place:id,name,image_urls',
+            ]);
+
+        $reviews = $page ? $query->paginate($perPage, ['*'], 'page', $page) : $query->paginate($perPage);
+
+        return [
+            'items' => $reviews->items(),
+            'total' => (int) $reviews->total(),
+            'current_page' => (int) $reviews->currentPage(),
+            'per_page' => (int) $reviews->perPage(),
+            'last_page' => (int) $reviews->lastPage(),
+        ];
+    }
+
+    /**
+     * Get user posts with pagination.
+     */
+    public function getPosts(int $userId, int $perPage = 10, ?int $page = null): array
+    {
+        $query = \App\Models\Post::where('user_id', $userId)
+            ->with([
+                'user:id,name,username,image_url',
+                'place:id,name,image_urls', 
+                'comments.user:id,name,username,image_url', 
+                'likes.user:id,name,username,image_url'
+            ])
+            ->withCount(['likes', 'comments']);
+
+        $posts = $page ? $query->paginate($perPage, ['*'], 'page', $page) : $query->paginate($perPage);
+
+        return [
+            'items' => $posts->items(),
+            'total' => (int) $posts->total(),
+            'current_page' => (int) $posts->currentPage(),
+            'per_page' => (int) $posts->perPage(),
+            'last_page' => (int) $posts->lastPage(),
+        ];
+    }
+
+    /**
+     * Get user achievements with pagination.
+     */
+    public function getAchievements(int $userId, int $perPage = 10, ?int $page = null): array
+    {
+        $query = \App\Models\UserAchievement::where('user_id', $userId);
+
+        $achievements = $page ? $query->paginate($perPage, ['*'], 'page', $page) : $query->paginate($perPage);
+
+        return [
+            'items' => $achievements->items(),
+            'total' => (int) $achievements->total(),
+            'current_page' => (int) $achievements->currentPage(),
+            'per_page' => (int) $achievements->perPage(),
+            'last_page' => (int) $achievements->lastPage(),
+        ];
+    }
+
+    /**
+     * Get user challenges with pagination.
+     */
+    public function getChallenges(int $userId, int $perPage = 10, ?int $page = null): array
+    {
+        $query = \App\Models\UserChallenge::where('user_id', $userId);
+
+        $challenges = $page ? $query->paginate($perPage, ['*'], 'page', $page) : $query->paginate($perPage);
+
+        return [
+            'items' => $challenges->items(),
+            'total' => (int) $challenges->total(),
+            'current_page' => (int) $challenges->currentPage(),
+            'per_page' => (int) $challenges->perPage(),
+            'last_page' => (int) $challenges->lastPage(),
+        ];
+    }
+
+        /**
+     * Get user rewards with pagination.
+     */
+    public function getRewards(int $userId, int $perPage = 10, ?int $page = null): array
+    {
+        $query = \App\Models\UserReward::where('user_id', $userId);
+
+        $rewards = $page ? $query->paginate($perPage, ['*'], 'page', $page) : $query->paginate($perPage);
+
+        return [
+            'items' => $rewards->items(),
+            'total' => (int) $rewards->total(),
+            'current_page' => (int) $rewards->currentPage(),
+            'per_page' => (int) $rewards->perPage(),
+            'last_page' => (int) $rewards->lastPage(),
         ];
     }
 }

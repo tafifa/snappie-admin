@@ -166,4 +166,82 @@ class UsersController
             'data' => $saved,
         ]);
     }
+
+    public function checkins(Request $request, int $user_id): JsonResponse
+    {
+        $perPage = (int) $request->query('per_page', 10);
+        $page = $request->query('page') ? (int) $request->query('page') : null;
+
+        $result = $this->service->getCheckins($user_id, $perPage, $page);
+        return response()->json([
+            'success' => true,
+            'message' => 'User checkins retrieved successfully',
+            'data' => $result,
+        ]);
+    }
+
+    public function rewards(Request $request, int $user_id): JsonResponse
+    {
+        $perPage = (int) $request->query('per_page', 10);
+        $page = $request->query('page') ? (int) $request->query('page') : null;
+
+        $result = $this->service->getRewards($user_id, $perPage, $page);
+        return response()->json([
+            'success' => true,
+            'message' => 'User rewards retrieved successfully',
+            'data' => $result,
+        ]);
+    }
+
+    public function reviews(Request $request, int $user_id): JsonResponse
+    {
+        $perPage = (int) $request->query('per_page', 10);
+        $page = $request->query('page') ? (int) $request->query('page') : null;
+
+        $result = $this->service->getReviews($user_id, $perPage, $page);
+        return response()->json([
+            'success' => true,
+            'message' => 'User reviews retrieved successfully',
+            'data' => $result,
+        ]);
+    }
+
+    public function posts(Request $request, int $user_id): JsonResponse
+    {
+        $perPage = (int) $request->query('per_page', 10);
+        $page = $request->query('page') ? (int) $request->query('page') : null;
+
+        $result = $this->service->getPosts($user_id, $perPage, $page);
+        return response()->json([
+            'success' => true,
+            'message' => 'User posts retrieved successfully',
+            'data' => $result,
+        ]);
+    }
+
+    public function achievements(Request $request, int $user_id): JsonResponse
+    {
+        $perPage = (int) $request->query('per_page', 10);
+        $page = $request->query('page') ? (int) $request->query('page') : null;
+
+        $result = $this->service->getAchievements($user_id, $perPage, $page);
+        return response()->json([
+            'success' => true,
+            'message' => 'User achievements retrieved successfully',
+            'data' => $result,
+        ]);
+    }
+
+    public function challenges(Request $request, int $user_id): JsonResponse
+    {
+        $perPage = (int) $request->query('per_page', 10);
+        $page = $request->query('page') ? (int) $request->query('page') : null;
+
+        $result = $this->service->getChallenges($user_id, $perPage, $page);
+        return response()->json([
+            'success' => true,
+            'message' => 'User challenges retrieved successfully',
+            'data' => $result,
+        ]);
+    }
 }
