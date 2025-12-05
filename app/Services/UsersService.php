@@ -6,6 +6,27 @@ use App\Models\User;
 
 class UsersService
 {
+    public function search(string $query, int $perPage = 10, ?int $page = null): array
+    {
+        $users = User::where(function ($q) use ($query) {
+            $q->where('name', 'like', '%' . $query . '%')
+              ->orWhere('username', 'like', '%' . $query . '%');
+        })
+        ->where('status', true)
+        ->select(['id', 'name', 'username', 'image_url', 'total_follower', 'total_following'])
+        ->orderBy('name')
+        ->simplePaginate($perPage, ['*'], 'page', $page);
+
+        return [
+            'users' => $users->items(),
+            'pagination' => [
+                'current_page' => $users->currentPage(),
+                'per_page' => $users->perPage(),
+                'has_more' => $users->hasMorePages(),
+            ],
+        ];
+    }
+
     public function getById(int $userId): ?User
     {
         return User::find($userId);

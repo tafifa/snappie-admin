@@ -32,6 +32,7 @@ Route::middleware('api')->prefix('v2')->group(function () {
 
         // Users
         Route::prefix('users')->group(function () {
+            Route::get('/search', [UsersController::class, 'search']);
             Route::get('/profile', [UsersController::class, 'profile']);
             Route::post('/profile', [UsersController::class, 'updateProfile']);
             Route::get('/saved', [UsersController::class, 'getSaved']);

@@ -10,6 +10,22 @@ use Illuminate\Http\Request;
 class UsersController
 {
     public function __construct(private UsersService $service) {}
+
+    public function search(Request $request): JsonResponse
+    {
+        $query = $request->query('q', '');
+        $perPage = (int) $request->query('per_page', 10);
+        $page = $request->query('page') ? (int) $request->query('page') : null;
+
+        $result = $this->service->search($query, $perPage, $page);
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Users search completed',
+            'data' => $result,
+        ]);
+    }
+
     public function show(int $user_id): JsonResponse
     {
         $user = $this->service->getById($user_id);
