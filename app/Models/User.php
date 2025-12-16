@@ -15,7 +15,7 @@ class User extends Model
      *
      * @var string
      */
-    protected $table = 'users';
+    protected $table = "users";
 
     /**
      * The attributes that are mass assignable.
@@ -23,23 +23,23 @@ class User extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'name',
-        'username',
-        'email',
-        'image_url',
-        'total_coin',
-        'total_exp',
-        'total_following',
-        'total_follower',
-        'total_checkin',
-        'total_post',
-        'total_article',
-        'total_review',
-        'total_achievement',
-        'total_challenge',
-        'status',
-        'last_login_at',
-        'additional_info',
+        "name",
+        "username",
+        "email",
+        "image_url",
+        "total_coin",
+        "total_exp",
+        "total_following",
+        "total_follower",
+        "total_checkin",
+        "total_post",
+        "total_article",
+        "total_review",
+        "total_achievement",
+        "total_challenge",
+        "status",
+        "last_login_at",
+        "additional_info",
     ];
 
     /**
@@ -48,22 +48,22 @@ class User extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'id' => 'integer',
-        'total_coin' => 'integer',
-        'total_exp' => 'integer',
-        'total_following' => 'integer',
-        'total_follower' => 'integer',
-        'total_checkin' => 'integer',
-        'total_post' => 'integer',
-        'total_article' => 'integer',
-        'total_review' => 'integer',
-        'total_achievement' => 'integer',
-        'total_challenge' => 'integer',
-        'status' => 'boolean',
-        'additional_info' => 'json',
-        'last_login_at' => 'datetime',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
+        "id" => "integer",
+        "total_coin" => "integer",
+        "total_exp" => "integer",
+        "total_following" => "integer",
+        "total_follower" => "integer",
+        "total_checkin" => "integer",
+        "total_post" => "integer",
+        "total_article" => "integer",
+        "total_review" => "integer",
+        "total_achievement" => "integer",
+        "total_challenge" => "integer",
+        "status" => "boolean",
+        "additional_info" => "json",
+        "last_login_at" => "datetime",
+        "created_at" => "datetime",
+        "updated_at" => "datetime",
     ];
 
     /**
@@ -83,27 +83,27 @@ class User extends Model
         }
 
         $defaults = [
-            'user_detail' => [
-                'bio' => '',
-                'gender' => null,
-                'date_of_birth' => '',
-                'phone' => '',
+            "user_detail" => [
+                "bio" => "",
+                "gender" => null,
+                "date_of_birth" => "",
+                "phone" => "",
             ],
-            'user_preferences' => [
-                'food_type' => [],
-                'place_value' => [],
+            "user_preferences" => [
+                "food_type" => [],
+                "place_value" => [],
             ],
-            'user_saved' => [
-                'saved_places' => [],
-                'saved_posts' => [],
-                'saved_articles' => [],
+            "user_saved" => [
+                "saved_places" => [],
+                "saved_posts" => [],
+                "saved_articles" => [],
             ],
-            'user_settings' => [
-                'language' => 'id',
-                'theme' => 'light',
+            "user_settings" => [
+                "language" => "id",
+                "theme" => "light",
             ],
-            'user_notification' => [
-                'push_notification' => true,
+            "user_notification" => [
+                "push_notification" => true,
             ],
         ];
 
@@ -114,11 +114,11 @@ class User extends Model
      * AdditionalInfo Key References
      */
     protected $additionalInfoKey = [
-        'user_detail', // subkey: firstName, lastName, gender
-        'user_preferences', // subkey: foodType, placeValue
-        'user_saved', // subkey: savedPlaces, savedPosts, savedArticles
-        'user_settings', // subkey: language, theme
-        'user_notification', // subkey: pushNotification
+        "user_detail", // subkey: firstName, lastName, gender
+        "user_preferences", // subkey: foodType, placeValue
+        "user_saved", // subkey: savedPlaces, savedPosts, savedArticles
+        "user_settings", // subkey: language, theme
+        "user_notification", // subkey: pushNotification
     ];
 
     /**
@@ -129,23 +129,23 @@ class User extends Model
     public static function rules()
     {
         return [
-            'name' => 'required|string|max:255',
-            'username' => 'required|string|max:255|unique:users,username',
-            'email' => 'required|email|max:255|unique:users,email',
-            'image_url' => 'nullable|url|max:500',
-            'total_coin' => 'integer|min:0',
-            'total_exp' => 'integer|min:0',
-            'total_following' => 'integer|min:0',
-            'total_follower' => 'integer|min:0',
-            'total_checkin' => 'integer|min:0',
-            'total_post' => 'integer|min:0',
-            'total_article' => 'integer|min:0',
-            'total_review' => 'integer|min:0',
-            'total_achievement' => 'integer|min:0',
-            'total_challenge' => 'integer|min:0',
-            'status' => 'boolean',
-            'last_login_at' => 'nullable|date',
-            'additional_info' => 'nullable|json',
+            "name" => "required|string|max:255",
+            "username" => "required|string|max:255|unique:users,username",
+            "email" => "required|email|max:255|unique:users,email",
+            "image_url" => "nullable|url|max:500",
+            "total_coin" => "integer|min:0",
+            "total_exp" => "integer|min:0",
+            "total_following" => "integer|min:0",
+            "total_follower" => "integer|min:0",
+            "total_checkin" => "integer|min:0",
+            "total_post" => "integer|min:0",
+            "total_article" => "integer|min:0",
+            "total_review" => "integer|min:0",
+            "total_achievement" => "integer|min:0",
+            "total_challenge" => "integer|min:0",
+            "status" => "boolean",
+            "last_login_at" => "nullable|date",
+            "additional_info" => "nullable|json",
         ];
     }
 
@@ -166,7 +166,7 @@ class User extends Model
     }
 
     /**
-     * Mendapatkan semua pencapaian yang dimiliki pengguna.
+     * Mendapatkan semua pencapaian yang diikuti pengguna.
      */
     public function userAchievements()
     {
@@ -178,28 +178,21 @@ class User extends Model
      */
     public function achievements()
     {
-        return $this->belongsToMany(Achievement::class, 'user_achievements')
+        return $this->belongsToMany(Achievement::class, "user_achievements")
             ->using(UserAchievement::class)
-            ->withPivot('status', 'additional_info')
+            ->withPivot("status", "current_progress", "target_progress", "completed_at", "period_date", "additional_info")
             ->withTimestamps();
     }
 
     /**
-     * Mendapatkan semua tantangan yang diikuti pengguna.
-     */
-    public function userChallenges()
-    {
-        return $this->hasMany(UserChallenge::class);
-    }
-
-    /**
-     * Relasi many-to-many ke model Challenge melalui tabel user_challenges.
+     * Relasi khusus untuk challenges (type = challenge).
      */
     public function challenges()
     {
-        return $this->belongsToMany(Challenge::class, 'user_challenges')
-            ->using(UserChallenge::class)
-            ->withPivot('status', 'additional_info')
+        return $this->belongsToMany(Achievement::class, "user_achievements")
+            ->using(UserAchievement::class)
+            ->where('type', Achievement::TYPE_CHALLENGE)
+            ->withPivot("status", "current_progress", "target_progress", "completed_at", "period_date", "additional_info")
             ->withTimestamps();
     }
 
@@ -210,15 +203,15 @@ class User extends Model
     {
         return $this->hasMany(UserReward::class);
     }
-    
+
     /**
      * Relasi many-to-many ke model Reward melalui tabel user_rewards.
      */
     public function rewards()
     {
-        return $this->belongsToMany(Reward::class, 'user_rewards')
+        return $this->belongsToMany(Reward::class, "user_rewards")
             ->using(UserReward::class)
-            ->withPivot('status', 'additional_info')
+            ->withPivot("status", "additional_info")
             ->withTimestamps();
     }
 
@@ -251,7 +244,12 @@ class User extends Model
      */
     public function followers()
     {
-        return $this->belongsToMany(User::class, 'user_follows', 'following_id', 'follower_id')
+        return $this->belongsToMany(
+            User::class,
+            "user_follows",
+            "following_id",
+            "follower_id",
+        )
             ->using(UserFollow::class)
             ->withTimestamps();
     }
@@ -261,14 +259,27 @@ class User extends Model
      */
     public function following()
     {
-        return $this->belongsToMany(User::class, 'user_follows', 'follower_id', 'following_id')
+        return $this->belongsToMany(
+            User::class,
+            "user_follows",
+            "follower_id",
+            "following_id",
+        )
             ->using(UserFollow::class)
             ->withTimestamps();
     }
 
     public function tokens()
     {
-        return $this->morphMany(PersonalAccessTokens::class, 'tokenable');
+        return $this->morphMany(PersonalAccessTokens::class, "tokenable");
+    }
+
+    /**
+     * Mendapatkan semua action logs yang dilakukan oleh pengguna.
+     */
+    public function actionLogs()
+    {
+        return $this->hasMany(UserActionLog::class);
     }
 
     // --- QUERY SCOPES ---
@@ -281,6 +292,6 @@ class User extends Model
      */
     public function scopeActive(Builder $query): Builder
     {
-        return $query->where('status', true);
+        return $query->where("status", true);
     }
 }
