@@ -6,20 +6,19 @@ use App\Models\Admin;
 use App\Models\User;
 use App\Models\Place;
 use App\Models\Achievement;
-use App\Models\Challenge;
 use App\Models\Reward;
 use App\Models\Checkin;
 use App\Models\Review;
 use App\Models\Post;
 use App\Models\Article;
 use App\Models\UserAchievement;
-use App\Models\UserChallenge;
 use App\Models\UserReward;
 use App\Models\UserFollow;
 use App\Models\CoinTransaction;
 use App\Models\ExpTransaction;
 use App\Models\UserComment;
 use App\Models\UserLike;
+use App\Models\UserActionLog;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -30,42 +29,46 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->command->info('========================');
-        $this->command->info('Seeding database...');
+        $this->command->info("========================");
+        $this->command->info("Seeding database...");
 
         // Create admin user if not exists
         Admin::firstOrCreate(
-            ['email' => env('ADMIN_EMAIL', 'admin@example.com')],
+            ["email" => env("ADMIN_EMAIL", "admin@example.com")],
             [
-                'name' => env('ADMIN_NAME', 'Admin'),
-                'password' => Hash::make(env('ADMIN_PASSWORD', 'password')),
-            ]
+                "name" => env("ADMIN_NAME", "Admin"),
+                "password" => Hash::make(env("ADMIN_PASSWORD", "password")),
+            ],
         );
 
         User::factory(10)->create();
         Place::factory(20)->create();
 
-        Achievement::factory(5)->create();
-        Challenge::factory(5)->create();
+        // Seed gamification achievements data first (predefined data)
+        $this->call(GamificationSeeder::class);
+
+        // Then seed other data using factories
         Reward::factory(5)->create();
-        
+
         Article::factory(15)->create();
         Checkin::factory(15)->create();
         Review::factory(15)->create();
         Post::factory(15)->create();
 
         UserAchievement::factory(20)->create();
-        UserChallenge::factory(20)->create();
         UserReward::factory(20)->create();
 
         CoinTransaction::factory(20)->create();
         ExpTransaction::factory(20)->create();
-        
+
         UserFollow::factory(20)->create();
         UserComment::factory(20)->create();
         UserLike::factory(20)->create();
 
-        $this->command->info('Seeding complete!');
-        $this->command->info('========================');
+        // Seed user action logs for gamification testing
+        UserActionLog::factory(50)->create();
+
+        $this->command->info("Seeding complete!");
+        $this->command->info("========================");
     }
 }
