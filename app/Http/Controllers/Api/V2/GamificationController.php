@@ -9,10 +9,25 @@ use Illuminate\Http\Request;
 class GamificationController
 {
     public function __construct(private GamificationService $service) {}
-    public function achievements(): JsonResponse
+
+    /**
+     * Get all achievements with user progress.
+     */
+    public function achievements(Request $request): JsonResponse
     {
         try {
-            $data = $this->service->listAchievements();
+            $user = $request->user();
+            if (!$user) {
+                return response()->json(
+                    [
+                        "success" => false,
+                        "message" => "Unauthorized",
+                    ],
+                    401,
+                );
+            }
+
+            $data = $this->service->getAchievements($user);
             return response()->json([
                 "success" => true,
                 "message" => "Achievements retrieved",
@@ -30,10 +45,24 @@ class GamificationController
         }
     }
 
-    public function challenges(): JsonResponse
+    /**
+     * Get active challenges with user progress.
+     */
+    public function challenges(Request $request): JsonResponse
     {
         try {
-            $data = $this->service->listChallenges();
+            $user = $request->user();
+            if (!$user) {
+                return response()->json(
+                    [
+                        "success" => false,
+                        "message" => "Unauthorized",
+                    ],
+                    401,
+                );
+            }
+
+            $data = $this->service->getChallenges($user);
             return response()->json([
                 "success" => true,
                 "message" => "Challenges retrieved",
@@ -51,10 +80,24 @@ class GamificationController
         }
     }
 
-    public function rewards(): JsonResponse
+    /**
+     * Get available rewards.
+     */
+    public function rewards(Request $request): JsonResponse
     {
         try {
-            $data = $this->service->listRewards();
+            $user = $request->user();
+            if (!$user) {
+                return response()->json(
+                    [
+                        "success" => false,
+                        "message" => "Unauthorized",
+                    ],
+                    401,
+                );
+            }
+
+            $data = $this->service->getRewards($user);
             return response()->json([
                 "success" => true,
                 "message" => "Rewards retrieved",
@@ -72,6 +115,10 @@ class GamificationController
         }
     }
 
+    /**
+     * Perform a checkin action.
+     * Returns checkin result with achievements unlocked and challenges updated.
+     */
     public function checkin(Request $request): JsonResponse
     {
         try {
@@ -115,7 +162,6 @@ class GamificationController
             );
         } catch (\InvalidArgumentException $e) {
             $errorMessage = $e->getMessage();
-            // Return 404 for not found, 409 for conflict/duplicate
             $status = str_contains($errorMessage, "not found") ? 404 : 409;
             return response()->json(
                 [
@@ -132,7 +178,6 @@ class GamificationController
                     : 500;
             $errorMessage = $e->getMessage();
 
-            // Return detailed error information
             return response()->json(
                 [
                     "success" => false,
@@ -147,10 +192,13 @@ class GamificationController
         }
     }
 
+    /**
+     * Create a review.
+     * Returns review result with achievements unlocked and challenges updated.
+     */
     public function review(Request $request): JsonResponse
     {
         try {
-            // Validasi input
             $payload = $request->validate([
                 "place_id" => "required|integer",
                 "rating" => "required|integer|min:1|max:5",
@@ -160,7 +208,6 @@ class GamificationController
                 "additional_info" => "nullable|array",
             ]);
 
-            // Ambil user dari request
             $user = $request->user();
             if (!$user) {
                 return response()->json(
@@ -172,7 +219,6 @@ class GamificationController
                 );
             }
 
-            // Panggil service
             $result = $this->service->createReview($user, $payload);
 
             return response()->json(
@@ -194,7 +240,6 @@ class GamificationController
             );
         } catch (\InvalidArgumentException $e) {
             $errorMessage = $e->getMessage();
-            // Return 404 for not found, 409 for conflict/duplicate
             $status = str_contains($errorMessage, "not found") ? 404 : 409;
             return response()->json(
                 [
@@ -211,7 +256,6 @@ class GamificationController
                     : 500;
             $errorMessage = $e->getMessage();
 
-            // Handle specific exceptions
             if ($errorMessage === "Place not found") {
                 return response()->json(
                     [
@@ -223,7 +267,6 @@ class GamificationController
                 );
             }
 
-            // Return detailed error information
             return response()->json(
                 [
                     "success" => false,
@@ -238,6 +281,9 @@ class GamificationController
         }
     }
 
+    /**
+     * Update an existing review.
+     */
     public function updateReview(Request $request, int $review_id): JsonResponse
     {
         try {
@@ -298,6 +344,9 @@ class GamificationController
         }
     }
 
+    /**
+     * Grant an achievement to the user (manual grant).
+     */
     public function grantAchievement(
         Request $request,
         int $achievement_id,
@@ -313,6 +362,7 @@ class GamificationController
                     401,
                 );
             }
+
             $payload = $request->validate([
                 "additional_info" => "nullable|array",
             ]);
@@ -320,7 +370,7 @@ class GamificationController
             $result = $this->service->grantAchievement(
                 $user,
                 $achievement_id,
-                $payload["additional_info"],
+                $payload["additional_info"] ?? [],
             );
 
             return response()->json(
@@ -340,10 +390,9 @@ class GamificationController
                 ],
                 400,
             );
-        } catch (\Exception $e) {
+        } catch (\InvalidArgumentException $e) {
             $errorMessage = $e->getMessage();
 
-            // Handle specific exceptions
             if (str_contains($errorMessage, "not found")) {
                 return response()->json(
                     [
@@ -365,6 +414,14 @@ class GamificationController
                 );
             }
 
+            return response()->json(
+                [
+                    "success" => false,
+                    "message" => $errorMessage,
+                ],
+                400,
+            );
+        } catch (\Exception $e) {
             $status =
                 $e instanceof
                 \Symfony\Component\HttpKernel\Exception\HttpException
@@ -376,14 +433,17 @@ class GamificationController
                     "message" =>
                         $status === 500
                             ? "Internal server error"
-                            : $errorMessage,
-                    "error" => $errorMessage,
+                            : $e->getMessage(),
+                    "error" => $e->getMessage(),
                 ],
                 $status,
             );
         }
     }
 
+    /**
+     * Complete a challenge (manual completion).
+     */
     public function completeChallenge(
         Request $request,
         int $challenge_id,
@@ -399,6 +459,7 @@ class GamificationController
                     401,
                 );
             }
+
             $payload = $request->validate([
                 "additional_info" => "nullable|array",
             ]);
@@ -406,7 +467,7 @@ class GamificationController
             $result = $this->service->completeChallenge(
                 $user,
                 $challenge_id,
-                $payload["additional_info"],
+                $payload["additional_info"] ?? [],
             );
 
             return response()->json(
@@ -426,10 +487,9 @@ class GamificationController
                 ],
                 400,
             );
-        } catch (\Exception $e) {
+        } catch (\InvalidArgumentException $e) {
             $errorMessage = $e->getMessage();
 
-            // Handle specific exceptions
             if (str_contains($errorMessage, "not found")) {
                 return response()->json(
                     [
@@ -451,6 +511,14 @@ class GamificationController
                 );
             }
 
+            return response()->json(
+                [
+                    "success" => false,
+                    "message" => $errorMessage,
+                ],
+                400,
+            );
+        } catch (\Exception $e) {
             $status =
                 $e instanceof
                 \Symfony\Component\HttpKernel\Exception\HttpException
@@ -462,14 +530,17 @@ class GamificationController
                     "message" =>
                         $status === 500
                             ? "Internal server error"
-                            : $errorMessage,
-                    "error" => $errorMessage,
+                            : $e->getMessage(),
+                    "error" => $e->getMessage(),
                 ],
                 $status,
             );
         }
     }
 
+    /**
+     * Redeem a reward.
+     */
     public function redeemReward(Request $request, int $reward_id): JsonResponse
     {
         try {
@@ -483,6 +554,7 @@ class GamificationController
                     401,
                 );
             }
+
             $payload = $request->validate([
                 "additional_info" => "nullable|array",
             ]);
@@ -490,7 +562,7 @@ class GamificationController
             $result = $this->service->redeemReward(
                 $user,
                 $reward_id,
-                $payload["additional_info"],
+                $payload["additional_info"] ?? [],
             );
 
             return response()->json(
@@ -510,10 +582,9 @@ class GamificationController
                 ],
                 400,
             );
-        } catch (\Exception $e) {
+        } catch (\InvalidArgumentException $e) {
             $errorMessage = $e->getMessage();
 
-            // Handle specific exceptions
             if (str_contains($errorMessage, "not found")) {
                 return response()->json(
                     [
@@ -566,6 +637,14 @@ class GamificationController
                 );
             }
 
+            return response()->json(
+                [
+                    "success" => false,
+                    "message" => $errorMessage,
+                ],
+                400,
+            );
+        } catch (\Exception $e) {
             $status =
                 $e instanceof
                 \Symfony\Component\HttpKernel\Exception\HttpException
@@ -577,34 +656,39 @@ class GamificationController
                     "message" =>
                         $status === 500
                             ? "Internal server error"
-                            : $errorMessage,
-                    "error" => $errorMessage,
+                            : $e->getMessage(),
+                    "error" => $e->getMessage(),
                 ],
                 $status,
             );
         }
     }
 
+    /**
+     * Get coin transactions for the authenticated user.
+     */
     public function coinTransactions(Request $request): JsonResponse
     {
         try {
-            $userId = $request->user()->id;
-
-            $filters = [];
-            if ($request->query("per_page")) {
-                $filters["per_page"] = (int) $request->query("per_page");
+            $user = $request->user();
+            if (!$user) {
+                return response()->json(
+                    [
+                        "success" => false,
+                        "message" => "Unauthorized",
+                    ],
+                    401,
+                );
             }
-            if ($request->query("page")) {
-                $filters["page"] = (int) $request->query("page");
-            }
 
-            $data = $this->service->getCoinTransactions(
-                (int) $userId,
-                $filters,
-            );
+            $limit = (int) $request->query("limit", 20);
+            $offset = (int) $request->query("offset", 0);
+
+            $data = $this->service->getCoinTransactions($user, $limit, $offset);
+
             return response()->json([
                 "success" => true,
-                "message" => "Coin transactions",
+                "message" => "Coin transactions retrieved",
                 "data" => $data,
             ]);
         } catch (\Exception $e) {
@@ -619,24 +703,31 @@ class GamificationController
         }
     }
 
+    /**
+     * Get EXP transactions for the authenticated user.
+     */
     public function expTransactions(Request $request): JsonResponse
     {
         try {
-            $userId = $request->user()->id;
-
-            $filters = [];
-            if ($request->query("per_page")) {
-                $filters["per_page"] = (int) $request->query("per_page");
+            $user = $request->user();
+            if (!$user) {
+                return response()->json(
+                    [
+                        "success" => false,
+                        "message" => "Unauthorized",
+                    ],
+                    401,
+                );
             }
-            if ($request->query("page")) {
-                $filters["page"] = (int) $request->query("page");
-            }
 
-            $data = $this->service->getExpTransactions((int) $userId, $filters);
+            $limit = (int) $request->query("limit", 20);
+            $offset = (int) $request->query("offset", 0);
+
+            $data = $this->service->getExpTransactions($user, $limit, $offset);
 
             return response()->json([
                 "success" => true,
-                "message" => "EXP transactions",
+                "message" => "EXP transactions retrieved",
                 "data" => $data,
             ]);
         } catch (\Exception $e) {
