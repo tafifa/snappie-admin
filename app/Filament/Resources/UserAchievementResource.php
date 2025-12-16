@@ -38,7 +38,7 @@ class UserAchievementResource extends Resource
             ->schema([
                 // Section 1: Relasi User & Achievement
                 Forms\Components\Section::make('👤 User & Achievement')
-                    ->description('Hubungan antara pengguna dan achievement')
+                    ->description('Hubungan antara pengguna dan achievement/challenge')
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
@@ -48,33 +48,62 @@ class UserAchievementResource extends Resource
                                     ->searchable()
                                     ->preload()
                                     ->required()
-                                    ->helperText('Pilih pengguna yang mendapat achievement')
+                                    ->helperText('Pilih pengguna')
                                     ->suffixIcon('heroicon-m-user'),
 
                                 Forms\Components\Select::make('achievement_id')
-                                    ->label('Achievement')
+                                    ->label('Achievement/Challenge')
                                     ->relationship('achievement', 'name')
                                     ->searchable()
                                     ->preload()
                                     ->required()
-                                    ->helperText('Pilih achievement yang diperoleh')
+                                    ->helperText('Pilih achievement atau challenge')
                                     ->suffixIcon('heroicon-m-trophy'),
                             ]),
                     ])->collapsible(),
 
-                // Section 2: Status Achievement
-                Forms\Components\Section::make('✅ Status Achievement')
-                    ->description('Status penyelesaian achievement')
+                // Section 2: Progress Tracking
+                Forms\Components\Section::make('📊 Progress Tracking')
+                    ->description('Progress dan target pencapaian')
                     ->schema([
-                        Forms\Components\Toggle::make('status')
-                            ->label('Status Selesai')
-                            ->default(false)
-                            ->helperText('Apakah achievement sudah diselesaikan?')
-                            ->onColor('success')
-                            ->offColor('warning'),
+                        Forms\Components\Grid::make(3)
+                            ->schema([
+                                Forms\Components\TextInput::make('current_progress')
+                                    ->label('Progress Saat Ini')
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->default(0)
+                                    ->required()
+                                    ->helperText('Progress yang sudah dicapai')
+                                    ->suffixIcon('heroicon-m-chart-bar'),
+
+                                Forms\Components\TextInput::make('target_progress')
+                                    ->label('Target Progress')
+                                    ->numeric()
+                                    ->minValue(1)
+                                    ->default(1)
+                                    ->required()
+                                    ->helperText('Target yang harus dicapai')
+                                    ->suffixIcon('heroicon-m-flag'),
+
+                                Forms\Components\DatePicker::make('period_date')
+                                    ->label('Periode')
+                                    ->helperText('Untuk challenge dengan reset (daily/weekly)')
+                                    ->native(false),
+                            ]),
                     ])->collapsible(),
 
-                // Section 3: Informasi Tambahan
+                // Section 3: Status Completion
+                Forms\Components\Section::make('✅ Status Completion')
+                    ->description('Status penyelesaian')
+                    ->schema([
+                        Forms\Components\DateTimePicker::make('completed_at')
+                            ->label('Tanggal Selesai')
+                            ->helperText('Waktu achievement/challenge diselesaikan')
+                            ->native(false),
+                    ])->collapsible(),
+
+                // Section 4: Informasi Tambahan
                 Forms\Components\Section::make('ℹ️ Informasi Tambahan')
                     ->description('Data tambahan dalam format JSON')
                     ->schema([
@@ -109,29 +138,87 @@ class UserAchievementResource extends Resource
                     ->icon('heroicon-m-trophy')
                     ->limit(30),
 
-                Tables\Columns\IconColumn::make('status')
-                    ->label('Status')
+                Tables\Columns\TextColumn::make('achievement.type')
+                    ->label('Tipe')
+                    ->sortable()
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'achievement' => 'success',
+                        'challenge' => 'warning',
+                        default => 'gray',
+                    })
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'achievement' => 'Achievement',
+                        'challenge' => 'Challenge',
+                        default => $state,
+                    }),
+
+                Tables\Columns\TextColumn::make('current_progress')
+                    ->label('Progress')
+                    ->numeric()
+                    ->sortable()
+                    ->alignCenter()
+                    ->badge()
+                    ->color('info')
+                    ->formatStateUsing(fn (UserAchievement $record): string => 
+                        $record->current_progress . ' / ' . $record->target_progress
+                    ),
+
+                Tables\Columns\TextColumn::make('period_date')
+                    ->label('Periode')
+                    ->date('d M Y')
+                    ->sortable()
+                    ->toggleable()
+                    ->placeholder('One-time'),
+
+                Tables\Columns\IconColumn::make('completed_at')
+                    ->label('Selesai')
                     ->boolean()
                     ->trueIcon('heroicon-o-check-circle')
                     ->falseIcon('heroicon-o-clock')
                     ->trueColor('success')
                     ->falseColor('warning')
-                    ->sortable(),
+                    ->sortable()
+                    ->getStateUsing(fn (UserAchievement $record): bool => $record->completed_at !== null),
 
-                Tables\Columns\TextColumn::make('created_at')
-                    ->label('Diperoleh')
+                Tables\Columns\TextColumn::make('completed_at')
+                    ->label('Tanggal Selesai')
                     ->dateTime('d M Y H:i')
                     ->sortable()
-                    ->tooltip(function (UserAchievement $record): string {
-                        return 'Achievement diperoleh pada: ' . $record->created_at->format('d M Y H:i');
-                    }),
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->placeholder('Belum selesai'),
+
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label('Dibuat')
+                    ->dateTime('d M Y H:i')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\TernaryFilter::make('status')
+                Tables\Filters\SelectFilter::make('achievement.type')
+                    ->label('Tipe')
+                    ->options([
+                        'achievement' => 'Achievement',
+                        'challenge' => 'Challenge',
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        if (isset($data['value'])) {
+                            return $query->whereHas('achievement', function (Builder $q) use ($data) {
+                                $q->where('type', $data['value']);
+                            });
+                        }
+                        return $query;
+                    }),
+
+                Tables\Filters\TernaryFilter::make('completed')
                     ->label('Status')
                     ->placeholder('Semua Status')
                     ->trueLabel('Selesai')
-                    ->falseLabel('Belum Selesai'),
+                    ->falseLabel('Belum Selesai')
+                    ->queries(
+                        true: fn (Builder $query) => $query->whereNotNull('completed_at'),
+                        false: fn (Builder $query) => $query->whereNull('completed_at'),
+                    ),
 
                 Tables\Filters\SelectFilter::make('user_id')
                     ->label('Pengguna')
@@ -155,7 +242,7 @@ class UserAchievementResource extends Resource
                 Tables\Filters\Filter::make('completed_today')
                     ->label('Selesai Hari Ini')
                     ->query(fn (Builder $query): Builder => 
-                        $query->where('status', true)->whereDate('updated_at', today())
+                        $query->whereNotNull('completed_at')->whereDate('completed_at', today())
                     )
                     ->toggle(),
 
@@ -180,37 +267,37 @@ class UserAchievementResource extends Resource
                 Tables\Actions\DeleteAction::make(),
                 
                 Tables\Actions\Action::make('complete')
-                    ->label('Selesaikan')
+                    ->label('Mark Completed')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
-                    ->action(fn (UserAchievement $record) => $record->update(['status' => true]))
+                    ->action(fn (UserAchievement $record) => $record->update(['completed_at' => now()]))
                     ->requiresConfirmation()
-                    ->visible(fn (UserAchievement $record): bool => !$record->status),
+                    ->visible(fn (UserAchievement $record): bool => $record->completed_at === null),
 
-                Tables\Actions\Action::make('mark_pending')
-                    ->label('Tandai Pending')
+                Tables\Actions\Action::make('mark_incomplete')
+                    ->label('Mark Incomplete')
                     ->icon('heroicon-o-clock')
                     ->color('warning')
-                    ->action(fn (UserAchievement $record) => $record->update(['status' => false]))
+                    ->action(fn (UserAchievement $record) => $record->update(['completed_at' => null]))
                     ->requiresConfirmation()
-                    ->visible(fn (UserAchievement $record): bool => $record->status),
+                    ->visible(fn (UserAchievement $record): bool => $record->completed_at !== null),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                     
                     Tables\Actions\BulkAction::make('complete')
-                        ->label('Selesaikan Terpilih')
+                        ->label('Mark Completed')
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
-                        ->action(fn ($records) => $records->each->update(['status' => true]))
+                        ->action(fn ($records) => $records->each->update(['completed_at' => now()]))
                         ->requiresConfirmation(),
 
-                    Tables\Actions\BulkAction::make('mark_pending')
-                        ->label('Tandai Pending Terpilih')
+                    Tables\Actions\BulkAction::make('mark_incomplete')
+                        ->label('Mark Incomplete')
                         ->icon('heroicon-o-clock')
                         ->color('warning')
-                        ->action(fn ($records) => $records->each->update(['status' => false]))
+                        ->action(fn ($records) => $records->each->update(['completed_at' => null]))
                         ->requiresConfirmation(),
                 ]),
             ])
@@ -234,46 +321,132 @@ class UserAchievementResource extends Resource
                                     ->icon('heroicon-m-user'),
 
                                 Infolists\Components\TextEntry::make('achievement.name')
-                                    ->label('Achievement')
+                                    ->label('Achievement/Challenge')
                                     ->weight(FontWeight::Bold)
                                     ->icon('heroicon-m-trophy'),
                             ]),
-                    ]),
 
-                // Section 2: Status & Reward
-                Infolists\Components\Section::make('✅ Status & Reward')
-                    ->schema([
                         Infolists\Components\Grid::make(3)
                             ->schema([
-                                Infolists\Components\IconEntry::make('status')
+                                Infolists\Components\TextEntry::make('achievement.type')
+                                    ->label('Tipe')
+                                    ->badge()
+                                    ->color(fn (string $state): string => match ($state) {
+                                        'achievement' => 'success',
+                                        'challenge' => 'warning',
+                                        default => 'gray',
+                                    })
+                                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                                        'achievement' => 'Achievement',
+                                        'challenge' => 'Challenge',
+                                        default => $state,
+                                    }),
+
+                                Infolists\Components\TextEntry::make('achievement.reset_schedule')
+                                    ->label('Reset Schedule')
+                                    ->badge()
+                                    ->color(fn (string $state): string => match ($state) {
+                                        'none' => 'gray',
+                                        'daily' => 'info',
+                                        'weekly' => 'primary',
+                                        default => 'gray',
+                                    })
+                                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                                        'none' => 'One-time',
+                                        'daily' => 'Daily',
+                                        'weekly' => 'Weekly',
+                                        default => $state,
+                                    }),
+
+                                Infolists\Components\TextEntry::make('period_date')
+                                    ->label('Periode')
+                                    ->date('d M Y')
+                                    ->placeholder('One-time'),
+                            ]),
+                    ])->collapsible(),
+
+                // Section 2: Progress Tracking
+                Infolists\Components\Section::make('📊 Progress Tracking')
+                    ->schema([
+                        Infolists\Components\Grid::make(4)
+                            ->schema([
+                                Infolists\Components\TextEntry::make('current_progress')
+                                    ->label('Current Progress')
+                                    ->numeric()
+                                    ->badge()
+                                    ->color('info')
+                                    ->icon('heroicon-m-chart-bar'),
+
+                                Infolists\Components\TextEntry::make('target_progress')
+                                    ->label('Target')
+                                    ->numeric()
+                                    ->badge()
+                                    ->color('purple')
+                                    ->icon('heroicon-m-flag'),
+
+                                Infolists\Components\TextEntry::make('progress_percentage')
+                                    ->label('Progress %')
+                                    ->suffix('%')
+                                    ->badge()
+                                    ->color(fn (UserAchievement $record): string => match (true) {
+                                        $record->target_progress == 0 => 'gray',
+                                        ($record->current_progress / $record->target_progress * 100) >= 100 => 'success',
+                                        ($record->current_progress / $record->target_progress * 100) >= 75 => 'info',
+                                        ($record->current_progress / $record->target_progress * 100) >= 50 => 'warning',
+                                        default => 'danger',
+                                    })
+                                    ->formatStateUsing(fn (UserAchievement $record): string =>
+                                        $record->target_progress > 0
+                                            ? round($record->current_progress / $record->target_progress * 100, 1)
+                                            : '0'
+                                    ),
+
+                                Infolists\Components\IconEntry::make('completed_at')
                                     ->label('Status')
                                     ->boolean()
                                     ->trueIcon('heroicon-o-check-circle')
                                     ->falseIcon('heroicon-o-clock')
                                     ->trueColor('success')
-                                    ->falseColor('warning'),
-                                
-                                // TODO: Add progress description
-                                Infolists\Components\TextEntry::make('progress')
-                                    ->label('Progress')
-                                    ->suffix('%')
-                                    ->badge()
-                                    ->color(fn (?int $state): string => match (true) {
-                                        $state >= 100 => 'success',
-                                        $state >= 75 => 'info',
-                                        $state >= 50 => 'warning',
-                                        $state >= 25 => 'gray',
-                                        default => 'danger',
-                                    })
-                                    ->icon('heroicon-m-chart-bar'),
+                                    ->falseColor('warning')
+                                    ->getStateUsing(fn (UserAchievement $record): bool => $record->completed_at !== null),
+                            ]),
 
+                        Infolists\Components\TextEntry::make('completed_at')
+                            ->label('Tanggal Selesai')
+                            ->dateTime('d M Y H:i')
+                            ->placeholder('Belum selesai')
+                            ->badge()
+                            ->color('success'),
+                    ])->collapsible(),
+
+                // Section 3: Reward Information
+                Infolists\Components\Section::make('💰 Reward Information')
+                    ->schema([
+                        Infolists\Components\Grid::make(3)
+                            ->schema([
                                 Infolists\Components\TextEntry::make('achievement.coin_reward')
                                     ->label('Coin Reward')
+                                    ->numeric()
+                                    ->suffix(' 🪙')
                                     ->badge()
                                     ->color('warning')
                                     ->icon('heroicon-m-currency-dollar'),
+
+                                Infolists\Components\TextEntry::make('achievement.reward_xp')
+                                    ->label('XP Reward')
+                                    ->numeric()
+                                    ->suffix(' ⭐')
+                                    ->badge()
+                                    ->color('info')
+                                    ->icon('heroicon-m-star'),
+
+                                Infolists\Components\TextEntry::make('achievement.criteria_action')
+                                    ->label('Criteria Action')
+                                    ->badge()
+                                    ->color('indigo')
+                                    ->icon('heroicon-m-bolt'),
                             ]),
-                    ]),
+                    ])->collapsible(),
 
                 // Section 4: Informasi Tambahan
                 Infolists\Components\Section::make('ℹ️ Informasi Tambahan')
@@ -282,7 +455,8 @@ class UserAchievementResource extends Resource
                             ->label('Data Tambahan')
                             ->columnSpanFull(),
                     ])
-                    ->visible(fn (UserAchievement $record): bool => !empty($record->additional_info)),
+                    ->visible(fn (UserAchievement $record): bool => !empty($record->additional_info))
+                    ->collapsible(),
 
                 // Section 5: Riwayat
                 Infolists\Components\Section::make('📅 Riwayat')
