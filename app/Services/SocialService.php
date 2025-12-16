@@ -4,10 +4,18 @@ namespace App\Services;
 
 use App\Models\Post;
 use App\Models\User;
+use App\Models\UserActionLog;
 use Illuminate\Support\Facades\DB;
 
 class SocialService
 {
+    protected AchievementChecker $achievementChecker;
+
+    public function __construct(AchievementChecker $achievementChecker)
+    {
+        $this->achievementChecker = $achievementChecker;
+    }
+
     public function getPosts(
         int $perPage = 10,
         ?int $page = null,
@@ -207,6 +215,17 @@ class SocialService
             ]);
             $user->increment("total_post");
 
+            // Log post action for achievement tracking
+            $this->achievementChecker->checkOnAction(
+                $user,
+                UserActionLog::ACTION_POST,
+                [
+                    "post_id" => $post->id,
+                    "place_id" => $place->id,
+                    "place_name" => $place->name,
+                ]
+            );
+
             return $post->toArray();
         });
     }
@@ -248,6 +267,17 @@ class SocialService
             ]);
             $follower->increment("total_following");
             $userToFollow->increment("total_follower");
+
+            // Log follow action for achievement tracking
+            $this->achievementChecker->checkOnAction(
+                $follower,
+                UserActionLog::ACTION_FOLLOW,
+                [
+                    "followed_user_id" => $followedId,
+                    "followed_username" => $userToFollow->username,
+                ]
+            );
+
             return true;
         });
     }

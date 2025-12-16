@@ -2,21 +2,29 @@
 
 namespace App\Services;
 
-use Illuminate\Database\Eloquent\Casts\Json;
 use Illuminate\Support\Facades\DB;
 use App\Models\User;
+use App\Models\Achievement;
+use App\Models\UserActionLog;
 use Illuminate\Support\Facades\Log;
 
 class GamificationService
 {
+    protected AchievementChecker $achievementChecker;
+
+    public function __construct(AchievementChecker $achievementChecker)
+    {
+        $this->achievementChecker = $achievementChecker;
+    }
+
     /**
      * Berikan koin kepada pengguna dan catat transaksinya.
      * Menggunakan database transaction untuk memastikan integritas data.
      * @param User $user
      * @param int $amount
-     * @param array $relatedObject - Objek yang menjadi sumber koin
-     * @param string $relatedObject['type'] - Tipe objek (e.g., 'Achievement', 'Checkin')
-     * @param int $relatedObject['id'] - ID objek
+     * @param array $metadata - Objek yang menjadi sumber koin
+     * @param string $metadata['type'] - Tipe objek (e.g., 'Achievement', 'Checkin')
+     * @param int $metadata['id'] - ID objek
      * @return array
      */
     public function addCoins(User $user, int $amount, array $metadata): array
@@ -42,6 +50,17 @@ class GamificationService
                 "metadata" => $metadata,
             ]);
 
+            // Log coin earned action for achievement tracking
+            $this->achievementChecker->checkOnAction(
+                $user,
+                UserActionLog::ACTION_COIN_EARNED,
+                [
+                    "amount" => $amount,
+                    "source" => $metadata,
+                    "transaction_id" => $coinTransaction->id,
+                ]
+            );
+
             return $coinTransaction->toArray();
         });
     }
@@ -50,9 +69,9 @@ class GamificationService
      * Kurangi koin pengguna dan catat transaksinya.
      * @param User $user
      * @param int $amount
-     * @param array $relatedObject - Objek yang menjadi sumber pengurangan koin
-     * @param string $relatedObject['type'] - Tipe objek
-     * @param int $relatedObject['id'] - ID objek
+     * @param array $metadata - Objek yang menjadi sumber pengurangan koin
+     * @param string $metadata['type'] - Tipe objek
+     * @param int $metadata['id'] - ID objek
      * @return array
      */
     public function useCoins(User $user, int $amount, array $metadata): array
@@ -86,9 +105,9 @@ class GamificationService
      * Berikan EXP kepada pengguna dan catat transaksinya.
      * @param User $user
      * @param int $amount
-     * @param array $relatedObject - Objek yang menjadi sumber EXP
-     * @param string $relatedObject['type'] - Tipe objek
-     * @param int $relatedObject['id'] - ID objek
+     * @param array $metadata - Objek yang menjadi sumber EXP
+     * @param string $metadata['type'] - Tipe objek
+     * @param int $metadata['id'] - ID objek
      * @return array
      */
     public function addExp(User $user, int $amount, array $metadata): array
@@ -114,8 +133,40 @@ class GamificationService
                 "metadata" => $metadata,
             ]);
 
+            // Log exp earned action for achievement tracking
+            $this->achievementChecker->checkOnAction(
+                $user,
+                UserActionLog::ACTION_EXP_EARNED,
+                [
+                    "amount" => $amount,
+                    "source" => $metadata,
+                    "transaction_id" => $expTransaction->id,
+                ]
+            );
+
             return $expTransaction->toArray();
         });
+    }
+
+    /**
+     * Get user stats including rank.
+     * @param User $user
+     * @return array
+     */
+    public function getUserStats(User $user): array
+    {
+        // Calculate rank based on total_exp (higher is better)
+        $rank = User::where("total_exp", ">", $user->total_exp)->count() + 1;
+
+        return [
+            "total_coins" => $user->total_coin,
+            "total_xp" => $user->total_exp,
+            "rank" => $rank,
+            "total_checkin" => $user->total_checkin,
+            "total_review" => $user->total_review,
+            "total_achievement" => $user->total_achievement,
+            "total_challenge" => $user->total_challenge,
+        ];
     }
 
     /**
@@ -191,7 +242,70 @@ class GamificationService
             // Transaksi exp (ini akan increment total_exp di user)
             $this->addExp($user, $expEarned, $metadata);
 
-            return $checkin->toArray();
+            // Check achievements for checkin action
+            $achievementResult = $this->achievementChecker->checkOnAction(
+                $user,
+                UserActionLog::ACTION_CHECKIN,
+                [
+                    "checkin_id" => $checkin->id,
+                    "place_id" => $place->id,
+                    "place_name" => $place->name,
+                ],
+            );
+
+            // Check for breakfast checkin (if checkin time is between 6am - 10am)
+            $hour = $now->hour;
+            if ($hour >= 6 && $hour <= 10) {
+                $breakfastResult = $this->achievementChecker->checkOnAction(
+                    $user,
+                    UserActionLog::ACTION_BREAKFAST_CHECKIN,
+                    [
+                        "checkin_id" => $checkin->id,
+                        "place_id" => $place->id,
+                    ],
+                );
+                // Merge breakfast achievements
+                $achievementResult["achievements_unlocked"] = array_merge(
+                    $achievementResult["achievements_unlocked"],
+                    $breakfastResult["achievements_unlocked"],
+                );
+                $achievementResult["challenges_updated"] = array_merge(
+                    $achievementResult["challenges_updated"],
+                    $breakfastResult["challenges_updated"],
+                );
+            }
+
+            // Calculate bonus rewards from achievements
+            $bonusCoins = 0;
+            $bonusXp = 0;
+            foreach (
+                $achievementResult["achievements_unlocked"]
+                as $achievement
+            ) {
+                $bonusCoins += $achievement["reward_coins"] ?? 0;
+                $bonusXp += $achievement["reward_xp"] ?? 0;
+            }
+
+            return [
+                "action_result" => [
+                    "checkin_id" => $checkin->id,
+                    "place_id" => $place->id,
+                    "place_name" => $place->name,
+                ],
+                "rewards" => [
+                    "base_xp" => $expEarned,
+                    "base_coins" => $coinsEarned,
+                    "bonus_xp" => $bonusXp,
+                    "bonus_coins" => $bonusCoins,
+                    "total_xp" => $expEarned + $bonusXp,
+                    "total_coins" => $coinsEarned + $bonusCoins,
+                ],
+                "achievements_unlocked" =>
+                    $achievementResult["achievements_unlocked"],
+                "challenges_updated" =>
+                    $achievementResult["challenges_updated"],
+                "user_stats" => $this->getUserStats($user->fresh()),
+            ];
         });
     }
 
@@ -288,7 +402,97 @@ class GamificationService
             // Transaksi exp
             $this->addExp($user, $expEarned, $metadata);
 
-            return $review->toArray();
+            // Check achievements for review action
+            $achievementResult = $this->achievementChecker->checkOnAction(
+                $user,
+                UserActionLog::ACTION_REVIEW,
+                [
+                    "review_id" => $review->id,
+                    "place_id" => $place->id,
+                    "place_name" => $place->name,
+                    "rating" => $payload["rating"],
+                ],
+            );
+
+            // Check for 5-star rating achievement
+            if ($payload["rating"] == 5) {
+                $fiveStarResult = $this->achievementChecker->checkOnAction(
+                    $user,
+                    UserActionLog::ACTION_RATING_5_STAR,
+                    [
+                        "review_id" => $review->id,
+                        "place_id" => $place->id,
+                    ],
+                );
+                // Merge 5-star achievements
+                $achievementResult["achievements_unlocked"] = array_merge(
+                    $achievementResult["achievements_unlocked"],
+                    $fiveStarResult["achievements_unlocked"],
+                );
+                $achievementResult["challenges_updated"] = array_merge(
+                    $achievementResult["challenges_updated"],
+                    $fiveStarResult["challenges_updated"],
+                );
+            }
+
+            // Check for photo upload achievement
+            if (!empty($payload["image_urls"])) {
+                $photoCount = is_array($payload["image_urls"])
+                    ? count($payload["image_urls"])
+                    : 1;
+                for ($i = 0; $i < $photoCount; $i++) {
+                    $photoResult = $this->achievementChecker->checkOnAction(
+                        $user,
+                        UserActionLog::ACTION_UPLOAD_PHOTO,
+                        [
+                            "review_id" => $review->id,
+                            "place_id" => $place->id,
+                        ],
+                    );
+                    // Merge photo achievements
+                    $achievementResult["achievements_unlocked"] = array_merge(
+                        $achievementResult["achievements_unlocked"],
+                        $photoResult["achievements_unlocked"],
+                    );
+                    $achievementResult["challenges_updated"] = array_merge(
+                        $achievementResult["challenges_updated"],
+                        $photoResult["challenges_updated"],
+                    );
+                }
+            }
+
+            // Calculate bonus rewards from achievements
+            $bonusCoins = 0;
+            $bonusXp = 0;
+            foreach (
+                $achievementResult["achievements_unlocked"]
+                as $achievement
+            ) {
+                $bonusCoins += $achievement["reward_coins"] ?? 0;
+                $bonusXp += $achievement["reward_xp"] ?? 0;
+            }
+
+            return [
+                "action_result" => [
+                    "review_id" => $review->id,
+                    "place_id" => $place->id,
+                    "place_name" => $place->name,
+                    "rating" => $review->rating,
+                ],
+                "rewards" => [
+                    "base_xp" => $expEarned,
+                    "base_coins" => $coinsEarned,
+                    "bonus_xp" => $bonusXp,
+                    "bonus_coins" => $bonusCoins,
+                    "total_xp" => $expEarned + $bonusXp,
+                    "total_coins" => $coinsEarned + $bonusCoins,
+                ],
+                "achievements_unlocked" =>
+                    $achievementResult["achievements_unlocked"],
+                "challenges_updated" =>
+                    $achievementResult["challenges_updated"],
+                "user_stats" => $this->getUserStats($user->fresh()),
+            ];
         });
     }
 
@@ -358,7 +562,10 @@ class GamificationService
                 ]);
             }
 
-            return $review->toArray();
+            return [
+                "action_result" => $review->toArray(),
+                "user_stats" => $this->getUserStats($user->fresh()),
+            ];
         });
     }
 
@@ -372,7 +579,7 @@ class GamificationService
     public function grantAchievement(
         User $user,
         int $achievement_id,
-        array $additional_info,
+        array $additional_info = [],
     ): array {
         return DB::transaction(function () use (
             $user,
@@ -390,12 +597,18 @@ class GamificationService
                 );
             }
 
+            // Get period date for this achievement
+            $periodDate = $this->achievementChecker->getPeriodDate(
+                $achievement->reset_schedule,
+            );
+
             // Cek apakah pengguna sudah memiliki achievement ini
             $hasAchievement = \App\Models\UserAchievement::where(
                 "user_id",
                 $user->id,
             )
                 ->where("achievement_id", $achievement_id)
+                ->where("period_date", $periodDate)
                 ->where("status", true)
                 ->exists();
 
@@ -409,43 +622,68 @@ class GamificationService
             $userAchievement = \App\Models\UserAchievement::create([
                 "user_id" => $user->id,
                 "achievement_id" => $achievement_id,
+                "current_progress" => $achievement->target,
+                "target_progress" => $achievement->target,
                 "additional_info" => $additional_info,
                 "status" => true,
+                "completed_at" => now(),
+                "period_date" => $periodDate,
             ]);
 
-            // Tambah counter di tabel user
-            $user->increment("total_achievement");
+            // Tambah counter di tabel user (only for one-time achievements)
+            if ($achievement->isOneTime()) {
+                $user->increment("total_achievement");
+            }
 
             $metadata = [
                 "type" => "Achievement",
                 "id" => $achievement->id,
+                "code" => $achievement->code,
             ];
 
             // Berikan reward
-            $this->addCoins($user, $achievement->coin_reward, $metadata);
+            if ($achievement->coin_reward > 0) {
+                $this->addCoins($user, $achievement->coin_reward, $metadata);
+            }
+            if ($achievement->reward_xp > 0) {
+                $this->addExp($user, $achievement->reward_xp, $metadata);
+            }
 
-            return $userAchievement->toArray();
+            return [
+                "achievement" => [
+                    "id" => $achievement->id,
+                    "code" => $achievement->code,
+                    "name" => $achievement->name,
+                    "description" => $achievement->description,
+                    "icon_url" => $achievement->image_url,
+                    "reward_coins" => $achievement->coin_reward,
+                    "reward_xp" => $achievement->reward_xp,
+                ],
+                "user_achievement" => $userAchievement->toArray(),
+                "user_stats" => $this->getUserStats($user->fresh()),
+            ];
         });
     }
 
     /**
      * Menyelesaikan challenge untuk pengguna jika belum pernah diselesaikan.
      * @param User $user
-     * @param int $challenge_id
+     * @param int $achievement_id (challenge)
      * @param array $additional_info
      * @return array
      */
     public function completeChallenge(
         User $user,
-        int $challenge_id,
+        int $achievement_id,
         array $additional_info = [],
     ): array {
         return DB::transaction(function () use (
             $user,
-            $challenge_id,
+            $achievement_id,
             $additional_info,
         ) {
-            $challenge = \App\Models\Challenge::find($challenge_id);
+            $challenge = Achievement::where('type', Achievement::TYPE_CHALLENGE)
+                ->find($achievement_id);
             if (!$challenge) {
                 throw new \InvalidArgumentException("Challenge not found");
             }
@@ -456,28 +694,40 @@ class GamificationService
                 );
             }
 
-            // Cek apakah user sudah menyelesaikan challenge ini
-            $hasCompleted = \App\Models\UserChallenge::where(
+            // Get period date based on reset schedule
+            $periodDate = $this->achievementChecker->getPeriodDate($challenge->reset_schedule);
+
+            // Cek apakah user sudah menyelesaikan challenge ini untuk periode ini
+            $hasCompleted = \App\Models\UserAchievement::where(
                 "user_id",
                 $user->id,
             )
-                ->where("challenge_id", $challenge_id)
+                ->where("achievement_id", $achievement_id)
+                ->where("period_date", $periodDate)
                 ->where("status", true)
                 ->exists();
 
             if ($hasCompleted) {
                 throw new \InvalidArgumentException(
-                    "You have already completed this challenge.",
+                    "You have already completed this challenge for this period.",
                 );
             }
 
-            // Catat di tabel pivot user_challenges
-            $userChallenge = \App\Models\UserChallenge::create([
-                "user_id" => $user->id,
-                "challenge_id" => $challenge_id,
-                "additional_info" => $additional_info,
-                "status" => true,
-            ]);
+            // Catat di tabel user_achievements
+            $userAchievement = \App\Models\UserAchievement::updateOrCreate(
+                [
+                    "user_id" => $user->id,
+                    "achievement_id" => $achievement_id,
+                    "period_date" => $periodDate,
+                ],
+                [
+                    "current_progress" => $challenge->criteria_target,
+                    "target_progress" => $challenge->criteria_target,
+                    "status" => true,
+                    "completed_at" => now(),
+                    "additional_info" => $additional_info,
+                ]
+            );
 
             // Tambah counter di tabel user
             $user->increment("total_challenge");
@@ -487,10 +737,32 @@ class GamificationService
                 "id" => $challenge->id,
             ];
 
-            // Berikan reward
-            $this->addExp($user, $challenge->exp_reward, $metadata);
+            // Berikan reward coins
+            if ($challenge->coin_reward > 0) {
+                $this->addCoins($user, $challenge->coin_reward, $metadata);
+            }
 
-            return $userChallenge->toArray();
+            // Berikan reward exp
+            if ($challenge->reward_xp > 0) {
+                $this->addExp($user, $challenge->reward_xp, $metadata);
+            }
+
+            // Log challenge completed action for achievement tracking
+            $this->achievementChecker->checkOnAction(
+                $user->fresh(),
+                UserActionLog::ACTION_CHALLENGE_COMPLETED,
+                [
+                    "achievement_id" => $challenge->id,
+                    "challenge_name" => $challenge->name,
+                    "challenge_code" => $challenge->code,
+                ]
+            );
+
+            return [
+                "challenge" => $challenge->toArray(),
+                "user_achievement" => $userAchievement->toArray(),
+                "user_stats" => $this->getUserStats($user->fresh()),
+            ];
         });
     }
 
@@ -538,7 +810,7 @@ class GamificationService
             ];
 
             // 2. Kurangi koin pengguna & stok reward
-            $this->useCoins($user->id, $reward->coin_requirement, $metadata);
+            $this->useCoins($user, $reward->coin_requirement, $metadata);
             $reward->decrement("stock");
 
             $additional_info = array_merge(
@@ -554,199 +826,157 @@ class GamificationService
                 "additional_info" => $additional_info,
             ]);
 
-            return $userReward->toArray();
+            return [
+                "reward" => $reward->toArray(),
+                "user_reward" => $userReward->toArray(),
+                "user_stats" => $this->getUserStats($user->fresh()),
+            ];
         });
     }
 
     /**
-     * Ambil transaksi coin user dengan pagination dan filter tipe.
-     * @param int $user_id
-     * @param array $options - { page, limit, type }
+     * Get coin transactions for a user.
+     * @param User $user
+     * @param int $limit
+     * @param int $offset
      * @return array
      */
     public function getCoinTransactions(
-        int $user_id,
-        array $options = [],
+        User $user,
+        int $limit = 20,
+        int $offset = 0,
     ): array {
-        $page = $options["page"] ?? 1;
-        $perPage = $options["per_page"] ?? 20;
-
-        $query = \App\Models\CoinTransaction::where("user_id", $user_id);
-
-        $totalItems = $query->count();
-
-        $transactions = $query
-            ->limit($perPage)
-            ->offset(($page - 1) * $perPage)
+        $transactions = \App\Models\CoinTransaction::where("user_id", $user->id)
             ->orderBy("created_at", "desc")
+            ->offset($offset)
+            ->limit($limit)
             ->get();
-        $totalPages = ceil($totalItems / $perPage);
+
+        $total = \App\Models\CoinTransaction::where(
+            "user_id",
+            $user->id,
+        )->count();
 
         return [
             "transactions" => $transactions->toArray(),
-            "pagination" => [
-                "items" => $transactions->count(),
-                "total" => $totalItems,
-                "current_page" => (int) $page,
-                "per_page" => (int) $perPage,
-                "last_page" => (int) $totalPages,
-            ],
+            "total" => $total,
+            "limit" => $limit,
+            "offset" => $offset,
         ];
     }
 
     /**
-     * Ambil transaksi exp user dengan pagination dan filter tipe.
-     * @param int $user_id
-     * @param array $options - { page, limit, type }
+     * Get EXP transactions for a user.
+     * @param User $user
+     * @param int $limit
+     * @param int $offset
      * @return array
      */
-    public function getExpTransactions(int $user_id, array $options = []): array
-    {
-        $page = $options["page"] ?? 1;
-        $perPage = $options["per_page"] ?? 20;
-
-        $query = \App\Models\ExpTransaction::where("user_id", $user_id);
-
-        $totalItems = $query->count();
-
-        $transactions = $query
-            ->limit($perPage)
-            ->offset(($page - 1) * $perPage)
+    public function getExpTransactions(
+        User $user,
+        int $limit = 20,
+        int $offset = 0,
+    ): array {
+        $transactions = \App\Models\ExpTransaction::where("user_id", $user->id)
             ->orderBy("created_at", "desc")
+            ->offset($offset)
+            ->limit($limit)
             ->get();
-        $totalPages = ceil($totalItems / $perPage);
+
+        $total = \App\Models\ExpTransaction::where(
+            "user_id",
+            $user->id,
+        )->count();
 
         return [
             "transactions" => $transactions->toArray(),
-            "pagination" => [
-                "items" => $transactions->count(),
-                "total" => $totalItems,
-                "current_page" => (int) $page,
-                "last_page" => (int) $totalPages,
-                "per_page" => (int) $perPage,
-            ],
+            "total" => $total,
+            "limit" => $limit,
+            "offset" => $offset,
         ];
     }
 
     /**
-     * Ambil achievements aktif beserta progress user.
-     * @param int $user_id
+     * Get achievements for a user with progress.
+     * @param User $user
      * @return array
      */
-    public function getAchievements(int $user_id): array
+    public function getAchievements(User $user): array
     {
-        $achievements = \App\Models\Achievement::where("status", true)
-            ->with([
-                "userAchievements" => function ($query) use ($user_id) {
-                    $query->where("user_id", $user_id)->where("status", true);
-                },
-            ])
-            ->orderBy("name", "asc")
+        return $this->achievementChecker->getUserAchievementsProgress($user);
+    }
+
+    /**
+     * Get active challenges for a user.
+     * @param User $user
+     * @return array
+     */
+    public function getChallenges(User $user): array
+    {
+        return $this->achievementChecker->getActiveChallenges($user);
+    }
+
+    /**
+     * Get available rewards.
+     * @param User $user
+     * @return array
+     */
+    public function getRewards(User $user): array
+    {
+        $rewards = \App\Models\Reward::where("status", true)
+            ->orderBy("coin_requirement", "asc")
             ->get();
 
-        return $achievements->toArray();
+        return $rewards
+            ->map(function ($reward) use ($user) {
+                return [
+                    "id" => $reward->id,
+                    "name" => $reward->name,
+                    "description" => $reward->description,
+                    "image_url" => $reward->image_url,
+                    "coin_requirement" => $reward->coin_requirement,
+                    "stock" => $reward->stock,
+                    "can_redeem" =>
+                        $user->total_coin >= $reward->coin_requirement &&
+                        $reward->stock > 0,
+                ];
+            })
+            ->toArray();
     }
 
     /**
-     * Ambil challenges berdasarkan status (active: dalam rentang tanggal saat ini).
-     * @param int $user_id
-     * @param array $options - { status }
-     * @return array
-     */
-    public function getChallenges(int $user_id, array $options = []): array
-    {
-        $status = $options["status"] ?? "active";
-
-        $query = \App\Models\Challenge::where("status", true);
-
-        if ($status === "active") {
-            $now = now();
-            $query
-                ->where("started_at", "<=", $now)
-                ->where("ended_at", ">=", $now);
-        }
-
-        $challenges = $query
-            ->with([
-                "userChallenges" => function ($query) use ($user_id) {
-                    $query->where("user_id", $user_id)->where("status", true);
-                },
-            ])
-            ->orderBy("started_at", "desc")
-            ->get();
-
-        return $challenges->toArray();
-    }
-
-    /**
-     * Ambil rewards aktif dengan filter kategori/tipe dan stok > 0.
-     * @param array $options - { status }
-     * @return array
-     */
-    public function getRewards(array $options = []): array
-    {
-        $status = $options["status"] ?? null;
-
-        $query = \App\Models\Reward::where("status", true)->where(
-            "stock",
-            ">",
-            0,
-        );
-
-        if ($status) {
-            $query->where("status", $status);
-        }
-
-        $rewards = $query->orderBy("coin_requirement", "asc")->get();
-
-        return $rewards->toArray();
-    }
-
-    /**
-     * Fungsi listAchievements yang kompatibel dengan controller yang sudah ada
+     * List all achievements (for admin).
      * @return array
      */
     public function listAchievements(): array
     {
-        $rows = \App\Models\Achievement::where("status", true)->get();
-        return [
-            "items" => $rows->toArray(),
-            "total" => (int) $rows->count(),
-            "current_page" => 1,
-            "per_page" => (int) $rows->count(),
-            "last_page" => 1,
-        ];
+        return \App\Models\Achievement::orderBy("display_order", "asc")
+            ->get()
+            ->toArray();
     }
 
     /**
-     * Fungsi listChallenges yang kompatibel dengan controller yang sudah ada
+     * List all challenges (for admin).
      * @return array
      */
     public function listChallenges(): array
     {
-        $rows = \App\Models\Challenge::where("status", true)->get();
-        return [
-            "items" => $rows->toArray(),
-            "total" => (int) $rows->count(),
-            "current_page" => 1,
-            "per_page" => (int) $rows->count(),
-            "last_page" => 1,
-        ];
+        return Achievement::where("status", true)
+            ->where("type", Achievement::TYPE_CHALLENGE)
+            ->orderBy("display_order", "asc")
+            ->get()
+            ->toArray();
     }
 
     /**
-     * Fungsi listRewards yang kompatibel dengan controller yang sudah ada
+     * List all rewards (for admin).
      * @return array
      */
     public function listRewards(): array
     {
-        $rows = \App\Models\Reward::where("status", true)->get();
-        return [
-            "items" => $rows->toArray(),
-            "total" => (int) $rows->count(),
-            "current_page" => 1,
-            "per_page" => (int) $rows->count(),
-            "last_page" => 1,
-        ];
+        return \App\Models\Reward::where("status", true)
+            ->orderBy("coin_requirement", "asc")
+            ->get()
+            ->toArray();
     }
 }

@@ -146,8 +146,20 @@ class UsersService
     {
         $reviews = \App\Models\Review::where('user_id', $userId)->orderBy('created_at', 'desc')->limit(10)->get();
         $posts = \App\Models\Post::where('user_id', $userId)->orderBy('created_at', 'desc')->limit(10)->get();
-        $userAchievements = \App\Models\UserAchievement::where('user_id', $userId)->orderBy('created_at', 'desc')->limit(10)->get();
-        $userChallenges = \App\Models\UserChallenge::where('user_id', $userId)->orderBy('created_at', 'desc')->limit(10)->get();
+        $userAchievements = \App\Models\UserAchievement::where('user_id', $userId)
+            ->whereHas('achievement', function($q) {
+                $q->where('type', \App\Models\Achievement::TYPE_ACHIEVEMENT);
+            })
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get();
+        $userChallenges = \App\Models\UserAchievement::where('user_id', $userId)
+            ->whereHas('achievement', function($q) {
+                $q->where('type', \App\Models\Achievement::TYPE_CHALLENGE);
+            })
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get();
 
         return [
             'reviews' => $reviews->toArray(),
@@ -414,7 +426,10 @@ class UsersService
      */
     public function getChallenges(int $userId, int $perPage = 10, ?int $page = null): array
     {
-        $query = \App\Models\UserChallenge::where('user_id', $userId);
+        $query = \App\Models\UserAchievement::where('user_id', $userId)
+            ->whereHas('achievement', function($q) {
+                $q->where('type', \App\Models\Achievement::TYPE_CHALLENGE);
+            });
 
         $challenges = $page ? $query->paginate($perPage, ['*'], 'page', $page) : $query->paginate($perPage);
 
