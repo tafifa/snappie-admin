@@ -3,7 +3,10 @@
     "name": "snappie/admin",
     "type": "project",
     "description": "The admin panel for the Snappie platform.",
-    "keywords": ["admin", "panel"],
+    "keywords": [
+        "admin",
+        "panel"
+    ],
     "license": "MIT",
     "require": {
         "php": "^8.2",
@@ -16,6 +19,12 @@
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
+        "laravel/pint": "^1.13",
+        "mockery/mockery": "^1.6",
+        "nunomaduro/collision": "^8.1",
+        "pestphp/pest": "^3.0",
+        "pestphp/pest-plugin-laravel": "^3.0",
+        "phpunit/phpunit": "^11.0",
         "smknstd/fakerphp-picsum-images": "^1.0"
     },
     "autoload": {
@@ -23,6 +32,11 @@
             "App\\": "app/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
         }
     },
     "scripts": {
@@ -43,7 +57,10 @@
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
-            "npx concurrently -c \"#93c5fd,#c4b5fd,#fdba74\" \"php artisan serve\" \"php artisan queue:listen --tries=1\" \"npm run dev\" --names='server,queue,vite'"
+            "npx concurrently -c \"#93c5fd,#c4b5fd,#fdba74\" \"php artisan serve --port=8001\" \"php artisan queue:listen --tries=1\" \"npm run dev\" --names='server,queue,vite'"
+        ],
+        "test": [
+            "@php artisan test"
         ]
     },
     "extra": {
@@ -56,10 +73,14 @@
         "preferred-install": "dist",
         "sort-packages": true,
         "allow-plugins": {
-            "php-http/discovery": true
+            "php-http/discovery": true,
+            "pestphp/pest-plugin": true
         },
         "audit": {
-            "ignore": ["PKSA-365x-2zjk-pt47", "PKSA-g5js-3ypd-k2kr"]
+            "ignore": [
+                "PKSA-365x-2zjk-pt47",
+                "PKSA-g5js-3ypd-k2kr"
+            ]
         }
     },
     "minimum-stability": "stable",
