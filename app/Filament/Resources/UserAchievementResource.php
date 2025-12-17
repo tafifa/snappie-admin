@@ -164,12 +164,12 @@ class UserAchievementResource extends Resource
                         $record->current_progress . ' / ' . $record->target_progress
                     ),
 
-                Tables\Columns\TextColumn::make('period_date')
-                    ->label('Periode')
-                    ->date('d M Y')
-                    ->sortable()
-                    ->toggleable()
-                    ->placeholder('One-time'),
+                // Tables\Columns\TextColumn::make('period_date')
+                //     ->label('Periode')
+                //     ->date('d M Y')
+                //     ->sortable()
+                //     ->toggleable()
+                //     ->placeholder('One-time'),
 
                 Tables\Columns\IconColumn::make('completed_at')
                     ->label('Selesai')
@@ -185,7 +185,7 @@ class UserAchievementResource extends Resource
                     ->label('Tanggal Selesai')
                     ->dateTime('d M Y H:i')
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->toggleable() // visible by default, can be toggled off
                     ->placeholder('Belum selesai'),
 
                 Tables\Columns\TextColumn::make('created_at')

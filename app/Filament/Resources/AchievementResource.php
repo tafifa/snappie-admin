@@ -90,11 +90,21 @@ class AchievementResource extends Resource
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
-                                Forms\Components\TextInput::make('criteria_action')
+                                Forms\Components\Select::make('criteria_action')
                                     ->label('Action Type')
-                                    ->placeholder('checkin, review, rating_5_star')
-                                    ->maxLength(50)
+                                    ->options([
+                                        'checkin' => 'Check-in',
+                                        'review' => 'Review',
+                                        'post' => 'Post',
+                                        'like' => 'Like',
+                                        'comment' => 'Comment',
+                                        'follow' => 'Follow',
+                                        'coin_earned' => 'Coin Earned',
+                                        'xp_earned' => 'XP Earned',
+                                        'top_rank' => 'Top Rank',
+                                    ])
                                     ->required()
+                                    ->searchable()
                                     ->helperText('Tipe aksi yang harus dilakukan')
                                     ->suffixIcon('heroicon-m-bolt'),
 
@@ -107,9 +117,46 @@ class AchievementResource extends Resource
                                     ->helperText('Jumlah target yang harus dicapai')
                                     ->suffixIcon('heroicon-m-flag'),
                             ]),
+
+                        Forms\Components\KeyValue::make('criteria_filters')
+                            ->label('Filters (Optional - Future Use)')
+                            ->helperText('Advanced filters seperti place_type, food_type, dll (belum digunakan)')
+                            ->keyLabel('Filter Key')
+                            ->valueLabel('Filter Value')
+                            ->addActionLabel('Tambah Filter')
+                            ->columnSpanFull(),
                     ])->collapsible(),
 
-                // Section 3: Reset Schedule (untuk Challenge)
+                // Section 3: Level & Prerequisite (hanya untuk Achievement)
+                Forms\Components\Section::make('📊 Level System')
+                    ->description('Level progression (hanya untuk type=achievement)')
+                    ->schema([
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\Select::make('level')
+                                    ->label('Level')
+                                    ->options([
+                                        1 => 'Level 1',
+                                        2 => 'Level 2',
+                                        3 => 'Level 3',
+                                    ])
+                                    ->helperText('Level achievement (1-3, kosongkan jika tidak ada level)')
+                                    ->suffixIcon('heroicon-m-star'),
+
+                                Forms\Components\Select::make('required_achievement_id')
+                                    ->label('Required Achievement')
+                                    ->relationship('requiredAchievement', 'name')
+                                    ->searchable()
+                                    ->preload()
+                                    ->helperText('Achievement yang harus diselesaikan dulu (prerequisite)')
+                                    ->suffixIcon('heroicon-m-lock-closed'),
+                            ]),
+                    ])
+                    ->collapsible()
+                    ->collapsed()
+                    ->visible(fn ($get) => $get('type') === 'achievement'),
+
+                // Section 4: Reset Schedule (untuk Challenge)
                 Forms\Components\Section::make('🔄 Reset Schedule')
                     ->description('Jadwal reset untuk challenge')
                     ->schema([
@@ -125,7 +172,7 @@ class AchievementResource extends Resource
                             ->helperText('none: one-time, daily: reset setiap hari, weekly: reset setiap minggu'),
                     ])->collapsible(),
 
-                // Section 4: Media & Visual
+                // Section 5: Media & Visual
                 Forms\Components\Section::make('🖼️ Media & Visual')
                     ->description('Gambar dan tampilan visual')
                     ->schema([
@@ -221,6 +268,15 @@ class AchievementResource extends Resource
                         'challenge' => 'Challenge',
                         default => $state,
                     }),
+
+                Tables\Columns\TextColumn::make('level')
+                    ->label('Lvl')
+                    ->sortable()
+                    ->badge()
+                    ->color('info')
+                    ->formatStateUsing(fn (?int $state): string => $state ? "Lv {$state}" : '-')
+                    ->toggleable()
+                    ->alignCenter(),
 
                 Tables\Columns\TextColumn::make('reset_schedule')
                     ->label('Reset')
