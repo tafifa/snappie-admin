@@ -121,11 +121,12 @@ class SocialController
                 ], 400);
             }
 
-            $followed = $this->service->followUser($user, $user_id);
+            $result = $this->service->followUser($user, $user_id);
+            $isFollow = $result["action"] === "follow";
             return response()->json([
                 'success' => true, 
-                'message' => ($followed ? 'Follow' : 'Unfollow') . ' successfully',
-                'data' => $followed,
+                'message' => ($isFollow ? 'Follow' : 'Unfollow') . ' successfully',
+                'data' => $result,
             ]);
         } catch (\InvalidArgumentException $e) {
             $errorMessage = $e->getMessage();
@@ -179,11 +180,12 @@ class SocialController
                 ], 401);
             }
             
-            $liked = $this->service->likePost($user->id, $post_id);
+            $result = $this->service->likePost($user->id, $post_id);
+            $isLike = $result["action"] === "like";
             return response()->json([
                 'success' => true, 
-                'message' => 'Post '.($liked ? 'liked' : 'unliked'),
-                'data' => $liked,
+                'message' => 'Post '.($isLike ? 'liked' : 'unliked'),
+                'data' => $result,
             ]);
         } catch (\InvalidArgumentException $e) {
             return response()->json([

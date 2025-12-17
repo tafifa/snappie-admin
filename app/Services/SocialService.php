@@ -16,6 +16,58 @@ class SocialService
         $this->achievementChecker = $achievementChecker;
     }
 
+    /**
+     * Format gamification result - only include if there are completed achievements/challenges.
+     * @param array $achievementResult
+     * @return array|null
+     */
+    protected function formatGamificationResult(array $achievementResult): ?array
+    {
+        $achievementsUnlocked = $achievementResult["achievements_unlocked"] ?? [];
+        $challengesUpdated = $achievementResult["challenges_updated"] ?? [];
+
+        // Filter completed challenges (progress == target)
+        $challengesCompleted = array_filter($challengesUpdated, function($challenge) {
+            return $challenge["progress"] >= $challenge["target"];
+        });
+
+        // Only return gamification data if there are unlocked achievements or completed challenges
+        if (empty($achievementsUnlocked) && empty($challengesCompleted)) {
+            return null;
+        }
+
+        $result = [];
+
+        if (!empty($achievementsUnlocked)) {
+            $result["achievements_unlocked"] = array_values($achievementsUnlocked);
+        }
+
+        if (!empty($challengesCompleted)) {
+            $result["challenges_completed"] = array_values($challengesCompleted);
+        }
+
+        // Calculate bonus rewards
+        $bonusCoins = 0;
+        $bonusXp = 0;
+        foreach ($achievementsUnlocked as $achievement) {
+            $bonusCoins += $achievement["reward_coins"] ?? 0;
+            $bonusXp += $achievement["reward_xp"] ?? 0;
+        }
+        foreach ($challengesCompleted as $challenge) {
+            $bonusCoins += $challenge["reward_coins"] ?? 0;
+            $bonusXp += $challenge["reward_xp"] ?? 0;
+        }
+
+        if ($bonusCoins > 0 || $bonusXp > 0) {
+            $result["rewards"] = [
+                "coins" => $bonusCoins,
+                "xp" => $bonusXp,
+            ];
+        }
+
+        return $result;
+    }
+
     public function getPosts(
         int $perPage = 10,
         ?int $page = null,
@@ -216,7 +268,7 @@ class SocialService
             $user->increment("total_post");
 
             // Log post action for achievement tracking
-            $this->achievementChecker->checkOnAction(
+            $achievementResult = $this->achievementChecker->checkOnAction(
                 $user,
                 UserActionLog::ACTION_POST,
                 [
@@ -226,14 +278,24 @@ class SocialService
                 ]
             );
 
-            return $post->toArray();
+            $result = [
+                "post" => $post->toArray(),
+            ];
+
+            // Add gamification if there are completed achievements/challenges
+            $gamification = $this->formatGamificationResult($achievementResult);
+            if ($gamification !== null) {
+                $result["gamification"] = $gamification;
+            }
+
+            return $result;
         });
     }
 
     /**
      * Toggle follow/unfollow a user
      */
-    public function followUser(User $follower, int $followedId): bool
+    public function followUser(User $follower, int $followedId): array
     {
         $userToFollow = User::find($followedId);
         if (!$userToFollow) {
@@ -257,7 +319,10 @@ class SocialService
                 $follow->delete();
                 $follower->decrement("total_following");
                 $userToFollow->decrement("total_follower");
-                return false;
+                return [
+                    "action" => "unfollow",
+                    "user_id" => $followedId,
+                ];
             }
 
             // Follow
@@ -269,7 +334,7 @@ class SocialService
             $userToFollow->increment("total_follower");
 
             // Log follow action for achievement tracking
-            $this->achievementChecker->checkOnAction(
+            $achievementResult = $this->achievementChecker->checkOnAction(
                 $follower,
                 UserActionLog::ACTION_FOLLOW,
                 [
@@ -278,7 +343,18 @@ class SocialService
                 ]
             );
 
-            return true;
+            $result = [
+                "action" => "follow",
+                "user_id" => $followedId,
+            ];
+
+            // Add gamification if there are completed achievements/challenges
+            $gamification = $this->formatGamificationResult($achievementResult);
+            if ($gamification !== null) {
+                $result["gamification"] = $gamification;
+            }
+
+            return $result;
         });
     }
 
@@ -425,32 +501,60 @@ class SocialService
     /**
      * Like a post
      */
-    public function likePost(int $userId, int $postId): bool
+    public function likePost(int $userId, int $postId): array
     {
         $post = Post::find($postId);
         if (!$post) {
             throw new \InvalidArgumentException("Post not found");
         }
 
-        // Check if the user is already liking
-        $like = \App\Models\UserLike::where("user_id", $userId)
-            ->where("related_to_type", \App\Models\Post::class)
-            ->where("related_to_id", $postId)
-            ->first();
+        return DB::transaction(function () use ($userId, $postId, $post) {
+            // Check if the user is already liking
+            $like = \App\Models\UserLike::where("user_id", $userId)
+                ->where("related_to_type", \App\Models\Post::class)
+                ->where("related_to_id", $postId)
+                ->first();
 
-        if ($like) {
-            // Unlike the post
-            $like->delete();
-            return false;
-        }
+            if ($like) {
+                // Unlike the post
+                $like->delete();
+                return [
+                    "action" => "unlike",
+                    "post_id" => $postId,
+                ];
+            }
 
-        // Create new like
-        $like = \App\Models\UserLike::firstOrCreate([
-            "user_id" => $userId,
-            "related_to_type" => \App\Models\Post::class,
-            "related_to_id" => $postId,
-        ]);
-        return $like->wasRecentlyCreated;
+            // Create new like
+            $like = \App\Models\UserLike::firstOrCreate([
+                "user_id" => $userId,
+                "related_to_type" => \App\Models\Post::class,
+                "related_to_id" => $postId,
+            ]);
+
+            // Log like action for achievement tracking
+            $user = User::find($userId);
+            $achievementResult = $this->achievementChecker->checkOnAction(
+                $user,
+                UserActionLog::ACTION_LIKE,
+                [
+                    "post_id" => $postId,
+                    "post_author_id" => $post->user_id,
+                ]
+            );
+
+            $result = [
+                "action" => "like",
+                "post_id" => $postId,
+            ];
+
+            // Add gamification if there are completed achievements/challenges
+            $gamification = $this->formatGamificationResult($achievementResult);
+            if ($gamification !== null) {
+                $result["gamification"] = $gamification;
+            }
+
+            return $result;
+        });
     }
 
     public function getPostComments(int $postId): array
@@ -482,7 +586,28 @@ class SocialService
                 "comment" => $comment,
             ]);
 
-            return $comment->toArray();
+            // Log comment action for achievement tracking
+            $user = User::find($userId);
+            $achievementResult = $this->achievementChecker->checkOnAction(
+                $user,
+                UserActionLog::ACTION_COMMENT,
+                [
+                    "post_id" => $postId,
+                    "comment_id" => $comment->id,
+                ]
+            );
+
+            $result = [
+                "comment" => $comment->toArray(),
+            ];
+
+            // Add gamification if there are completed achievements/challenges
+            $gamification = $this->formatGamificationResult($achievementResult);
+            if ($gamification !== null) {
+                $result["gamification"] = $gamification;
+            }
+
+            return $result;
         });
     }
 
