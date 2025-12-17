@@ -292,6 +292,7 @@ class AchievementChecker
             'description' => $achievement->description,
             'icon_url' => $achievement->image_url,
             'type' => $achievement->type,
+            'level' => $achievement->level,
             'reward_coins' => $achievement->coin_reward,
             'reward_xp' => $achievement->reward_xp,
         ];
@@ -315,6 +316,34 @@ class AchievementChecker
             'target' => $progress->target_progress,
             'percentage' => $progress->progress_percentage,
         ];
+    }
+
+    /**
+     * Check if user can unlock an achievement (prerequisite validation).
+     *
+     * @param User $user
+     * @param Achievement $achievement
+     * @return bool
+     */
+    protected function canUnlock(User $user, Achievement $achievement): bool
+    {
+        // Only achievements have levels and prerequisites, not challenges
+        if ($achievement->type === Achievement::TYPE_CHALLENGE) {
+            return true;
+        }
+
+        // If no required achievement, can unlock
+        if (!$achievement->required_achievement_id) {
+            return true;
+        }
+
+        // Check if user has completed the required achievement
+        $hasCompleted = UserAchievement::where('user_id', $user->id)
+            ->where('achievement_id', $achievement->required_achievement_id)
+            ->whereNotNull('completed_at')
+            ->exists();
+
+        return $hasCompleted;
     }
 
     /**

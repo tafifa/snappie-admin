@@ -28,12 +28,15 @@ class Achievement extends Model
         "description",
         "criteria_action",
         "criteria_target",
+        "criteria_filters",
         "image_url",
         "coin_reward",
         "reward_xp",
         "status",
         "reset_schedule",
         "display_order",
+        "level",
+        "required_achievement_id",
         "additional_info",
     ];
 
@@ -45,10 +48,13 @@ class Achievement extends Model
     protected $casts = [
         "id" => "integer",
         "criteria_target" => "integer",
+        "criteria_filters" => "json",
         "coin_reward" => "integer",
         "reward_xp" => "integer",
         "status" => "boolean",
         "display_order" => "integer",
+        "level" => "integer",
+        "required_achievement_id" => "integer",
         "additional_info" => "json",
         "created_at" => "datetime",
         "updated_at" => "datetime",
@@ -78,17 +84,33 @@ class Achievement extends Model
             "code" => "required|string|max:50|unique:achievements,code",
             "name" => "required|string|max:255",
             "type" => "required|in:achievement,challenge",
-            "description" => "nullable|string|max:1000",
-            "criteria_action" => "required|string|max:50",
-            "criteria_target" => "required|integer|min:1",
+            "criteria_filters" => "nullable|json",
             "image_url" => "nullable|url|max:500",
             "coin_reward" => "integer|min:0|max:10000",
             "reward_xp" => "integer|min:0|max:10000",
             "status" => "boolean",
             "reset_schedule" => "required|in:none,daily,weekly",
             "display_order" => "integer|min:0",
+            "level" => "nullable|integer|min:1|max:3",
+            "required_achievement_id" => "nullable|exists:achievements,id",
             "additional_info" => "nullable|json",
         ];
+    }
+    
+    /**
+     * Get the prerequisite achievement (for leveled achievements).
+     */ 
+    public function requiredAchievement()
+    {
+        return $this->belongsTo(Achievement::class, 'required_achievement_id');
+    }
+
+    /**
+     * Get achievements that require this achievement.
+     */
+    public function dependentAchievements()
+    {
+        return $this->hasMany(Achievement::class, 'required_achievement_id');
     }
 
     /**

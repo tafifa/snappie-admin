@@ -21,8 +21,6 @@ class UserActionLogFactory extends Factory
         $actionTypes = [
             UserActionLog::ACTION_CHECKIN,
             UserActionLog::ACTION_REVIEW,
-            UserActionLog::ACTION_RATING_5_STAR,
-            UserActionLog::ACTION_UPLOAD_PHOTO,
             UserActionLog::ACTION_POST,
             UserActionLog::ACTION_COMMENT,
             UserActionLog::ACTION_LIKE,
@@ -54,14 +52,6 @@ class UserActionLogFactory extends Factory
                 "place_id" => fake()->numberBetween(1, 20),
                 "review_id" => fake()->numberBetween(1, 100),
                 "rating" => fake()->numberBetween(1, 5),
-            ],
-            UserActionLog::ACTION_RATING_5_STAR => [
-                "place_id" => fake()->numberBetween(1, 20),
-                "review_id" => fake()->numberBetween(1, 100),
-            ],
-            UserActionLog::ACTION_UPLOAD_PHOTO => [
-                "place_id" => fake()->numberBetween(1, 20),
-                "photo_url" => fake()->imageUrl(),
             ],
             UserActionLog::ACTION_POST => [
                 "post_id" => fake()->numberBetween(1, 100),
@@ -109,38 +99,6 @@ class UserActionLogFactory extends Factory
                     "place_id" => $placeId ?? fake()->numberBetween(1, 20),
                     "review_id" => fake()->numberBetween(1, 100),
                     "rating" => $rating ?? fake()->numberBetween(1, 5),
-                ],
-            ],
-        );
-    }
-
-    /**
-     * Indicate that the action is a 5-star rating.
-     */
-    public function fiveStar(?int $placeId = null): static
-    {
-        return $this->state(
-            fn(array $attributes) => [
-                "action_type" => UserActionLog::ACTION_RATING_5_STAR,
-                "action_data" => [
-                    "place_id" => $placeId ?? fake()->numberBetween(1, 20),
-                    "review_id" => fake()->numberBetween(1, 100),
-                ],
-            ],
-        );
-    }
-
-    /**
-     * Indicate that the action is a photo upload.
-     */
-    public function uploadPhoto(?int $placeId = null): static
-    {
-        return $this->state(
-            fn(array $attributes) => [
-                "action_type" => UserActionLog::ACTION_UPLOAD_PHOTO,
-                "action_data" => [
-                    "place_id" => $placeId ?? fake()->numberBetween(1, 20),
-                    "photo_url" => fake()->imageUrl(),
                 ],
             ],
         );
@@ -199,24 +157,6 @@ class UserActionLogFactory extends Factory
             fn(array $attributes) => [
                 "created_at" => $date,
                 "updated_at" => $date,
-            ],
-        );
-    }
-
-    /**
-     * Set the action to be a breakfast checkin (6am-10am).
-     */
-    public function breakfastCheckin(?int $placeId = null): static
-    {
-        return $this->state(
-            fn(array $attributes) => [
-                "action_type" => UserActionLog::ACTION_BREAKFAST_CHECKIN,
-                "action_data" => [
-                    "place_id" => $placeId ?? fake()->numberBetween(1, 20),
-                    "place_name" => fake()->company(),
-                ],
-                "created_at" => now()
-                    ->setTime(fake()->numberBetween(6, 10), 0, 0),
             ],
         );
     }

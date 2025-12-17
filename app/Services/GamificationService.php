@@ -18,6 +18,51 @@ class GamificationService
     }
 
     /**
+     * Format gamification result - only include if there are completed achievements/challenges.
+     * @param array $achievementResult
+     * @param int $bonusCoins
+     * @param int $bonusXp
+     * @return array|null
+     */
+    protected function formatGamificationResult(
+        array $achievementResult,
+        int $bonusCoins = 0,
+        int $bonusXp = 0
+    ): ?array {
+        $achievementsUnlocked = $achievementResult["achievements_unlocked"] ?? [];
+        $challengesUpdated = $achievementResult["challenges_updated"] ?? [];
+
+        // Filter completed challenges (progress == target)
+        $challengesCompleted = array_filter($challengesUpdated, function($challenge) {
+            return $challenge["progress"] >= $challenge["target"];
+        });
+
+        // Only return gamification data if there are unlocked achievements or completed challenges
+        if (empty($achievementsUnlocked) && empty($challengesCompleted)) {
+            return null;
+        }
+
+        $result = [];
+
+        if (!empty($achievementsUnlocked)) {
+            $result["achievements_unlocked"] = array_values($achievementsUnlocked);
+        }
+
+        if (!empty($challengesCompleted)) {
+            $result["challenges_completed"] = array_values($challengesCompleted);
+        }
+
+        if ($bonusCoins > 0 || $bonusXp > 0) {
+            $result["rewards"] = [
+                "coins" => $bonusCoins,
+                "xp" => $bonusXp,
+            ];
+        }
+
+        return $result;
+    }
+
+    /**
      * Berikan koin kepada pengguna dan catat transaksinya.
      * Menggunakan database transaction untuk memastikan integritas data.
      * @param User $user
@@ -136,7 +181,7 @@ class GamificationService
             // Log exp earned action for achievement tracking
             $this->achievementChecker->checkOnAction(
                 $user,
-                UserActionLog::ACTION_EXP_EARNED,
+                UserActionLog::ACTION_XP_EARNED,
                 [
                     "amount" => $amount,
                     "source" => $metadata,
@@ -253,28 +298,6 @@ class GamificationService
                 ],
             );
 
-            // Check for breakfast checkin (if checkin time is between 6am - 10am)
-            $hour = $now->hour;
-            if ($hour >= 6 && $hour <= 10) {
-                $breakfastResult = $this->achievementChecker->checkOnAction(
-                    $user,
-                    UserActionLog::ACTION_BREAKFAST_CHECKIN,
-                    [
-                        "checkin_id" => $checkin->id,
-                        "place_id" => $place->id,
-                    ],
-                );
-                // Merge breakfast achievements
-                $achievementResult["achievements_unlocked"] = array_merge(
-                    $achievementResult["achievements_unlocked"],
-                    $breakfastResult["achievements_unlocked"],
-                );
-                $achievementResult["challenges_updated"] = array_merge(
-                    $achievementResult["challenges_updated"],
-                    $breakfastResult["challenges_updated"],
-                );
-            }
-
             // Calculate bonus rewards from achievements
             $bonusCoins = 0;
             $bonusXp = 0;
@@ -286,26 +309,23 @@ class GamificationService
                 $bonusXp += $achievement["reward_xp"] ?? 0;
             }
 
-            return [
-                "action_result" => [
-                    "checkin_id" => $checkin->id,
+            $result = [
+                "checkin" => [
+                    "id" => $checkin->id,
                     "place_id" => $place->id,
                     "place_name" => $place->name,
+                    "coins_earned" => $coinsEarned,
+                    "xp_earned" => $expEarned,
                 ],
-                "rewards" => [
-                    "base_xp" => $expEarned,
-                    "base_coins" => $coinsEarned,
-                    "bonus_xp" => $bonusXp,
-                    "bonus_coins" => $bonusCoins,
-                    "total_xp" => $expEarned + $bonusXp,
-                    "total_coins" => $coinsEarned + $bonusCoins,
-                ],
-                "achievements_unlocked" =>
-                    $achievementResult["achievements_unlocked"],
-                "challenges_updated" =>
-                    $achievementResult["challenges_updated"],
-                "user_stats" => $this->getUserStats($user->fresh()),
             ];
+
+            // Add gamification result if there are completed achievements/challenges
+            $gamification = $this->formatGamificationResult($achievementResult, $bonusCoins, $bonusXp);
+            if ($gamification !== null) {
+                $result["gamification"] = $gamification;
+            }
+
+            return $result;
         });
     }
 
@@ -414,53 +434,6 @@ class GamificationService
                 ],
             );
 
-            // Check for 5-star rating achievement
-            if ($payload["rating"] == 5) {
-                $fiveStarResult = $this->achievementChecker->checkOnAction(
-                    $user,
-                    UserActionLog::ACTION_RATING_5_STAR,
-                    [
-                        "review_id" => $review->id,
-                        "place_id" => $place->id,
-                    ],
-                );
-                // Merge 5-star achievements
-                $achievementResult["achievements_unlocked"] = array_merge(
-                    $achievementResult["achievements_unlocked"],
-                    $fiveStarResult["achievements_unlocked"],
-                );
-                $achievementResult["challenges_updated"] = array_merge(
-                    $achievementResult["challenges_updated"],
-                    $fiveStarResult["challenges_updated"],
-                );
-            }
-
-            // Check for photo upload achievement
-            if (!empty($payload["image_urls"])) {
-                $photoCount = is_array($payload["image_urls"])
-                    ? count($payload["image_urls"])
-                    : 1;
-                for ($i = 0; $i < $photoCount; $i++) {
-                    $photoResult = $this->achievementChecker->checkOnAction(
-                        $user,
-                        UserActionLog::ACTION_UPLOAD_PHOTO,
-                        [
-                            "review_id" => $review->id,
-                            "place_id" => $place->id,
-                        ],
-                    );
-                    // Merge photo achievements
-                    $achievementResult["achievements_unlocked"] = array_merge(
-                        $achievementResult["achievements_unlocked"],
-                        $photoResult["achievements_unlocked"],
-                    );
-                    $achievementResult["challenges_updated"] = array_merge(
-                        $achievementResult["challenges_updated"],
-                        $photoResult["challenges_updated"],
-                    );
-                }
-            }
-
             // Calculate bonus rewards from achievements
             $bonusCoins = 0;
             $bonusXp = 0;
@@ -472,27 +445,24 @@ class GamificationService
                 $bonusXp += $achievement["reward_xp"] ?? 0;
             }
 
-            return [
-                "action_result" => [
-                    "review_id" => $review->id,
+            $result = [
+                "review" => [
+                    "id" => $review->id,
                     "place_id" => $place->id,
                     "place_name" => $place->name,
                     "rating" => $review->rating,
+                    "coins_earned" => $coinsEarned,
+                    "xp_earned" => $expEarned,
                 ],
-                "rewards" => [
-                    "base_xp" => $expEarned,
-                    "base_coins" => $coinsEarned,
-                    "bonus_xp" => $bonusXp,
-                    "bonus_coins" => $bonusCoins,
-                    "total_xp" => $expEarned + $bonusXp,
-                    "total_coins" => $coinsEarned + $bonusCoins,
-                ],
-                "achievements_unlocked" =>
-                    $achievementResult["achievements_unlocked"],
-                "challenges_updated" =>
-                    $achievementResult["challenges_updated"],
-                "user_stats" => $this->getUserStats($user->fresh()),
             ];
+
+            // Add gamification result if there are completed achievements/challenges
+            $gamification = $this->formatGamificationResult($achievementResult, $bonusCoins, $bonusXp);
+            if ($gamification !== null) {
+                $result["gamification"] = $gamification;
+            }
+
+            return $result;
         });
     }
 
@@ -746,17 +716,6 @@ class GamificationService
             if ($challenge->reward_xp > 0) {
                 $this->addExp($user, $challenge->reward_xp, $metadata);
             }
-
-            // Log challenge completed action for achievement tracking
-            $this->achievementChecker->checkOnAction(
-                $user->fresh(),
-                UserActionLog::ACTION_CHALLENGE_COMPLETED,
-                [
-                    "achievement_id" => $challenge->id,
-                    "challenge_name" => $challenge->name,
-                    "challenge_code" => $challenge->code,
-                ]
-            );
 
             return [
                 "challenge" => $challenge->toArray(),

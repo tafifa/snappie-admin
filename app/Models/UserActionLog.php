@@ -42,31 +42,17 @@ class UserActionLog extends Model
     ];
 
     /**
-     * Action type constants
+     * Action type constants (Simplified - Core Actions Only)
      */
-    const ACTION_CHECKIN = 'checkin';
-    const ACTION_REVIEW = 'review';
-    const ACTION_RATING_5_STAR = 'rating_5_star';
-    const ACTION_UPLOAD_PHOTO = 'upload_photo';
-    const ACTION_SHARE_EXPERIENCE = 'share_experience';
-    const ACTION_POST = 'post';
-    const ACTION_POST_LIKE_RECEIVED = 'post_like_received';
-    const ACTION_RANK_FIRST = 'rank_first';
-    const ACTION_COIN_EARNED = 'coin_earned';
-    const ACTION_EXP_EARNED = 'exp_earned';
-    const ACTION_CHALLENGE_COMPLETED = 'challenge_completed';
-    const ACTION_BREAKFAST_CHECKIN = 'breakfast_checkin';
-    const ACTION_CAFE_CHECKIN = 'cafe_checkin';
-    const ACTION_DESSERT_CHECKIN = 'dessert_checkin';
-    const ACTION_COFFEE_CHECKIN = 'coffee_checkin';
-    const ACTION_LOCAL_FOOD_CHECKIN = 'local_food_checkin';
-    const ACTION_HIDDEN_GEM_VISIT = 'hidden_gem_visit';
-    const ACTION_MONTHLY_BEST = 'monthly_best';
-    const ACTION_MONTHLY_RANK_FIRST = 'monthly_rank_first';
-    const ACTION_COMMENT = 'comment';
-    const ACTION_LIKE = 'like';
-    const ACTION_FOLLOW = 'follow';
-    const ACTION_UNIQUE_PLACE_VISIT = 'unique_place_visit';
+    const ACTION_CHECKIN = 'checkin';          // Check-in at place
+    const ACTION_REVIEW = 'review';            // Write review
+    const ACTION_POST = 'post';                // Create post
+    const ACTION_LIKE = 'like';                // Like content
+    const ACTION_COMMENT = 'comment';          // Comment on content
+    const ACTION_FOLLOW = 'follow';            // Follow user
+    const ACTION_COIN_EARNED = 'coin_earned';  // Earn coins
+    const ACTION_XP_EARNED = 'xp_earned';      // Earn XP
+    const ACTION_TOP_RANK = 'top_rank';        // Reach top rank
 
     /**
      * Get all valid action types
@@ -78,27 +64,13 @@ class UserActionLog extends Model
         return [
             self::ACTION_CHECKIN,
             self::ACTION_REVIEW,
-            self::ACTION_RATING_5_STAR,
-            self::ACTION_UPLOAD_PHOTO,
-            self::ACTION_SHARE_EXPERIENCE,
             self::ACTION_POST,
-            self::ACTION_POST_LIKE_RECEIVED,
-            self::ACTION_RANK_FIRST,
-            self::ACTION_COIN_EARNED,
-            self::ACTION_EXP_EARNED,
-            self::ACTION_CHALLENGE_COMPLETED,
-            self::ACTION_BREAKFAST_CHECKIN,
-            self::ACTION_CAFE_CHECKIN,
-            self::ACTION_DESSERT_CHECKIN,
-            self::ACTION_COFFEE_CHECKIN,
-            self::ACTION_LOCAL_FOOD_CHECKIN,
-            self::ACTION_HIDDEN_GEM_VISIT,
-            self::ACTION_MONTHLY_BEST,
-            self::ACTION_MONTHLY_RANK_FIRST,
-            self::ACTION_COMMENT,
             self::ACTION_LIKE,
+            self::ACTION_COMMENT,
             self::ACTION_FOLLOW,
-            self::ACTION_UNIQUE_PLACE_VISIT,
+            self::ACTION_COIN_EARNED,
+            self::ACTION_XP_EARNED,
+            self::ACTION_TOP_RANK,
         ];
     }
 
