@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->text('description')->nullable();
-            $table->float('latitude', 10, 6)->nullable();
-            $table->float('longitude', 10, 6)->nullable();
+            $table->float('latitude', 10)->nullable();
+            $table->float('longitude', 10)->nullable();
             $table->json('image_urls')->nullable();
             $table->integer('coin_reward')->default(0);
             $table->integer('exp_reward')->default(0);
