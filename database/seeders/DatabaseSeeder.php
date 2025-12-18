@@ -41,7 +41,7 @@ class DatabaseSeeder extends Seeder
             ],
         );
 
-        // User::factory(10)->create();
+        User::factory(10)->create();
 
         // Seed places data
         $this->call(PlaceSeeder::class);
@@ -50,25 +50,25 @@ class DatabaseSeeder extends Seeder
         $this->call(GamificationSeeder::class);
 
         // Then seed other data using factories
-        // Reward::factory(5)->create();
+        Reward::factory(5)->create();
 
-        // Article::factory(15)->create();
-        // Checkin::factory(15)->create();
-        // Review::factory(15)->create();
-        // Post::factory(15)->create();
+        Article::factory(15)->create();
+        Checkin::factory(15)->create();
+        Review::factory(15)->create();
+        Post::factory(15)->create();
 
-        // UserAchievement::factory(20)->create();
-        // UserReward::factory(20)->create();
+        UserAchievement::factory(20)->create();
+        UserReward::factory(20)->create();
 
-        // CoinTransaction::factory(20)->create();
-        // ExpTransaction::factory(20)->create();
+        CoinTransaction::factory(20)->create();
+        ExpTransaction::factory(20)->create();
 
-        // UserFollow::factory(20)->create();
-        // UserComment::factory(20)->create();
-        // UserLike::factory(20)->create();
+        UserFollow::factory(20)->create();
+        UserComment::factory(20)->create();
+        UserLike::factory(20)->create();
 
-        // // Seed user action logs for gamification testing
-        // UserActionLog::factory(50)->create();
+        // Seed user action logs for gamification testing
+        UserActionLog::factory(50)->create();
 
         $this->command->info("Seeding complete!");
         $this->command->info("========================");
