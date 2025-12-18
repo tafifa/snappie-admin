@@ -16,19 +16,18 @@ class ApiRedirectWidget extends Widget
 
   protected function getViewData(): array
   {
-    $appUrl = env('APP_URL', 'http://localhost:8000');
     return [
       'links' => [
         [
           'label' => 'API Base URL',
-          'url' => $appUrl . '/api/v2/health',
+          'url' => url('/api/v2/health'),
           'icon' => 'heroicon-o-server',
           'description' => 'Root API endpoint',
           'color' => 'success',
         ],
         [
           'label' => 'API Documentation',
-          'url' => $appUrl . '/docs',
+          'url' => url('/docs'),
           'icon' => 'heroicon-o-book-open',
           'description' => 'Swagger documentation',
           'color' => 'primary',
