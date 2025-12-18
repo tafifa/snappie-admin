@@ -14,6 +14,7 @@ use App\Observers\PlaceObserver;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Http\Request;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Support\Facades\URL;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -41,5 +42,7 @@ class AppServiceProvider extends ServiceProvider
                 Limit::perMinute(15)->by(optional($request->user())->id ?: $request->ip()),
             ];
         });
+
+        URL::forceScheme('https');
     }
 }
