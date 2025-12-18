@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use App\Models\Achievement;
-use App\Models\UserActionLog;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class GamificationSeeder extends Seeder
 {
@@ -13,428 +13,178 @@ class GamificationSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->command->info('Seeding gamification data...');
+        // Menggunakan transaksi database agar data konsisten (terutama untuk Foreign Key Prerequisite)
+        DB::transaction(function () {
+            // Hapus data lama jika diperlukan (opsional, hati-hati di production)
+            // DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+            // Achievement::truncate();
+            // DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
-        $this->seedAchievements();
-        $this->seedChallenges();
-
-        $this->command->info('Gamification seeding complete!');
+            $this->seedAchievements(); // 6 Core Actions x 3 Levels
+            $this->seedChallenges();   // 9 Challenges (None, Daily, Weekly)
+        });
     }
 
     /**
-     * Seed one-time achievements with 3-level progression.
+     * Seed Achievements (One-time, Leveling System)
      */
-    protected function seedAchievements(): void
+    private function seedAchievements()
     {
-        $achievements = [
-            // ===== EXPLORER SERIES (Check-in) - 3 Levels =====
-            [
-                'code' => 'ach_explorer_1',
-                'name' => 'Explorer I',
-                'type' => Achievement::TYPE_ACHIEVEMENT,
-                'description' => 'Lakukan 100 check-in di tempat manapun',
-                'criteria_action' => UserActionLog::ACTION_CHECKIN,
-                'criteria_target' => 100,
-                'image_url' => null,
-                'coin_reward' => 100,
-                'reward_xp' => 50,
-                'status' => true,
-                'reset_schedule' => Achievement::RESET_NONE,
-                'display_order' => 1,
-                'level' => 1,
-                'required_achievement_id' => null,
+        // Konfigurasi berdasarkan Tabel Desain Achievement V3.3
+        $series = [
+            // 1. CHECK-IN SERIES
+            'checkin' => [
+                ['name' => 'Langkah Awal',     'target' => 1,   'coin' => 50,  'xp' => 20,  'desc' => 'Check-in pertama kali.'],
+                ['name' => 'Penjelajah Kota',  'target' => 20,  'coin' => 150, 'xp' => 100, 'desc' => 'Eksplorasi menengah.'],
+                ['name' => 'Legenda Peta',     'target' => 100, 'coin' => 500, 'xp' => 300, 'desc' => 'Eksplorasi expert.'],
             ],
-            [
-                'code' => 'ach_explorer_2',
-                'name' => 'Explorer II',
-                'type' => Achievement::TYPE_ACHIEVEMENT,
-                'description' => 'Lakukan 250 check-in di tempat manapun',
-                'criteria_action' => UserActionLog::ACTION_CHECKIN,
-                'criteria_target' => 250,
-                'image_url' => null,
-                'coin_reward' => 250,
-                'reward_xp' => 125,
-                'status' => true,
-                'reset_schedule' => Achievement::RESET_NONE,
-                'display_order' => 2,
-                'level' => 2,
-                'required_achievement_id' => null, // Will be set after level 1 created
+            // 2. REVIEW SERIES
+            'review' => [
+                ['name' => 'Komentator',       'target' => 1,   'coin' => 50,  'xp' => 25,  'desc' => 'Review pertama.'],
+                ['name' => 'Kritikus Tajam',   'target' => 10,  'coin' => 200, 'xp' => 100, 'desc' => 'Konsisten mereview.'],
+                ['name' => 'Lidah Emas',       'target' => 50,  'coin' => 600, 'xp' => 400, 'desc' => 'Opinion leader.'],
             ],
-            [
-                'code' => 'ach_explorer_3',
-                'name' => 'Explorer III',
-                'type' => Achievement::TYPE_ACHIEVEMENT,
-                'description' => 'Lakukan 500 check-in di tempat manapun',
-                'criteria_action' => UserActionLog::ACTION_CHECKIN,
-                'criteria_target' => 500,
-                'image_url' => null,
-                'coin_reward' => 500,
-                'reward_xp' => 250,
-                'status' => true,
-                'reset_schedule' => Achievement::RESET_NONE,
-                'display_order' => 3,
-                'level' => 3,
-                'required_achievement_id' => null, // Will be set after level 2 created
+            // 3. POST SERIES
+            'post' => [
+                ['name' => 'Iseng Posting',    'target' => 1,   'coin' => 50,  'xp' => 20,  'desc' => 'Postingan pertama.'],
+                ['name' => 'Jurnalis Makanan', 'target' => 10,  'coin' => 200, 'xp' => 100, 'desc' => 'Sharing aktif.'],
+                ['name' => 'Kurator Hidden Gem','target' => 50, 'coin' => 500, 'xp' => 300, 'desc' => 'Influencer konten.'],
             ],
-
-            // ===== REVIEWER SERIES (Review) - 3 Levels =====
-            [
-                'code' => 'ach_reviewer_1',
-                'name' => 'Reviewer I',
-                'type' => Achievement::TYPE_ACHIEVEMENT,
-                'description' => 'Tulis 50 review',
-                'criteria_action' => UserActionLog::ACTION_REVIEW,
-                'criteria_target' => 50,
-                'image_url' => null,
-                'coin_reward' => 100,
-                'reward_xp' => 50,
-                'status' => true,
-                'reset_schedule' => Achievement::RESET_NONE,
-                'display_order' => 4,
-                'level' => 1,
-                'required_achievement_id' => null,
+            // 4. COIN EARNED SERIES
+            'coin_earned' => [
+                ['name' => 'Tabungan Awal',    'target' => 1000, 'coin' => 100,  'xp' => 50,   'desc' => 'Akumulasi koin awal.'],
+                ['name' => 'Juragan Kecil',    'target' => 5000, 'coin' => 500,  'xp' => 250,  'desc' => 'Akumulasi menengah.'],
+                ['name' => 'Sultan Snappie',   'target' => 20000,'coin' => 2000, 'xp' => 1000, 'desc' => 'Wealthy user.'],
             ],
-            [
-                'code' => 'ach_reviewer_2',
-                'name' => 'Reviewer II',
-                'type' => Achievement::TYPE_ACHIEVEMENT,
-                'description' => 'Tulis 150 review',
-                'criteria_action' => UserActionLog::ACTION_REVIEW,
-                'criteria_target' => 150,
-                'image_url' => null,
-                'coin_reward' => 250,
-                'reward_xp' => 125,
-                'status' => true,
-                'reset_schedule' => Achievement::RESET_NONE,
-                'display_order' => 5,
-                'level' => 2,
-                'required_achievement_id' => null,
+            // 5. XP EARNED SERIES (Reward XP = 0 untuk mencegah loop)
+            'xp_earned' => [
+                ['name' => 'Pendatang Baru',   'target' => 500,   'coin' => 100,  'xp' => 0, 'desc' => 'Level up awal.'],
+                ['name' => 'Warga Tetap',      'target' => 2500,  'coin' => 300,  'xp' => 0, 'desc' => 'Level up lanjut.'],
+                ['name' => 'Sesepuh Kota',     'target' => 10000, 'coin' => 1000, 'xp' => 0, 'desc' => 'Top level user.'],
             ],
-            [
-                'code' => 'ach_reviewer_3',
-                'name' => 'Reviewer III',
-                'type' => Achievement::TYPE_ACHIEVEMENT,
-                'description' => 'Tulis 300 review',
-                'criteria_action' => UserActionLog::ACTION_REVIEW,
-                'criteria_target' => 300,
-                'image_url' => null,
-                'coin_reward' => 500,
-                'reward_xp' => 250,
-                'status' => true,
-                'reset_schedule' => Achievement::RESET_NONE,
-                'display_order' => 6,
-                'level' => 3,
-                'required_achievement_id' => null,
-            ],
-
-            // ===== SOCIAL BUTTERFLY SERIES (Follow) - 3 Levels =====
-            [
-                'code' => 'ach_social_1',
-                'name' => 'Social Butterfly I',
-                'type' => Achievement::TYPE_ACHIEVEMENT,
-                'description' => 'Follow 25 pengguna',
-                'criteria_action' => UserActionLog::ACTION_FOLLOW,
-                'criteria_target' => 25,
-                'image_url' => null,
-                'coin_reward' => 100,
-                'reward_xp' => 50,
-                'status' => true,
-                'reset_schedule' => Achievement::RESET_NONE,
-                'display_order' => 7,
-                'level' => 1,
-                'required_achievement_id' => null,
-            ],
-            [
-                'code' => 'ach_social_2',
-                'name' => 'Social Butterfly II',
-                'type' => Achievement::TYPE_ACHIEVEMENT,
-                'description' => 'Follow 75 pengguna',
-                'criteria_action' => UserActionLog::ACTION_FOLLOW,
-                'criteria_target' => 75,
-                'image_url' => null,
-                'coin_reward' => 250,
-                'reward_xp' => 125,
-                'status' => true,
-                'reset_schedule' => Achievement::RESET_NONE,
-                'display_order' => 8,
-                'level' => 2,
-                'required_achievement_id' => null,
-            ],
-            [
-                'code' => 'ach_social_3',
-                'name' => 'Social Butterfly III',
-                'type' => Achievement::TYPE_ACHIEVEMENT,
-                'description' => 'Follow 150 pengguna',
-                'criteria_action' => UserActionLog::ACTION_FOLLOW,
-                'criteria_target' => 150,
-                'image_url' => null,
-                'coin_reward' => 500,
-                'reward_xp' => 250,
-                'status' => true,
-                'reset_schedule' => Achievement::RESET_NONE,
-                'display_order' => 9,
-                'level' => 3,
-                'required_achievement_id' => null,
-            ],
-
-            // ===== WEALTH SERIES (Coin Earned) - 3 Levels =====
-            [
-                'code' => 'ach_wealth_1',
-                'name' => 'Coin Collector I',
-                'type' => Achievement::TYPE_ACHIEVEMENT,
-                'description' => 'Dapatkan 500 koin',
-                'criteria_action' => UserActionLog::ACTION_COIN_EARNED,
-                'criteria_target' => 500,
-                'image_url' => null,
-                'coin_reward' => 100,
-                'reward_xp' => 50,
-                'status' => true,
-                'reset_schedule' => Achievement::RESET_NONE,
-                'display_order' => 10,
-                'level' => 1,
-                'required_achievement_id' => null,
-            ],
-            [
-                'code' => 'ach_wealth_2',
-                'name' => 'Coin Collector II',
-                'type' => Achievement::TYPE_ACHIEVEMENT,
-                'description' => 'Dapatkan 1500 koin',
-                'criteria_action' => UserActionLog::ACTION_COIN_EARNED,
-                'criteria_target' => 1500,
-                'image_url' => null,
-                'coin_reward' => 250,
-                'reward_xp' => 125,
-                'status' => true,
-                'reset_schedule' => Achievement::RESET_NONE,
-                'display_order' => 11,
-                'level' => 2,
-                'required_achievement_id' => null,
-            ],
-            [
-                'code' => 'ach_wealth_3',
-                'name' => 'Coin Collector III',
-                'type' => Achievement::TYPE_ACHIEVEMENT,
-                'description' => 'Dapatkan 3000 koin',
-                'criteria_action' => UserActionLog::ACTION_COIN_EARNED,
-                'criteria_target' => 3000,
-                'image_url' => null,
-                'coin_reward' => 500,
-                'reward_xp' => 250,
-                'status' => true,
-                'reset_schedule' => Achievement::RESET_NONE,
-                'display_order' => 12,
-                'level' => 3,
-                'required_achievement_id' => null,
-            ],
-
-            // ===== SINGLE ACHIEVEMENTS (No levels) =====
-            [
-                'code' => 'ach_top_rank',
-                'name' => 'Top Rank',
-                'type' => Achievement::TYPE_ACHIEVEMENT,
-                'description' => 'Raih posisi #1 di leaderboard',
-                'criteria_action' => UserActionLog::ACTION_TOP_RANK,
-                'criteria_target' => 1,
-                'image_url' => null,
-                'coin_reward' => 1000,
-                'reward_xp' => 500,
-                'status' => true,
-                'reset_schedule' => Achievement::RESET_NONE,
-                'display_order' => 13,
-                'level' => null,
-                'required_achievement_id' => null,
+            // 6. TOP RANK SERIES (Menggunakan Target sebagai threshold rank)
+            'top_rank' => [
+                ['name' => 'Bintang Lokal',    'target' => 10, 'coin' => 200,  'xp' => 100,  'desc' => 'Masuk Top 10 Leaderboard.', 'filter' => ['max_rank' => 10]],
+                ['name' => 'Selebriti Kota',   'target' => 5,  'coin' => 1000, 'xp' => 500,  'desc' => 'Masuk Top 5 Leaderboard.',  'filter' => ['max_rank' => 5]],
+                ['name' => 'Penguasa Kuliner', 'target' => 1,  'coin' => 5000, 'xp' => 2500, 'desc' => 'Raih Peringkat 1 Leaderboard.', 'filter' => ['max_rank' => 1]],
             ],
         ];
 
-        // Create achievements and set required_achievement_id for levels
-        $createdAchievements = [];
-        
-        foreach ($achievements as $achievementData) {
-            $achievement = Achievement::create($achievementData);
-            $createdAchievements[$achievement->code] = $achievement;
-        }
+        $displayOrder = 1;
 
-        // Set prerequisites for level 2 and 3
-        $prerequisites = [
-            'ach_explorer_2' => 'ach_explorer_1',
-            'ach_explorer_3' => 'ach_explorer_2',
-            'ach_reviewer_2' => 'ach_reviewer_1',
-            'ach_reviewer_3' => 'ach_reviewer_2',
-            'ach_social_2' => 'ach_social_1',
-            'ach_social_3' => 'ach_social_2',
-            'ach_wealth_2' => 'ach_wealth_1',
-            'ach_wealth_3' => 'ach_wealth_2',
-        ];
+        foreach ($series as $action => $levels) {
+            $previousAchievementId = null; // Reset parent ID untuk setiap series baru
 
-        foreach ($prerequisites as $code => $requiredCode) {
-            if (isset($createdAchievements[$code]) && isset($createdAchievements[$requiredCode])) {
-                $createdAchievements[$code]->update([
-                    'required_achievement_id' => $createdAchievements[$requiredCode]->id,
-                ]);
+            foreach ($levels as $index => $data) {
+                $level = $index + 1;
+                // $code = "ach_{$action}_{$level}";
+                
+                // Membuat Achievement Record
+                $achievement = Achievement::updateOrCreate(
+                    // ['code' => $code], // Kunci unik
+                    [
+                        'name'            => $data['name'],
+                        'code'            => "ach_$action",
+                        'type'            => 'achievement', // Konstanta TYPE_ACHIEVEMENT
+                        'description'     => $data['desc'],
+                        'criteria_action' => $action,
+                        'criteria_target' => $data['target'],
+                        'criteria_filters'=> $data['filter'] ?? null, // Filter opsional (untuk rank)
+                        'coin_reward'     => $data['coin'],
+                        'reward_xp'       => $data['xp'],
+                        'reset_schedule'  => 'none', // Konstanta RESET_NONE
+                        'level'           => $level,
+                        'required_achievement_id' => $previousAchievementId, // Link ke level sebelumnya
+                        'display_order'   => $displayOrder++,
+                        'status'          => true,
+                    ]
+                );
+
+                // Set ID saat ini sebagai parent untuk iterasi level berikutnya
+                $previousAchievementId = $achievement->id;
             }
         }
-
-        $this->command->info('✓ Seeded ' . count($achievements) . ' achievements with 3-level progression');
     }
 
     /**
-     * Seed repeating challenges.
+     * Seed Challenges (Recurring, Reset Schedule)
      */
-    protected function seedChallenges(): void
+    private function seedChallenges()
     {
+        // Konfigurasi berdasarkan Tabel Desain Challenge V3.3
         $challenges = [
-            // ===== DAILY CHALLENGES =====
+            // 1. Tipe RESET: NONE (Special Missions)
             [
-                'code' => 'daily_checkin_5',
-                'name' => 'Check-in Harian',
-                'type' => Achievement::TYPE_CHALLENGE,
-                'description' => 'Lakukan 5 check-in hari ini',
-                'criteria_action' => UserActionLog::ACTION_CHECKIN,
-                'criteria_target' => 5,
-                'image_url' => null,
-                'coin_reward' => 20,
-                'reward_xp' => 10,
-                'status' => true,
-                'reset_schedule' => Achievement::RESET_DAILY,
-                'display_order' => 100,
+                'code' => 'miss_social_follow', 'name' => 'Mencari Teman', 'action' => 'follow', 
+                'target' => 5, 'coin' => 100, 'xp' => 50, 'reset' => 'none', 
+                'desc' => 'Ikuti (follow) 5 user lain.'
             ],
             [
-                'code' => 'daily_review_3',
-                'name' => 'Review Harian',
-                'type' => Achievement::TYPE_CHALLENGE,
-                'description' => 'Tulis 3 review hari ini',
-                'criteria_action' => UserActionLog::ACTION_REVIEW,
-                'criteria_target' => 3,
-                'image_url' => null,
-                'coin_reward' => 15,
-                'reward_xp' => 8,
-                'status' => true,
-                'reset_schedule' => Achievement::RESET_DAILY,
-                'display_order' => 101,
+                'code' => 'miss_social_comment', 'name' => 'Suara Netizen', 'action' => 'comment', 
+                'target' => 10, 'coin' => 150, 'xp' => 75, 'reset' => 'none', 
+                'desc' => 'Berikan 10 komentar total.'
             ],
             [
-                'code' => 'daily_post_2',
-                'name' => 'Post Harian',
-                'type' => Achievement::TYPE_CHALLENGE,
-                'description' => 'Buat 2 post hari ini',
-                'criteria_action' => UserActionLog::ACTION_POST,
-                'criteria_target' => 2,
-                'image_url' => null,
-                'coin_reward' => 15,
-                'reward_xp' => 8,
-                'status' => true,
-                'reset_schedule' => Achievement::RESET_DAILY,
-                'display_order' => 102,
-            ],
-            [
-                'code' => 'daily_like_10',
-                'name' => 'Like Harian',
-                'type' => Achievement::TYPE_CHALLENGE,
-                'description' => 'Like 10 postingan hari ini',
-                'criteria_action' => UserActionLog::ACTION_LIKE,
-                'criteria_target' => 10,
-                'image_url' => null,
-                'coin_reward' => 10,
-                'reward_xp' => 5,
-                'status' => true,
-                'reset_schedule' => Achievement::RESET_DAILY,
-                'display_order' => 103,
-            ],
-            [
-                'code' => 'daily_comment_5',
-                'name' => 'Comment Harian',
-                'type' => Achievement::TYPE_CHALLENGE,
-                'description' => 'Beri 5 komentar hari ini',
-                'criteria_action' => UserActionLog::ACTION_COMMENT,
-                'criteria_target' => 5,
-                'image_url' => null,
-                'coin_reward' => 15,
-                'reward_xp' => 8,
-                'status' => true,
-                'reset_schedule' => Achievement::RESET_DAILY,
-                'display_order' => 104,
+                'code' => 'miss_social_like', 'name' => 'Jempol Sakti', 'action' => 'like', 
+                'target' => 50, 'coin' => 200, 'xp' => 100, 'reset' => 'none', 
+                'desc' => 'Like 50 postingan total.'
             ],
 
-            // ===== WEEKLY CHALLENGES =====
+            // 2. Tipe RESET: DAILY (Harian)
             [
-                'code' => 'weekly_checkin_20',
-                'name' => 'Check-in Mingguan',
-                'type' => Achievement::TYPE_CHALLENGE,
-                'description' => 'Lakukan 20 check-in minggu ini',
-                'criteria_action' => UserActionLog::ACTION_CHECKIN,
-                'criteria_target' => 20,
-                'image_url' => null,
-                'coin_reward' => 50,
-                'reward_xp' => 25,
-                'status' => true,
-                'reset_schedule' => Achievement::RESET_WEEKLY,
-                'display_order' => 200,
+                'code' => 'chal_daily_checkin', 'name' => 'Absen Dulu', 'action' => 'checkin', 
+                'target' => 1, 'coin' => 20, 'xp' => 10, 'reset' => 'daily', 
+                'desc' => 'Check-in 1x hari ini.'
             ],
             [
-                'code' => 'weekly_review_10',
-                'name' => 'Reviewer Mingguan',
-                'type' => Achievement::TYPE_CHALLENGE,
-                'description' => 'Tulis 10 review minggu ini',
-                'criteria_action' => UserActionLog::ACTION_REVIEW,
-                'criteria_target' => 10,
-                'image_url' => null,
-                'coin_reward' => 60,
-                'reward_xp' => 30,
-                'status' => true,
-                'reset_schedule' => Achievement::RESET_WEEKLY,
-                'display_order' => 201,
+                'code' => 'chal_daily_coin', 'name' => 'Receh Harian', 'action' => 'coin_earned', 
+                'target' => 50, 'coin' => 10, 'xp' => 25, 'reset' => 'daily', 
+                'desc' => 'Dapat 50 koin hari ini.'
             ],
             [
-                'code' => 'weekly_post_5',
-                'name' => 'Content Creator',
-                'type' => Achievement::TYPE_CHALLENGE,
-                'description' => 'Buat 5 post minggu ini',
-                'criteria_action' => UserActionLog::ACTION_POST,
-                'criteria_target' => 5,
-                'image_url' => null,
-                'coin_reward' => 40,
-                'reward_xp' => 20,
-                'status' => true,
-                'reset_schedule' => Achievement::RESET_WEEKLY,
-                'display_order' => 202,
+                'code' => 'chal_daily_post', 'name' => 'Story Hari Ini', 'action' => 'post', 
+                'target' => 1, 'coin' => 30, 'xp' => 15, 'reset' => 'daily', 
+                'desc' => 'Buat 1 postingan hari ini.'
+            ],
+
+            // 3. Tipe RESET: WEEKLY (Mingguan)
+            [
+                'code' => 'chal_weekly_review', 'name' => 'Jurnal Mingguan', 'action' => 'review', 
+                'target' => 3, 'coin' => 250, 'xp' => 125, 'reset' => 'weekly', 
+                'desc' => 'Tulis 3 ulasan minggu ini.'
             ],
             [
-                'code' => 'weekly_follow_10',
-                'name' => 'Social Network',
-                'type' => Achievement::TYPE_CHALLENGE,
-                'description' => 'Follow 10 pengguna minggu ini',
-                'criteria_action' => UserActionLog::ACTION_FOLLOW,
-                'criteria_target' => 10,
-                'image_url' => null,
-                'coin_reward' => 40,
-                'reward_xp' => 20,
-                'status' => true,
-                'reset_schedule' => Achievement::RESET_WEEKLY,
-                'display_order' => 203,
+                'code' => 'chal_weekly_xp', 'name' => 'Mengejar Level', 'action' => 'xp_earned', 
+                'target' => 200, 'coin' => 150, 'xp' => 0, 'reset' => 'weekly', // XP 0 prevent loop
+                'desc' => 'Dapat 200 XP minggu ini.'
             ],
             [
-                'code' => 'weekly_coin_200',
-                'name' => 'Coin Hunter',
-                'type' => Achievement::TYPE_CHALLENGE,
-                'description' => 'Dapatkan 200 koin minggu ini',
-                'criteria_action' => UserActionLog::ACTION_COIN_EARNED,
-                'criteria_target' => 200,
-                'image_url' => null,
-                'coin_reward' => 70,
-                'reward_xp' => 35,
-                'status' => true,
-                'reset_schedule' => Achievement::RESET_WEEKLY,
-                'display_order' => 204,
+                'code' => 'chal_weekly_trip', 'name' => 'Petualang Minggu Ini', 'action' => 'checkin', 
+                'target' => 5, 'coin' => 300, 'xp' => 150, 'reset' => 'weekly', 
+                'desc' => 'Check-in 5 tempat minggu ini.'
             ],
         ];
 
-        foreach ($challenges as $challenge) {
+        $displayOrder = 50; // Mulai urutan setelah achievements
+
+        foreach ($challenges as $data) {
             Achievement::updateOrCreate(
-                ['code' => $challenge['code']],
-                $challenge
+                ['code' => $data['code']],
+                [
+                    'name'            => $data['name'],
+                    'type'            => 'challenge', // Konstanta TYPE_CHALLENGE
+                    'description'     => $data['desc'],
+                    'criteria_action' => $data['action'],
+                    'criteria_target' => $data['target'],
+                    'coin_reward'     => $data['coin'],
+                    'reward_xp'       => $data['xp'],
+                    'reset_schedule'  => $data['reset'],
+                    'level'           => null,
+                    'required_achievement_id' => null,
+                    'display_order'   => $displayOrder++,
+                    'status'          => true,
+                ]
             );
         }
-
-        $this->command->info('✓ Seeded ' . count($challenges) . ' challenges (daily & weekly)');
     }
 }

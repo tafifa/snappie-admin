@@ -42,7 +42,9 @@ class DatabaseSeeder extends Seeder
         );
 
         User::factory(10)->create();
-        Place::factory(20)->create();
+
+        // Seed places data
+        $this->call(PlaceSeeder::class);
 
         // Seed gamification achievements data first (predefined data)
         $this->call(GamificationSeeder::class);
