@@ -25,8 +25,39 @@ class PlaceFactory extends Factory
         $minPrice = fake()->numberBetween(1, 10) * 10000; // e.g., 10000 to 100000
         $latitude = fake()->latitude(-0.1, 0.1); // Coordinates around Pontianak
         $longitude = fake()->longitude(109.2, 109.4); // Coordinates around Pontianak
-        $placeValueOptions = ['Harga Terjangkau', 'Rasa Autentik', 'Menu Bervariasi', 'Buka 24 Jam', 'Jaringan Lancar', 'Estetika', 'Suasana Tenang', 'Suasana Tradisional', 'Suasana Homey', 'Pet Friendly', 'Ramah Keluarga', 'Pelayanan Ramah', 'Cocok untuk Nongkrong', 'Cocok untuk Work From Cafe', 'Tempat Bersejarah'];
-        $foodTypeOptions = ['Nusantara', 'Internasional', 'Seafood', 'Kafein', 'Non-Kafein', 'Vegetarian', 'Dessert', 'Makanan Ringan', 'Pastry'];
+        $foodTypeOptions = [
+            'Non-Sup',
+            'Mi Instan',
+            'Menu Komposit',
+            'Sup/Soto',
+            'Menu Campuran',
+            'Minuman dan Tambahan',
+            'Liwetan',
+            'Gaya Padang',
+            'Gaya Tionghoa',
+            'Makanan Cepat Saji',
+            'Makanan Tradisional',
+            'Makanan Kemasan',
+            'Buah-buahan'
+        ];
+
+        $placeValueOptions = [
+            'Harga Terjangkau',
+            'Rasa Autentik',
+            'Menu Unik/Variasi',
+            'Buka 24 Jam',
+            'Jaringan Lancar',
+            'Estetika/Instagrammable',
+            'Suasana Tenang',
+            'Suasana Homey',
+            'Bersejarah/Tradisional',
+            'Pet Friendly',
+            'Ramah Keluarga',
+            'Pelayanan Ramah',
+            'Rapat/Diskusi',
+            'Nongkrong',
+            'Work From Cafe'
+        ];
 
         return [
             'name' => fake('id_ID')->company(),

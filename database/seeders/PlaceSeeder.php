@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Place;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Smknstd\FakerPicsumImages\FakerPicsumImagesProvider;
 
 class PlaceSeeder extends Seeder
 {
@@ -17,6 +18,9 @@ class PlaceSeeder extends Seeder
             // Hapus data lama (opsional)
             // Place::truncate();
 
+            $faker = \Faker\Factory::create('id_ID');
+            $faker->addProvider(new FakerPicsumImagesProvider($faker));
+
             // =========================================================================
             // 1. Sagarmatha Coffee Bar (The True Hidden Gem)
             // =========================================================================
@@ -25,14 +29,15 @@ class PlaceSeeder extends Seeder
                 'description' => 'Hidden gem sesungguhnya di Pontianak. Berlokasi di rooftop gang sempit Sungai Jawi, tempat ini menawarkan suasana slow bar yang intim dengan pemandangan sunset kota yang syahdu.',
                 'longitude' => 109.3155,
                 'latitude' => -0.0289,
-                'image_urls' => ['https://via.placeholder.com/600x400?text=Sagarmatha+Rooftop', 'https://via.placeholder.com/600x400?text=Sagarmatha+Sunset'],
+                'image_urls' => [
+                    $faker->imageUrl(640, 480),
+                    $faker->imageUrl(640, 480),
+                    $faker->imageUrl(640, 480),
+                ],
                 'coin_reward' => 30,
                 'exp_reward' => 150, // High XP for hidden location
                 'min_price' => 20000,
                 'max_price' => 45000,
-                'avg_rating' => 4.8,
-                'total_review' => 120,
-                'total_checkin' => 340,
                 'status' => true,
                 'partnership_status' => true,
                 'additional_info' => [
@@ -42,16 +47,16 @@ class PlaceSeeder extends Seeder
                         'opening_hours' => '16:00',
                         'closing_hours' => '23:00',
                         'opening_days' => ['Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'],
-                        'contact_number' => '0812-3456-7890', // Placeholder
+                        'contact_number' => '6281234567890', // Placeholder
                         'website' => 'https://instagram.com/sagarmatha.coffee',
                     ],
-                    'place_value' => ['Hidden Gem', 'Estetika', 'Suasana Tenang', 'Cocok untuk Nongkrong'],
-                    'food_type' => ['Coffee', 'Mocktail', 'Snack'],
-                    'menu_image_url' => 'https://via.placeholder.com/640x480?text=Menu+Sagarmatha',
+                    'place_value' => ['Estetika/Instagrammable', 'Suasana Tenang', 'Nongkrong', 'Bersejarah/Tradisional'],
+                    'food_type' => ['Minuman dan Tambahan', 'Menu Campuran', 'Makanan Tradisional'],
+                    'menu_image_url' => $faker->imageUrl(640, 480),
                     'menu' => [
-                        ['name' => 'V60 Manual Brew', 'image_url' => 'https://via.placeholder.com/150', 'price' => 25000, 'description' => 'Seduhan kopi manual dengan beans pilihan.'],
-                        ['name' => 'Sunset Mocktail', 'image_url' => 'https://via.placeholder.com/150', 'price' => 28000, 'description' => 'Campuran segar soda dan buah tropis.'],
-                        ['name' => 'Cireng Rujak', 'image_url' => 'https://via.placeholder.com/150', 'price' => 18000, 'description' => 'Camilan gurih dengan bumbu rujak pedas.']
+                        ['name' => 'V60 Manual Brew', 'image_url' => $faker->imageUrl(640, 480), 'price' => 25000, 'description' => 'Seduhan kopi manual dengan beans pilihan.'],
+                        ['name' => 'Sunset Mocktail', 'image_url' => $faker->imageUrl(640, 480), 'price' => 28000, 'description' => 'Campuran segar soda dan buah tropis.'],
+                        ['name' => 'Cireng Rujak', 'image_url' => $faker->imageUrl(640, 480), 'price' => 18000, 'description' => 'Camilan gurih dengan bumbu rujak pedas.']
                     ],
                     'place_attributes' => [
                         'facility' => [
@@ -89,14 +94,15 @@ class PlaceSeeder extends Seeder
                 'description' => 'Tempat serius untuk pecinta kopi. Mengusung konsep industrial di area perumahan, tempat ini me-roasting biji kopi mereka sendiri. Vibe-nya tenang, cocok untuk WFC.',
                 'longitude' => 109.3321,
                 'latitude' => -0.0450,
-                'image_urls' => ['https://via.placeholder.com/600x400?text=2818+Roastery'],
+                'image_urls' => [
+                    $faker->imageUrl(640, 480),
+                    $faker->imageUrl(640, 480),
+                    $faker->imageUrl(640, 480),
+                ],
                 'coin_reward' => 40,
                 'exp_reward' => 80,
                 'min_price' => 25000,
                 'max_price' => 60000,
-                'avg_rating' => 4.7,
-                'total_review' => 210,
-                'total_checkin' => 560,
                 'status' => true,
                 'partnership_status' => true,
                 'additional_info' => [
@@ -106,16 +112,16 @@ class PlaceSeeder extends Seeder
                         'opening_hours' => '08:00',
                         'closing_hours' => '22:00',
                         'opening_days' => ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'],
-                        'contact_number' => '0811-0000-2818',
+                        'contact_number' => '6281100002818',
                         'website' => 'https://instagram.com/2818coffeeroasters',
                     ],
-                    'place_value' => ['Rasa Autentik', 'Cocok untuk Work From Cafe', 'Jaringan Lancar', 'Suasana Tenang'],
-                    'food_type' => ['Coffee', 'Pastry', 'Main Course'],
-                    'menu_image_url' => 'https://via.placeholder.com/640x480?text=Menu+2818',
+                    'place_value' => ['Rasa Autentik', 'Work From Cafe', 'Jaringan Lancar', 'Suasana Tenang'],
+                    'food_type' => ['Minuman dan Tambahan', 'Makanan Kemasan', 'Menu Komposit'],
+                    'menu_image_url' => $faker->imageUrl(640, 480),
                     'menu' => [
-                        ['name' => 'Magic Latte', 'image_url' => 'https://via.placeholder.com/150', 'price' => 32000, 'description' => 'Double ristretto dengan susu creamy.'],
-                        ['name' => 'Croissant Butter', 'image_url' => 'https://via.placeholder.com/150', 'price' => 25000, 'description' => 'Pastry renyah teman ngopi.'],
-                        ['name' => 'Japanese Iced Coffee', 'image_url' => 'https://via.placeholder.com/150', 'price' => 30000, 'description' => 'Segar dan fruity.']
+                        ['name' => 'Magic Latte', 'image_url' => $faker->imageUrl(640, 480), 'price' => 32000, 'description' => 'Double ristretto dengan susu creamy.'],
+                        ['name' => 'Croissant Butter', 'image_url' => $faker->imageUrl(640, 480), 'price' => 25000, 'description' => 'Pastry renyah teman ngopi.'],
+                        ['name' => 'Japanese Iced Coffee', 'image_url' => $faker->imageUrl(640, 480), 'price' => 30000, 'description' => 'Segar dan fruity.']
                     ],
                     'place_attributes' => [
                         'facility' => [
@@ -154,14 +160,15 @@ class PlaceSeeder extends Seeder
                 'description' => 'Restoran modern yang menaikkan kelas kuliner Nusantara. Nasi goreng dan bakso disajikan dengan plating estetik. Tempat luas, cocok untuk makan bersama keluarga.',
                 'longitude' => 109.3288,
                 'latitude' => -0.0355,
-                'image_urls' => ['https://via.placeholder.com/600x400?text=Ningrat+Interior'],
+                'image_urls' => [
+                    $faker->imageUrl(640, 480),
+                    $faker->imageUrl(640, 480),
+                    $faker->imageUrl(640, 480),
+                ],
                 'coin_reward' => 60,
                 'exp_reward' => 50,
                 'min_price' => 30000,
                 'max_price' => 80000,
-                'avg_rating' => 4.6,
-                'total_review' => 450,
-                'total_checkin' => 1200,
                 'status' => true,
                 'partnership_status' => true,
                 'additional_info' => [
@@ -171,16 +178,16 @@ class PlaceSeeder extends Seeder
                         'opening_hours' => '10:00',
                         'closing_hours' => '22:00',
                         'opening_days' => ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'],
-                        'contact_number' => '0821-9999-8888',
+                        'contact_number' => '6282199998888',
                         'website' => 'https://instagram.com/ningrateatery',
                     ],
-                    'place_value' => ['Ramah Keluarga', 'Menu Bervariasi', 'Pelayanan Ramah', 'Estetika'],
-                    'food_type' => ['Indonesian', 'Asian', 'Dessert'],
-                    'menu_image_url' => 'https://via.placeholder.com/640x480?text=Menu+Ningrat',
+                    'place_value' => ['Ramah Keluarga', 'Menu Unik/Variasi', 'Pelayanan Ramah', 'Estetika/Instagrammable'],
+                    'food_type' => ['Gaya Padang', 'Liwetan', 'Menu Campuran'],
+                    'menu_image_url' => $faker->imageUrl(640, 480),
                     'menu' => [
-                        ['name' => 'Nasi Goreng Ningrat', 'image_url' => 'https://via.placeholder.com/150', 'price' => 35000, 'description' => 'Nasi goreng spesial dengan sate.'],
-                        ['name' => 'Bakso Beranak', 'image_url' => 'https://via.placeholder.com/150', 'price' => 40000, 'description' => 'Bakso besar isi bakso kecil.'],
-                        ['name' => 'Es Campur Royal', 'image_url' => 'https://via.placeholder.com/150', 'price' => 25000, 'description' => 'Segar dengan topping melimpah.']
+                        ['name' => 'Nasi Goreng Ningrat', 'image_url' => $faker->imageUrl(640, 480), 'price' => 35000, 'description' => 'Nasi goreng spesial dengan sate.'],
+                        ['name' => 'Bakso Beranak', 'image_url' => $faker->imageUrl(640, 480), 'price' => 40000, 'description' => 'Bakso besar isi bakso kecil.'],
+                        ['name' => 'Es Campur Royal', 'image_url' => $faker->imageUrl(640, 480), 'price' => 25000, 'description' => 'Segar dengan topping melimpah.']
                     ],
                     'place_attributes' => [
                         'facility' => [
@@ -219,14 +226,15 @@ class PlaceSeeder extends Seeder
                 'description' => 'Singkatan dari "Orang Dalam Sini". Spot nongkrong favorit anak muda dengan konsep unfinished industrial yang santai.',
                 'longitude' => 109.3422,
                 'latitude' => -0.0311,
-                'image_urls' => ['https://via.placeholder.com/600x400?text=ODS+Coffee'],
+                'image_urls' => [
+                    $faker->imageUrl(640, 480),
+                    $faker->imageUrl(640, 480),
+                    $faker->imageUrl(640, 480),
+                ],
                 'coin_reward' => 20,
                 'exp_reward' => 60,
                 'min_price' => 18000,
                 'max_price' => 40000,
-                'avg_rating' => 4.5,
-                'total_review' => 890,
-                'total_checkin' => 2100,
                 'status' => true,
                 'partnership_status' => true,
                 'additional_info' => [
@@ -236,16 +244,16 @@ class PlaceSeeder extends Seeder
                         'opening_hours' => '07:00',
                         'closing_hours' => '23:00',
                         'opening_days' => ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'],
-                        'contact_number' => '0813-XXXX-XXXX',
+                        'contact_number' => '62813XXXXXXXX',
                         'website' => 'https://instagram.com/tokokopiods',
                     ],
-                    'place_value' => ['Harga Terjangkau', 'Cocok untuk Nongkrong', 'Buka 24 Jam', 'Suasana Tenang'],
-                    'food_type' => ['Coffee', 'Toast'],
-                    'menu_image_url' => 'https://via.placeholder.com/640x480?text=Menu+ODS',
+                    'place_value' => ['Harga Terjangkau', 'Nongkrong', 'Buka 24 Jam', 'Suasana Tenang'],
+                    'food_type' => ['Minuman dan Tambahan', 'Mi Instan', 'Menu Campuran'],
+                    'menu_image_url' => $faker->imageUrl(640, 480),
                     'menu' => [
-                        ['name' => 'Es Kopi ODS', 'image_url' => 'https://via.placeholder.com/150', 'price' => 20000, 'description' => 'Signature kopi susu gula aren.'],
-                        ['name' => 'Roti Bakar Coklat', 'image_url' => 'https://via.placeholder.com/150', 'price' => 18000, 'description' => 'Roti bakar tebal topping melimpah.'],
-                        ['name' => 'Sea Salt Latte', 'image_url' => 'https://via.placeholder.com/150', 'price' => 25000, 'description' => 'Kopi susu dengan foam asin gurih.']
+                        ['name' => 'Es Kopi ODS', 'image_url' => $faker->imageUrl(640, 480), 'price' => 20000, 'description' => 'Signature kopi susu gula aren.'],
+                        ['name' => 'Roti Bakar Coklat', 'image_url' => $faker->imageUrl(640, 480), 'price' => 18000, 'description' => 'Roti bakar tebal topping melimpah.'],
+                        ['name' => 'Sea Salt Latte', 'image_url' => $faker->imageUrl(640, 480), 'price' => 25000, 'description' => 'Kopi susu dengan foam asin gurih.']
                     ],
                     'place_attributes' => [
                         'facility' => [
@@ -283,14 +291,15 @@ class PlaceSeeder extends Seeder
                 'description' => 'Rumah hunian yang disulap menjadi restoran Western & Pasta yang sangat homey. Serasa makan di rumah nenek tapi dengan kualitas makanan bintang lima.',
                 'longitude' => 109.3305,
                 'latitude' => -0.0401,
-                'image_urls' => ['https://via.placeholder.com/600x400?text=House+of+Tahron'],
+                'image_urls' => [
+                    $faker->imageUrl(640, 480),
+                    $faker->imageUrl(640, 480),
+                    $faker->imageUrl(640, 480),
+                ],
                 'coin_reward' => 80,
                 'exp_reward' => 70,
                 'min_price' => 35000,
                 'max_price' => 100000,
-                'avg_rating' => 4.7,
-                'total_review' => 150,
-                'total_checkin' => 400,
                 'status' => true,
                 'partnership_status' => false,
                 'additional_info' => [
@@ -300,16 +309,16 @@ class PlaceSeeder extends Seeder
                         'opening_hours' => '11:00',
                         'closing_hours' => '21:00',
                         'opening_days' => ['Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'],
-                        'contact_number' => '0812-XXXX-XXXX',
+                        'contact_number' => '62812XXXXXXXX',
                         'website' => 'https://',
                     ],
-                    'place_value' => ['Suasana Homey', 'Rasa Autentik', 'Estetika', 'Hidden Gem'],
-                    'food_type' => ['Western', 'Pasta', 'Steak'],
+                    'place_value' => ['Suasana Homey', 'Rasa Autentik', 'Estetika/Instagrammable', 'Bersejarah/Tradisional'],
+                    'food_type' => ['Menu Komposit', 'Liwetan', 'Menu Campuran'],
                     'menu_image_url' => 'https://via.placeholder.com/640x480?text=Menu+Tahron',
                     'menu' => [
-                        ['name' => 'Aglio Olio', 'image_url' => 'https://via.placeholder.com/150', 'price' => 45000, 'description' => 'Pasta pedas gurih dengan udang.'],
-                        ['name' => 'Sirloin Steak', 'image_url' => 'https://via.placeholder.com/150', 'price' => 95000, 'description' => 'Daging sapi impor juicy.'],
-                        ['name' => 'Mushroom Soup', 'image_url' => 'https://via.placeholder.com/150', 'price' => 35000, 'description' => 'Sup krim jamur kental.']
+                        ['name' => 'Aglio Olio', 'image_url' => $faker->imageUrl(640, 480), 'price' => 45000, 'description' => 'Pasta pedas gurih dengan udang.'],
+                        ['name' => 'Sirloin Steak', 'image_url' => $faker->imageUrl(640, 480), 'price' => 95000, 'description' => 'Daging sapi impor juicy.'],
+                        ['name' => 'Mushroom Soup', 'image_url' => $faker->imageUrl(640, 480), 'price' => 35000, 'description' => 'Sup krim jamur kental.']
                     ],
                     'place_attributes' => [
                         'facility' => [
@@ -345,14 +354,15 @@ class PlaceSeeder extends Seeder
                 'description' => 'Kedai kopi di area Untan yang memanfaatkan teras rumah. Sangat tenang, dikelilingi pohon rindang. Salah satu spot terbaik untuk WFC atau membaca buku.',
                 'longitude' => 109.3490,
                 'latitude' => -0.0550,
-                'image_urls' => ['https://via.placeholder.com/600x400?text=Rumangsa'],
+                'image_urls' => [
+                    $faker->imageUrl(640, 480),
+                    $faker->imageUrl(640, 480),
+                    $faker->imageUrl(640, 480),
+                ],
                 'coin_reward' => 25,
                 'exp_reward' => 130, // High XP
                 'min_price' => 20000,
                 'max_price' => 45000,
-                'avg_rating' => 4.8,
-                'total_review' => 95,
-                'total_checkin' => 280,
                 'status' => true,
                 'partnership_status' => true,
                 'additional_info' => [
@@ -362,16 +372,16 @@ class PlaceSeeder extends Seeder
                         'opening_hours' => '08:00',
                         'closing_hours' => '22:00',
                         'opening_days' => ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'],
-                        'contact_number' => '0852-XXXX-XXXX',
+                        'contact_number' => '62852XXXXXXXX',
                         'website' => 'https://instagram.com/rumangsa.kopi',
                     ],
-                    'place_value' => ['Pet Friendly', 'Suasana Tenang', 'Cocok untuk Work From Cafe', 'Hidden Gem'],
-                    'food_type' => ['Coffee', 'Tea', 'Light Bites'],
-                    'menu_image_url' => 'https://via.placeholder.com/640x480?text=Menu+Rumangsa',
+                    'place_value' => ['Pet Friendly', 'Suasana Tenang', 'Work From Cafe', 'Bersejarah/Tradisional'],
+                    'food_type' => ['Minuman dan Tambahan', 'Menu Campuran', 'Makanan Tradisional'],
+                    'menu_image_url' => $faker->imageUrl(640, 480),
                     'menu' => [
-                        ['name' => 'Es Kopi Rumangsa', 'image_url' => 'https://via.placeholder.com/150', 'price' => 22000, 'description' => 'Kopi susu gula aren creamy.'],
-                        ['name' => 'Donat Kampung', 'image_url' => 'https://via.placeholder.com/150', 'price' => 8000, 'description' => 'Donat gula klasik.'],
-                        ['name' => 'Filter Coffee', 'image_url' => 'https://via.placeholder.com/150', 'price' => 25000, 'description' => 'Beans lokal pilihan.']
+                        ['name' => 'Es Kopi Rumangsa', 'image_url' => $faker->imageUrl(640, 480), 'price' => 22000, 'description' => 'Kopi susu gula aren creamy.'],
+                        ['name' => 'Donat Kampung', 'image_url' => $faker->imageUrl(640, 480), 'price' => 8000, 'description' => 'Donat gula klasik.'],
+                        ['name' => 'Filter Coffee', 'image_url' => $faker->imageUrl(640, 480), 'price' => 25000, 'description' => 'Beans lokal pilihan.']
                     ],
                     'place_attributes' => [
                         'facility' => [
@@ -406,14 +416,15 @@ class PlaceSeeder extends Seeder
                 'description' => 'Sepotong Paris di Pontianak. Bakery shop dengan etalase pastry yang menggoda iman. Croissant dan Danish-nya terkenal autentik.',
                 'longitude' => 109.3200,
                 'latitude' => -0.0300,
-                'image_urls' => ['https://via.placeholder.com/600x400?text=Le+Baker'],
+                'image_urls' => [
+                    $faker->imageUrl(640, 480),
+                    $faker->imageUrl(640, 480),
+                    $faker->imageUrl(640, 480),
+                ],
                 'coin_reward' => 50,
                 'exp_reward' => 60,
                 'min_price' => 25000,
                 'max_price' => 70000,
-                'avg_rating' => 4.6,
-                'total_review' => 320,
-                'total_checkin' => 800,
                 'status' => true,
                 'partnership_status' => true,
                 'additional_info' => [
@@ -423,16 +434,16 @@ class PlaceSeeder extends Seeder
                         'opening_hours' => '09:00',
                         'closing_hours' => '21:00',
                         'opening_days' => ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'],
-                        'contact_number' => '0811-XXXX-XXXX',
+                        'contact_number' => '62811XXXXXXXX',
                         'website' => 'https://instagram.com/lebakerstreet4',
                     ],
-                    'place_value' => ['Estetika', 'Rasa Autentik', 'Menu Bervariasi'],
-                    'food_type' => ['Bakery', 'Pastry', 'Coffee'],
-                    'menu_image_url' => 'https://via.placeholder.com/640x480?text=Menu+LeBaker',
+                    'place_value' => ['Estetika/Instagrammable', 'Rasa Autentik', 'Menu Unik/Variasi'],
+                    'food_type' => ['Makanan Kemasan', 'Menu Campuran', 'Minuman dan Tambahan'],
+                    'menu_image_url' => $faker->imageUrl(640, 480),
                     'menu' => [
-                        ['name' => 'Almond Croissant', 'image_url' => 'https://via.placeholder.com/150', 'price' => 35000, 'description' => 'Croissant flaky dengan isian almond.'],
-                        ['name' => 'Cromboloni', 'image_url' => 'https://via.placeholder.com/150', 'price' => 40000, 'description' => 'Pastry viral dengan isian krim.'],
-                        ['name' => 'Hot Cappuccino', 'image_url' => 'https://via.placeholder.com/150', 'price' => 30000, 'description' => 'Teman makan roti.']
+                        ['name' => 'Almond Croissant', 'image_url' => $faker->imageUrl(640, 480), 'price' => 35000, 'description' => 'Croissant flaky dengan isian almond.'],
+                        ['name' => 'Cromboloni', 'image_url' => $faker->imageUrl(640, 480), 'price' => 40000, 'description' => 'Pastry viral dengan isian krim.'],
+                        ['name' => 'Hot Cappuccino', 'image_url' => $faker->imageUrl(640, 480), 'price' => 30000, 'description' => 'Teman makan roti.']
                     ],
                     'place_attributes' => [
                         'facility' => [
@@ -467,14 +478,15 @@ class PlaceSeeder extends Seeder
                 'description' => 'Sesuai namanya, berada "di sela-sela" bangunan lain. Coffee shop minimalis yang fokus pada kualitas beans. Tempatnya mungil tapi sangat nyaman.',
                 'longitude' => 109.3380,
                 'latitude' => -0.0380,
-                'image_urls' => ['https://via.placeholder.com/600x400?text=Disela'],
+                'image_urls' => [
+                    $faker->imageUrl(640, 480),
+                    $faker->imageUrl(640, 480),
+                    $faker->imageUrl(640, 480),
+                ],
                 'coin_reward' => 30,
                 'exp_reward' => 100,
                 'min_price' => 20000,
                 'max_price' => 50000,
-                'avg_rating' => 4.6,
-                'total_review' => 180,
-                'total_checkin' => 450,
                 'status' => true,
                 'partnership_status' => true,
                 'additional_info' => [
@@ -484,16 +496,16 @@ class PlaceSeeder extends Seeder
                         'opening_hours' => '08:00',
                         'closing_hours' => '22:00',
                         'opening_days' => ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'],
-                        'contact_number' => '0896-XXXX-XXXX',
+                        'contact_number' => '62896XXXXXXXX',
                         'website' => 'https://instagram.com/disela.coffee',
                     ],
-                    'place_value' => ['Hidden Gem', 'Pelayanan Ramah', 'Suasana Tenang'],
-                    'food_type' => ['Coffee', 'Non-Coffee'],
-                    'menu_image_url' => 'https://via.placeholder.com/640x480?text=Menu+Disela',
+                    'place_value' => ['Bersejarah/Tradisional', 'Pelayanan Ramah', 'Suasana Tenang'],
+                    'food_type' => ['Minuman dan Tambahan', 'Menu Campuran', 'Makanan Tradisional'],
+                    'menu_image_url' => $faker->imageUrl(640, 480),
                     'menu' => [
-                        ['name' => 'Kopi Susu Disela', 'image_url' => 'https://via.placeholder.com/150', 'price' => 22000, 'description' => 'Creamy dan strong.'],
-                        ['name' => 'Lychee Tea', 'image_url' => 'https://via.placeholder.com/150', 'price' => 18000, 'description' => 'Segar dengan buah leci asli.'],
-                        ['name' => 'Brownies', 'image_url' => 'https://via.placeholder.com/150', 'price' => 15000, 'description' => 'Fudgy brownies.']
+                        ['name' => 'Kopi Susu Disela', 'image_url' => $faker->imageUrl(640, 480), 'price' => 22000, 'description' => 'Creamy dan strong.'],
+                        ['name' => 'Lychee Tea', 'image_url' => $faker->imageUrl(640, 480), 'price' => 18000, 'description' => 'Segar dengan buah leci asli.'],
+                        ['name' => 'Brownies', 'image_url' => $faker->imageUrl(640, 480), 'price' => 15000, 'description' => 'Fudgy brownies.']
                     ],
                     'place_attributes' => [
                         'facility' => [
@@ -528,14 +540,15 @@ class PlaceSeeder extends Seeder
                 'description' => 'Legenda kuliner Pontianak. Bukan tempat yang instagrammable, tapi rasa bakso sapinya konsisten lezat selama puluhan tahun.',
                 'longitude' => 109.3500,
                 'latitude' => -0.0250,
-                'image_urls' => ['https://via.placeholder.com/600x400?text=Bakso+Cahaya+Abadi'],
+                'image_urls' => [
+                    $faker->imageUrl(640, 480),
+                    $faker->imageUrl(640, 480),
+                    $faker->imageUrl(640, 480),
+                ],
                 'coin_reward' => 20,
                 'exp_reward' => 40,
                 'min_price' => 25000,
                 'max_price' => 50000,
-                'avg_rating' => 4.7,
-                'total_review' => 1500,
-                'total_checkin' => 5000,
                 'status' => true,
                 'partnership_status' => false,
                 'additional_info' => [
@@ -545,16 +558,16 @@ class PlaceSeeder extends Seeder
                         'opening_hours' => '10:00',
                         'closing_hours' => '21:00',
                         'opening_days' => ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'],
-                        'contact_number' => '0561-XXXXXX',
-                        'website' => 'https://',
+                        'contact_number' => '62561XXXXX',
+                        'website' => 'https://instagram.com/baksocahaya' ,
                     ],
-                    'place_value' => ['Rasa Autentik', 'Tempat Bersejarah', 'Harga Terjangkau'],
-                    'food_type' => ['Indonesian', 'Bakso'],
-                    'menu_image_url' => 'https://via.placeholder.com/640x480?text=Menu+Bakso',
+                    'place_value' => ['Rasa Autentik', 'Bersejarah/Tradisional', 'Harga Terjangkau'],
+                    'food_type' => ['Sup/Soto', 'Gaya Padang', 'Menu Komposit'],
+                    'menu_image_url' => $faker->imageUrl(640, 480),
                     'menu' => [
-                        ['name' => 'Bakso Sapi Komplit', 'image_url' => 'https://via.placeholder.com/150', 'price' => 30000, 'description' => 'Bakso, tahu, mie kuning, kwetiau.'],
-                        ['name' => 'Es Jeruk Besar', 'image_url' => 'https://via.placeholder.com/150', 'price' => 10000, 'description' => 'Jeruk Pontianak asli.'],
-                        ['name' => 'Kerupuk Ikan', 'image_url' => 'https://via.placeholder.com/150', 'price' => 5000, 'description' => 'Pelengkap makan bakso.']
+                        ['name' => 'Bakso Sapi Komplit', 'image_url' => $faker->imageUrl(640, 480), 'price' => 30000, 'description' => 'Bakso, tahu, mie kuning, kwetiau.'],
+                        ['name' => 'Es Jeruk Besar', 'image_url' => $faker->imageUrl(640, 480), 'price' => 10000, 'description' => 'Jeruk Pontianak asli.'],
+                        ['name' => 'Kerupuk Ikan', 'image_url' => $faker->imageUrl(640, 480), 'price' => 5000, 'description' => 'Pelengkap makan bakso.']
                     ],
                     'place_attributes' => [
                         'facility' => [
@@ -588,14 +601,15 @@ class PlaceSeeder extends Seeder
                 'description' => 'Bistro dengan desain interior yang chic dan playful. Menyajikan comfort food, gelato, dan cake. Destinasi "cantik" untuk arisan atau date.',
                 'longitude' => 109.3250,
                 'latitude' => -0.0420,
-                'image_urls' => ['https://via.placeholder.com/600x400?text=Popina'],
+                'image_urls' => [
+                    $faker->imageUrl(640, 480),
+                    $faker->imageUrl(640, 480),
+                    $faker->imageUrl(640, 480),
+                ],
                 'coin_reward' => 70,
                 'exp_reward' => 60,
                 'min_price' => 35000,
                 'max_price' => 90000,
-                'avg_rating' => 4.6,
-                'total_review' => 400,
-                'total_checkin' => 950,
                 'status' => true,
                 'partnership_status' => true,
                 'additional_info' => [
@@ -605,16 +619,16 @@ class PlaceSeeder extends Seeder
                         'opening_hours' => '10:00',
                         'closing_hours' => '22:00',
                         'opening_days' => ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'],
-                        'contact_number' => '0811-XXXX-XXXX',
+                        'contact_number' => '62811XXXXXXXX',
                         'website' => 'https://instagram.com/popina',
                     ],
-                    'place_value' => ['Estetika', 'Ramah Keluarga', 'Menu Bervariasi'],
-                    'food_type' => ['Western', 'Dessert', 'Gelato'],
-                    'menu_image_url' => 'https://via.placeholder.com/640x480?text=Menu+Popina',
+                    'place_value' => ['Estetika/Instagrammable', 'Ramah Keluarga', 'Menu Unik/Variasi'],
+                    'food_type' => ['Menu Komposit', 'Minuman dan Tambahan', 'Menu Campuran'],
+                    'menu_image_url' => $faker->imageUrl(640, 480),
                     'menu' => [
-                        ['name' => 'Gelato Cone', 'image_url' => 'https://via.placeholder.com/150', 'price' => 35000, 'description' => '2 scoops gelato homemade.'],
-                        ['name' => 'Popina Fried Rice', 'image_url' => 'https://via.placeholder.com/150', 'price' => 45000, 'description' => 'Nasi goreng buntut.'],
-                        ['name' => 'Lychee Rose Cake', 'image_url' => 'https://via.placeholder.com/150', 'price' => 40000, 'description' => 'Slice cake wangi bunga mawar.']
+                        ['name' => 'Gelato Cone', 'image_url' => $faker->imageUrl(640, 480), 'price' => 35000, 'description' => '2 scoops gelato homemade.'],
+                        ['name' => 'Popina Fried Rice', 'image_url' => $faker->imageUrl(640, 480), 'price' => 45000, 'description' => 'Nasi goreng buntut.'],
+                        ['name' => 'Lychee Rose Cake', 'image_url' => $faker->imageUrl(640, 480), 'price' => 40000, 'description' => 'Slice cake wangi bunga mawar.']
                     ],
                     'place_attributes' => [
                         'facility' => [

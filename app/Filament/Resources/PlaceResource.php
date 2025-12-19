@@ -42,8 +42,39 @@ class PlaceResource extends Resource
     public static function form(Form $form): Form
     {
         // Opsi ini diambil dari factory Anda untuk konsistensi
-        $placeValueOptions = ['Harga Terjangkau', 'Rasa Autentik', 'Menu Bervariasi', 'Buka 24 Jam', 'Jaringan Lancar', 'Estetika', 'Suasana Tenang', 'Suasana Tradisional', 'Suasana Homey', 'Pet Friendly', 'Ramah Keluarga', 'Pelayanan Ramah', 'Cocok untuk Nongkrong', 'Cocok untuk Work From Cafe', 'Tempat Bersejarah'];
-        $foodTypeOptions = ['Nusantara', 'Internasional', 'Seafood', 'Kafein', 'Non-Kafein', 'Vegetarian', 'Dessert', 'Makanan Ringan', 'Pastry'];
+        $foodTypeOptions = [
+            'Non-Sup',
+            'Mi Instan',
+            'Menu Komposit',
+            'Sup/Soto',
+            'Menu Campuran',
+            'Minuman dan Tambahan',
+            'Liwetan',
+            'Gaya Padang',
+            'Gaya Tionghoa',
+            'Makanan Cepat Saji',
+            'Makanan Tradisional',
+            'Makanan Kemasan',
+            'Buah-buahan'
+        ];
+
+        $placeValueOptions = [
+            'Harga Terjangkau',
+            'Rasa Autentik',
+            'Menu Unik/Variasi',
+            'Buka 24 Jam',
+            'Jaringan Lancar',
+            'Estetika/Instagrammable',
+            'Suasana Tenang',
+            'Suasana Homey',
+            'Bersejarah/Tradisional',
+            'Pet Friendly',
+            'Ramah Keluarga',
+            'Pelayanan Ramah',
+            'Rapat/Diskusi',
+            'Nongkrong',
+            'Work From Cafe'
+        ];
 
         return $form
             ->schema([

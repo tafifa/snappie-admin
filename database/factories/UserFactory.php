@@ -19,8 +19,39 @@ class UserFactory extends Factory
      */
     public function definition(): array
     {
-        $foodTypeOptions = ['Nusantara', 'Internasional', 'Seafood', 'Kafein', 'Non-Kafein', 'Vegetarian', 'Dessert', 'Makanan Ringan', 'Pastry'];
-        $placeValueOptions = ['Harga Terjangkau', 'Rasa Autentik', 'Menu Bervariasi', 'Buka 24 Jam', 'Jaringan Lancar', 'Estetika', 'Suasana Tenang', 'Suasana Tradisional', 'Suasana Homey', 'Pet Friendly', 'Ramah Keluarga', 'Pelayanan Ramah', 'Cocok untuk Nongkrong', 'Cocok untuk Work From Cafe', 'Tempat Bersejarah'];
+        $foodTypeOptions = [
+            'Non-Sup',
+            'Mi Instan',
+            'Menu Komposit',
+            'Sup/Soto',
+            'Menu Campuran',
+            'Minuman dan Tambahan',
+            'Liwetan',
+            'Gaya Padang',
+            'Gaya Tionghoa',
+            'Makanan Cepat Saji',
+            'Makanan Tradisional',
+            'Makanan Kemasan',
+            'Buah-buahan'
+        ];
+
+        $placeValueOptions = [
+            'Harga Terjangkau',
+            'Rasa Autentik',
+            'Menu Unik/Variasi',
+            'Buka 24 Jam',
+            'Jaringan Lancar',
+            'Estetika/Instagrammable',
+            'Suasana Tenang',
+            'Suasana Homey',
+            'Bersejarah/Tradisional',
+            'Pet Friendly',
+            'Ramah Keluarga',
+            'Pelayanan Ramah',
+            'Rapat/Diskusi',
+            'Nongkrong',
+            'Work From Cafe'
+        ];
         $userAvatarOptions = ['avatar_m1_hdpi.png', 'avatar_m2_hdpi.png', 'avatar_m3_hdpi.png', 'avatar_m4_hdpi.png', 'avatar_f1_hdpi.png', 'avatar_f2_hdpi.png', 'avatar_f3_hdpi.png', 'avatar_f4_hdpi.png'];
 
         return [
