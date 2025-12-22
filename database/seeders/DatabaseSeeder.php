@@ -34,22 +34,21 @@ class DatabaseSeeder extends Seeder
 
         // Create admin user if not exists
         Admin::firstOrCreate(
-            ["email" => env("ADMIN_EMAIL", "admin@example.com")],
+            ["email" => env("ADMIN_EMAIL")],
             [
-                "name" => env("ADMIN_NAME", "Admin"),
-                "password" => Hash::make(env("ADMIN_PASSWORD", "password")),
+                "name" => env("ADMIN_NAME"), 
+                "password" => Hash::make(env("ADMIN_PASSWORD"))
             ],
         );
-
-        User::factory(10)->create();
 
         // Seed places data
         $this->call(PlaceSeeder::class);
 
-        // Seed gamification achievements data first (predefined data)
+        // Seed gamification achievements data
         $this->call(GamificationSeeder::class);
 
-        // Then seed other data using factories
+        // Seed using factories for testing only
+        // User::factory(10)->create();
         // Reward::factory(5)->create();
 
         // Article::factory(15)->create();
