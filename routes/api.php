@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\V2\ArticlesController;
 use App\Http\Controllers\Api\V2\GamificationController;
 use App\Http\Controllers\Api\V2\LeaderboardController;
 use App\Http\Controllers\Api\V2\SocialController;
+use App\Http\Controllers\Api\V2\AppUpdaterController;
 
 Route::middleware("api")
     ->prefix("v2")
@@ -30,6 +31,13 @@ Route::middleware("api")
                 Route::post("/refresh", [
                     AuthenticationController::class,
                     "refreshToken",
+                ]);
+            });
+
+            Route::prefix("app")->group(function () {
+                Route::get("/update", [
+                    AppUpdaterController::class,
+                    "checkAndUpdate"
                 ]);
             });
         });
