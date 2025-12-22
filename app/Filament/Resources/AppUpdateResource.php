@@ -8,6 +8,7 @@ use App\Models\AppUpdate;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Actions\Action;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Filament\Support\Enums\FontWeight;
@@ -42,37 +43,13 @@ class AppUpdateResource extends Resource
                         Forms\Components\TextInput::make('version_name')
                             ->label('Version Name')
                             ->required()
-                            ->maxLength(255)
-                            ->live()
-                            ->afterStateUpdated(function (Set $set, Get $get) {
-                                $code = (int) $get('version_code');
-                                $platform = (string) $get('device_platform');
-                                if ($code && $platform) {
-                                    $ext = $platform === 'ios' ? 'ipa' : 'apk';
-                                    $filename = "snappie-{$platform}-v{$code}.{$ext}";
-                                    $set('apk_url', asset('app-update/' . $filename));
-                                } else {
-                                    $set('apk_url', null);
-                                }
-                            }),
+                            ->maxLength(255),
                         
                         Forms\Components\TextInput::make('version_code')
                             ->label('Version Code')
                             ->numeric()
                             ->required()
-                            ->maxLength(255)
-                            ->live()
-                            ->afterStateUpdated(function (Set $set, Get $get) {
-                                $code = (int) $get('version_code');
-                                $platform = (string) $get('device_platform');
-                                if ($code && $platform) {
-                                    $ext = $platform === 'ios' ? 'ipa' : 'apk';
-                                    $filename = "snappie-{$platform}-v{$code}.{$ext}";
-                                    $set('apk_url', asset('app-update/' . $filename));
-                                } else {
-                                    $set('apk_url', null);
-                                }
-                            }),
+                            ->maxLength(255),
 
                         Forms\Components\Select::make('device_platform')
                             ->label('Device Platform')
@@ -80,51 +57,35 @@ class AppUpdateResource extends Resource
                             ->options([
                                 'android'=> 'Android',
                                 'ios'=> 'iOS',
-                            ])
-                            ->live()
-                            ->afterStateUpdated(function ($state, Set $set, Get $get) {
-                                $slug = Str::slug((string) $get('version_name'));
-                                $code = (int) $get('version_code');
-                                $platform = (string) $get('device_platform');
-                                if ($slug && $code && $platform) {
-                                    $ext = $platform === 'ios' ? 'ipa' : 'apk';
-                                    $filename = "{$slug}-v{$code}.{$ext}";
-                                    $set('apk_url', asset('apk/' . $filename));
-                                } else {
-                                    $set('apk_url', null);
-                                }
-                            }),
+                            ]),
                     ])
                     ->columns(3),
 
                 Forms\Components\Section::make('Media & Additional Information')
                     ->schema([
-                        // FileUpload::make('apk_file')
-                        //     ->label('Upload APK')
-                        //     // ->acceptedFileTypes(['.apk'])
-                        //     // ->rules(['nullable', 'mimes:apk'])
-                        //     ->visibility('public')
-                        //     ->disk('public')
-                        //     ->dehydrated(false)
-                        //     ->afterStateUpdated(function ($state, Set $set, Get $get) {
-                        //         if ($state) {
-                        //             $slug = Str::slug((string) $get('version_name'));
-                        //             $code = (int) $get('version_code');
-                        //             $platform = (string) $get('device_platform');
-                        //             $directory = "app-updates/{$platform}";
-                        //             $filename = "{$slug}-v{$code}.apk";
-                        //             $storedPath = $state->storeAs($directory, $filename, 'public');
-                        //             $url = asset('storage/' . $storedPath);
-                        //             $set('apk_url', $url);
-                        //         }
-                        //     })
-                        //     ->columnSpanFull(),
+                        
                         Forms\Components\TextInput::make('apk_url')
                             ->label('APK URL')
                             ->maxLength(2048)
                             ->readOnly()
                             ->required()
-                            ->columnSpanFull(),
+                            ->placeholder('Klik Generate untuk membuat URL')
+                            ->suffixActions([
+                                Action::make('generate')
+                                    ->label('Generate')
+                                    ->color('success')
+                                    ->icon('heroicon-m-bolt')
+                                    ->action(function (Set $set, Get $get) {
+                                        $code = (int) $get('version_code');
+                                        $platform = (string) $get('device_platform');
+                                        if ($code && $platform) {
+                                            $ext = $platform === 'ios' ? 'ipa' : 'apk';
+                                            $filename = "snappie-{$platform}-v{$code}.{$ext}";
+                                            $set('apk_url', asset('app-update/' . $filename));
+                                        }
+                                    }),
+                            ]),
+                           
                         Forms\Components\RichEditor::make('changelogs')
                             ->required()
                             ->columnSpanFull(),
