@@ -30,6 +30,22 @@ class CheckinObserver
      */
     public function deleted(Checkin $checkin): void
     {
+        // Decrement user's total_checkin
+        if ($checkin->user_id) {
+            $user = \App\Models\User::find($checkin->user_id);
+            if ($user && $user->total_checkin > 0) {
+                $user->decrement('total_checkin');
+            }
+        }
+
+        // Decrement place's total_checkin
+        if ($checkin->place_id) {
+            $place = \App\Models\Place::find($checkin->place_id);
+            if ($place && $place->total_checkin > 0) {
+                $place->decrement('total_checkin');
+            }
+        }
+
         // Delete from Cloudinary if it's a Cloudinary URL
         if ($checkin->image_url && str_contains($checkin->image_url, 'cloudinary.com')) {
             try {

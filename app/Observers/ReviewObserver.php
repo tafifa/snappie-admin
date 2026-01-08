@@ -30,6 +30,37 @@ class ReviewObserver
      */
     public function deleted(Review $review): void
     {
+        // Decrement user's total_review
+        if ($review->user_id) {
+            $user = \App\Models\User::find($review->user_id);
+            if ($user && $user->total_review > 0) {
+                $user->decrement('total_review');
+            }
+        }
+
+        // Update place statistics
+        if ($review->place_id) {
+            $place = \App\Models\Place::find($review->place_id);
+            if ($place) {
+                // Decrement total_review
+                if ($place->total_review > 0) {
+                    $place->decrement('total_review');
+                }
+
+                // Recalculate avg_rating
+                $reviewStats = Review::where('place_id', $review->place_id)
+                    ->where('id', '!=', $review->id) // Exclude the deleted review
+                    ->selectRaw('COUNT(id) as review_count, SUM(rating) as total_rating')
+                    ->first();
+
+                $newAvgRating = $reviewStats->review_count > 0
+                    ? round($reviewStats->total_rating / $reviewStats->review_count, 2)
+                    : 0;
+
+                $place->update(['avg_rating' => $newAvgRating]);
+            }
+        }
+
         // Delete all images from Cloudinary
         if ($review->image_urls && is_array($review->image_urls)) {
             foreach ($review->image_urls as $imageUrl) {

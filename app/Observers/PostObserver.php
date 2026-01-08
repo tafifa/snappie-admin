@@ -30,6 +30,14 @@ class PostObserver
      */
     public function deleted(Post $post): void
     {
+        // Decrement user's total_post
+        if ($post->user_id) {
+            $user = \App\Models\User::find($post->user_id);
+            if ($user && $user->total_post > 0) {
+                $user->decrement('total_post');
+            }
+        }
+
         // Delete all images from Cloudinary
         if ($post->image_urls && is_array($post->image_urls)) {
             foreach ($post->image_urls as $imageUrl) {
