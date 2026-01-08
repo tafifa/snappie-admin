@@ -293,6 +293,35 @@ class SocialService
     }
 
     /**
+     * Delete a post
+     */
+    public function deletePost(User $user, int $postId): bool
+    {
+        return DB::transaction(function () use ($user, $postId) {
+            $post = Post::find($postId);
+
+            if (!$post) {
+                throw new \InvalidArgumentException("Post not found");
+            }
+
+            // Check if user is the owner of the post
+            if ($post->user_id !== $user->id) {
+                throw new \InvalidArgumentException("You are not authorized to delete this post");
+            }
+
+            // Delete the post
+            $post->delete();
+
+            // Decrement user's total_post count
+            if ($user->total_post > 0) {
+                $user->decrement("total_post");
+            }
+
+            return true;
+        });
+    }
+
+    /**
      * Toggle follow/unfollow a user
      */
     public function followUser(User $follower, int $followedId): array

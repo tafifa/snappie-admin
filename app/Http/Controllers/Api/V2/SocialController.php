@@ -103,6 +103,39 @@ class SocialController
         }
     }
 
+    public function deletePost(Request $request, int $post_id): JsonResponse
+    {
+        try {
+            $user = $request->user();
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized'
+                ], 401);
+            }
+
+            $this->service->deletePost($user, $post_id);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Post deleted successfully',
+            ], 200);
+        } catch (\InvalidArgumentException $e) {
+            $errorMessage = $e->getMessage();
+            $status = str_contains($errorMessage, 'not found') ? 404 : 403;
+            return response()->json([
+                'success' => false,
+                'message' => $errorMessage,
+            ], $status);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete post',
+                'error'   => $e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function follow(Request $request, int $user_id): JsonResponse
     {
         try {

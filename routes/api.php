@@ -200,6 +200,10 @@ Route::middleware("api")
                     "postDetail",
                 ]);
                 Route::post("/posts", [SocialController::class, "createPost"]);
+                Route::delete("/posts/id/{post_id}", [
+                    SocialController::class,
+                    "deletePost",
+                ]);
 
                 Route::get("/follow", [SocialController::class, "followData"]);
                 Route::post("/follow/id/{user_id}", [
