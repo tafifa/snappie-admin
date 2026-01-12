@@ -365,7 +365,8 @@ class UsersService
         $query = \App\Models\Review::where('user_id', $userId)
             ->with([
                 'place:id,name,image_urls',
-            ]);
+            ])
+            ->orderBy('created_at', 'desc');
 
         $reviews = $page ? $query->paginate($perPage, ['*'], 'page', $page) : $query->paginate($perPage);
 
@@ -390,7 +391,8 @@ class UsersService
                 'comments.user:id,name,username,image_url', 
                 'likes.user:id,name,username,image_url'
             ])
-            ->withCount(['likes', 'comments']);
+            ->withCount(['likes', 'comments'])
+            ->orderBy('created_at', 'desc');
 
         $posts = $page ? $query->paginate($perPage, ['*'], 'page', $page) : $query->paginate($perPage);
 

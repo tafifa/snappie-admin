@@ -107,6 +107,8 @@ class SocialService
             $query->where("content", "like", "%" . $tag . "%");
         }
 
+        $query->orderBy('created_at', 'desc');
+
         $posts = $page
             ? $query->paginate($perPage, ["*"], "page", (int) $page)
             : $query->paginate($perPage);
