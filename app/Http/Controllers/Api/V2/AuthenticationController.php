@@ -19,9 +19,9 @@ class AuthenticationController
             'gender' => ['required', 'in:male,female,other'],
             'image_url' => ['required', 'url', 'max:500'],
             'username' => ['required', 'string', 'max:255', 'unique:users,username'],
-            'food_type' => ['required', 'array', 'size:3'],
+            'food_type' => ['required', 'array'],
             'food_type.*' => ['string', 'distinct'],
-            'place_value' => ['required', 'array', 'size:3'],
+            'place_value' => ['required', 'array'],
             'place_value.*' => ['string', 'distinct'],
         ]);
         $result = $this->service->registerUser($payload);
